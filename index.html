@@ -20,11 +20,11 @@
     #topbar { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: var(--topbar-h); background: #fff; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 20; }
     #topbar h1 { font-size: 15px; font-weight: 700; margin-right: 2px; }
     .view-tabs { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .view-tab { font-size: 12px; font-weight: 600; padding: 5px 12px; border: none; background: #fff; color: var(--muted); cursor: pointer; transition: background .12s; white-space: nowrap; }
+    .view-tab { font-size: 12px; font-weight: 600; padding: 5px 12px; border: none; background: #fff; color: var(--muted); cursor: pointer; white-space: nowrap; }
     .view-tab.active { background: var(--accent); color: #fff; }
-    #search { font-size: 13px; padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius); width: 170px; outline: none; }
+    #search { font-size: 13px; padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius); width: 160px; outline: none; }
     #search:focus { border-color: var(--accent); }
-    .tb-btn { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; transition: background .12s; }
+    .tb-btn { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; }
     .tb-btn:hover { background: var(--bg); }
     .tb-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
     .tb-btn.primary:hover { background: #0043a8; }
@@ -46,15 +46,17 @@
 
     /* ── Filter bar ── */
     #filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0 14px; background: #fff; border-bottom: 1px solid var(--border); overflow: hidden; max-height: 0; transition: max-height .25s ease, padding .25s ease; flex-shrink: 0; }
-    #filter-bar.open { max-height: 110px; padding: 10px 14px; }
+    #filter-bar.open { max-height: 120px; padding: 10px 14px; }
     .f-group { display: flex; align-items: center; gap: 6px; }
     .f-label { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; }
-    .f-chip { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; transition: all .12s; white-space: nowrap; }
+    .f-chip { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; white-space: nowrap; }
     .f-chip.on { border-color: var(--accent); background: #e6f0ff; color: var(--accent); }
     .f-date { font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; }
     .f-date:focus { border-color: var(--accent); }
     .f-num { font-size: 12px; padding: 4px 8px; width: 90px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; }
     .f-num:focus { border-color: var(--accent); }
+    .f-text { font-size: 12px; padding: 4px 9px; width: 150px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; }
+    .f-text:focus { border-color: var(--accent); }
     .f-sep { color: var(--muted); font-size: 12px; }
     #btn-clear-filters { font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
 
@@ -64,10 +66,10 @@
     #board::-webkit-scrollbar-thumb { background: #c1c7d0; border-radius: 3px; }
     .column { flex-shrink: 0; width: 240px; display: flex; flex-direction: column; background: var(--col-bg); border-radius: var(--radius); max-height: calc(100vh - var(--topbar-h) - 24px); }
     .column.terminal { opacity: .85; }
-    .col-header { padding: 10px 11px 8px; background: #fff; border-radius: var(--radius) var(--radius) 0 0; border-top: 3px solid var(--col-color, #888); }
+    .col-header { padding: 10px 11px 8px; background: #fff; border-radius: var(--radius) var(--radius) 0 0; border-top: 3px solid var(--col-color,#888); }
     .col-h1 { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
     .col-name { font-size: 14px; font-weight: 700; }
-    .col-weight { font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--col-color,#888) 15%, white); color: var(--col-color,#888); border-radius: 8px; padding: 1px 6px; }
+    .col-weight { font-size: 11px; font-weight: 700; background: color-mix(in srgb,var(--col-color,#888) 15%,white); color: var(--col-color,#888); border-radius: 8px; padding: 1px 6px; }
     .col-count { margin-left: auto; font-size: 11px; font-weight: 600; background: var(--border); color: var(--muted); border-radius: 9px; padding: 1px 7px; }
     .col-h2 { display: flex; flex-direction: column; gap: 1px; }
     .col-pipeline { font-size: 11px; color: var(--muted); }
@@ -86,19 +88,21 @@
     .card.status-on-hold { opacity: .72; }
     .card-badge { position: absolute; top: 7px; right: 8px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; text-transform: uppercase; }
     .badge-new { background: #e3fcef; color: #006644; }
-    .card-name-link { font-size: 12px; font-weight: 600; line-height: 1.35; margin-bottom: 2px; padding-right: 36px; cursor: pointer; color: var(--text); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .12s; display: block; }
+    .card-name-link { font-size: 12px; font-weight: 600; line-height: 1.35; margin-bottom: 2px; padding-right: 36px; cursor: pointer; color: var(--text); display: block; border-bottom: 1px solid transparent; transition: border-color .12s; }
     .card-name-link:hover { border-bottom-color: var(--accent); color: var(--accent); }
     .card-account { font-size: 11px; color: var(--muted); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-value-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .card-value { font-size: 13px; font-weight: 700; cursor: text; border-bottom: 1px dashed transparent; transition: border-color .12s; padding: 0 2px; border-radius: 2px; }
+    .card-value { font-size: 13px; font-weight: 700; cursor: text; border-bottom: 1px dashed transparent; padding: 0 2px; }
     .card-value:hover { border-bottom-color: var(--accent); }
     .card-value-input { font-size: 13px; font-weight: 700; color: var(--text); border: 1.5px solid var(--accent); border-radius: 4px; padding: 1px 5px; width: 110px; outline: none; background: #f0f6ff; }
     .card-weighted { font-size: 11px; color: var(--muted); margin-left: auto; }
     .card-weighted strong { color: var(--col-color,#888); }
     .card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .card-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .card-date { font-size: 11px; color: var(--muted); white-space: nowrap; cursor: pointer; border-bottom: 1px dashed transparent; }
+    .card-date:hover { border-bottom-color: var(--accent); color: var(--accent); }
     .card-date.overdue { color: #de350b; font-weight: 600; }
     .card-date.soon { color: #ff8b00; font-weight: 600; }
+    .card-date-input { font-size: 11px; border: 1.5px solid var(--accent); border-radius: 4px; padding: 1px 4px; outline: none; background: #f0f6ff; cursor: pointer; }
     .card-activity { font-size: 10px; color: var(--muted); margin-top: 4px; }
     .status-pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; border: none; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; white-space: nowrap; }
     .status-pill:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -119,6 +123,8 @@
     .lt-name:hover { color: var(--accent); text-decoration: underline; }
     .lt-val { font-weight: 600; cursor: text; border-bottom: 1px dashed transparent; display: inline-block; }
     .lt-val:hover { border-bottom-color: var(--accent); }
+    .lt-date { cursor: pointer; border-bottom: 1px dashed transparent; display: inline-block; }
+    .lt-date:hover { border-bottom-color: var(--accent); color: var(--accent); }
     .lt-select { font-size: 12px; border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; background: #f8f9fa; color: var(--text); cursor: pointer; outline: none; }
     .lt-select:focus { border-color: var(--accent); }
     .lt-activity { font-size: 11px; color: var(--muted); }
@@ -126,25 +132,53 @@
     .lt-note-btn:hover { background: var(--bg); color: var(--accent); }
 
     /* ── Forecast view ── */
-    #forecast-view { display: none; flex: 1; overflow-y: auto; padding: 16px 20px; gap: 24px; flex-direction: column; }
+    #forecast-view { display: none; flex: 1; overflow-y: auto; padding: 14px 18px; gap: 18px; flex-direction: column; }
     #forecast-view.show { display: flex; }
-    .fc-controls { display: flex; align-items: center; gap: 16px; background: #fff; padding: 12px 16px; border-radius: var(--radius); box-shadow: var(--shadow-sm); flex-shrink: 0; }
-    .fc-controls label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
-    .fc-controls input[type=checkbox] { cursor: pointer; }
+    .fc-controls { display: flex; align-items: center; gap: 12px; background: #fff; padding: 11px 14px; border-radius: var(--radius); box-shadow: var(--shadow-sm); flex-shrink: 0; flex-wrap: wrap; }
+    .fc-controls label { display: flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+    .fc-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+    .fc-select { font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text); outline: none; cursor: pointer; }
+    .fc-select:focus { border-color: var(--accent); }
     .fc-undated { font-size: 12px; color: var(--muted); margin-left: auto; }
-    .fc-section { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 18px 20px; }
-    .fc-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
-    .fc-chart-wrap { position: relative; height: 240px; margin-bottom: 16px; }
+    .fc-section { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 16px 18px; }
+    .fc-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .fc-section-head h3 { font-size: 14px; font-weight: 700; }
+    .win-btn { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; }
+    .win-btn.active { border-color: var(--accent); background: #e6f0ff; color: var(--accent); }
+    .fc-custom-range { display: none; align-items: center; gap: 6px; font-size: 12px; }
+    .fc-custom-range.show { display: flex; }
+    .fc-chart-wrap { position: relative; height: 230px; margin-bottom: 14px; }
     .fc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .fc-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 6px 10px; border-bottom: 1px solid var(--border); }
-    .fc-table td { padding: 7px 10px; border-bottom: 1px solid #f0f2f5; }
+    .fc-table td { padding: 7px 10px; border-bottom: 1px solid #f0f2f5; cursor: pointer; }
     .fc-table tr:last-child td { border-bottom: none; }
+    .fc-table tr:hover td { background: #f5f7fa; }
     .fc-table td:not(:first-child) { font-weight: 600; }
     .fc-table td.zero { color: var(--muted); font-weight: 400; }
     .fc-total { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: right; }
 
+    /* ── Drill-down panel ── */
+    #drill-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.45); z-index: 250; align-items: flex-start; justify-content: flex-end; }
+    #drill-overlay.open { display: flex; }
+    #drill-panel { width: 560px; height: 100vh; background: #fff; display: flex; flex-direction: column; box-shadow: var(--shadow-md); animation: slideIn .2s ease; }
+    .dp-head { display: flex; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 10px; flex-shrink: 0; }
+    .dp-head-text { flex: 1; }
+    .dp-head-text h2 { font-size: 15px; font-weight: 700; }
+    .dp-head-text .dp-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .dp-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--muted); line-height: 1; flex-shrink: 0; }
+    .dp-body { flex: 1; overflow-y: auto; }
+    .dp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dp-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 10px 14px; background: #f8f9fa; border-bottom: 2px solid var(--border); position: sticky; top: 0; }
+    .dp-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+    .dp-table tr:last-child td { border-bottom: none; }
+    .dp-table tr:hover td { background: #fafbfc; }
+    .dp-name { font-weight: 600; cursor: pointer; color: var(--text); }
+    .dp-name:hover { color: var(--accent); text-decoration: underline; }
+    .dp-stage { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+    .dp-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 30px; }
+
     /* ── Notes panel ── */
-    #notes-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.45); z-index: 200; align-items: flex-start; justify-content: flex-end; }
+    #notes-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.45); z-index: 300; align-items: flex-start; justify-content: flex-end; }
     #notes-overlay.open { display: flex; }
     #notes-panel { width: 440px; height: 100vh; background: #fff; display: flex; flex-direction: column; box-shadow: var(--shadow-md); animation: slideIn .2s ease; }
     .np-head { display: flex; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 10px; flex-shrink: 0; }
@@ -155,7 +189,8 @@
     .np-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .np-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
     .np-value { font-size: 13px; font-weight: 700; }
-    .np-date { font-size: 12px; color: var(--muted); }
+    .np-date { font-size: 12px; color: var(--muted); cursor: pointer; border-bottom: 1px dashed transparent; }
+    .np-date:hover { border-bottom-color: var(--accent); color: var(--accent); }
     .np-activity { font-size: 11px; color: var(--muted); margin-left: auto; }
     .np-notes-wrap { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
     .np-no-notes { font-size: 13px; color: var(--muted); text-align: center; padding: 20px 0; }
@@ -167,7 +202,6 @@
     .np-textarea:focus { border-color: var(--accent); }
     .np-submit { font-size: 13px; font-weight: 600; padding: 8px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; cursor: pointer; }
     .np-submit:hover { background: #0043a8; }
-    .np-submit:disabled { opacity: .5; cursor: default; }
 
     /* ── Settings overlay ── */
     #settings-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.5); z-index: 200; align-items: flex-start; justify-content: flex-end; }
@@ -223,7 +257,7 @@
     <div class="sp-head"><h2>⚙ Pipeline Settings</h2><button class="sp-close" id="sp-close">×</button></div>
     <div class="sp-section">
       <h3>Deal Stages</h3>
-      <p>Each stage has a default weight applied to all deals in that column.</p>
+      <p>Each stage has a default weight applied to all deals in that column. Your changes here are saved permanently in the browser.</p>
       <div class="stage-row hdr"><span>Label</span><span>Weight %</span><span>Color</span><span></span><span></span></div>
       <div id="stages-editor"></div>
       <button class="sp-add" id="add-stage-btn">+ Add Stage</button>
@@ -242,6 +276,28 @@
   </div>
 </div>
 
+<!-- Drill-down panel -->
+<div id="drill-overlay">
+  <div id="drill-panel">
+    <div class="dp-head">
+      <div class="dp-head-text">
+        <h2 id="dp-title"></h2>
+        <div class="dp-sub" id="dp-sub"></div>
+      </div>
+      <button class="dp-close" id="dp-close">×</button>
+    </div>
+    <div class="dp-body">
+      <table class="dp-table">
+        <thead><tr>
+          <th>Opportunity</th><th>Account</th><th>Stage</th><th>Status</th>
+          <th>Value</th><th>Weighted</th><th>Close Date</th>
+        </tr></thead>
+        <tbody id="dp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- Notes panel -->
 <div id="notes-overlay">
   <div id="notes-panel">
@@ -255,7 +311,7 @@
     <div class="np-meta" id="np-meta"></div>
     <div class="np-notes-wrap" id="np-notes-list"></div>
     <div class="np-add">
-      <textarea class="np-textarea" id="np-textarea" placeholder="Add a note…"></textarea>
+      <textarea class="np-textarea" id="np-textarea" placeholder="Add a note… (Ctrl+Enter to save)"></textarea>
       <button class="np-submit" id="np-submit">Add Note</button>
     </div>
   </div>
@@ -300,6 +356,10 @@
   <div class="f-group"><span class="f-label">Status</span><div id="f-status-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div></div>
   <div class="f-group"><span class="f-label">Stage</span><div id="f-stage-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div></div>
   <div class="f-group">
+    <span class="f-label">Company</span>
+    <input class="f-text" id="f-company" type="search" placeholder="Account name…" />
+  </div>
+  <div class="f-group">
     <span class="f-label">Close Date</span>
     <input class="f-date" id="f-date-from" type="date" title="From" />
     <span class="f-sep">→</span>
@@ -330,16 +390,46 @@
   <div class="fc-controls">
     <label><input type="checkbox" id="fc-inc-won" /> Include Won</label>
     <label><input type="checkbox" id="fc-inc-lost" /> Include Lost</label>
+    <div class="fc-sep"></div>
+    <span class="f-label">Date field</span>
+    <select class="fc-select" id="fc-date-field"><option value="">Close Date (default)</option></select>
     <span class="fc-undated" id="fc-undated"></span>
   </div>
+
   <div class="fc-section">
-    <h3>Monthly Forecast — next 12 months</h3>
+    <div class="fc-section-head">
+      <h3>Monthly Forecast</h3>
+      <button class="win-btn active" data-win="3m">3M</button>
+      <button class="win-btn" data-win="6m">6M</button>
+      <button class="win-btn" data-win="12m">12M</button>
+      <button class="win-btn" data-win="24m">24M</button>
+      <button class="win-btn" data-win="customm">Custom</button>
+      <div class="fc-custom-range" id="fc-custom-monthly">
+        <span class="f-label">From</span>
+        <input class="f-date" id="fc-m-from" type="date" />
+        <span class="f-sep">→</span>
+        <input class="f-date" id="fc-m-to" type="date" />
+      </div>
+    </div>
     <div class="fc-chart-wrap"><canvas id="chart-monthly"></canvas></div>
     <table class="fc-table"><thead><tr><th>Month</th><th>Deals</th><th>Pipeline</th><th>Weighted</th><th>Avg Weight</th></tr></thead><tbody id="tbl-monthly"></tbody></table>
     <div class="fc-total" id="fc-monthly-total"></div>
   </div>
+
   <div class="fc-section">
-    <h3>Quarterly Forecast — next 8 quarters</h3>
+    <div class="fc-section-head">
+      <h3>Quarterly Forecast</h3>
+      <button class="win-btn" data-win="4q">4Q</button>
+      <button class="win-btn active" data-win="8q">8Q</button>
+      <button class="win-btn" data-win="12q">12Q</button>
+      <button class="win-btn" data-win="customq">Custom</button>
+      <div class="fc-custom-range" id="fc-custom-quarterly">
+        <span class="f-label">From</span>
+        <input class="f-date" id="fc-q-from" type="date" />
+        <span class="f-sep">→</span>
+        <input class="f-date" id="fc-q-to" type="date" />
+      </div>
+    </div>
     <div class="fc-chart-wrap"><canvas id="chart-quarterly"></canvas></div>
     <table class="fc-table"><thead><tr><th>Quarter</th><th>Deals</th><th>Pipeline</th><th>Weighted</th><th>Avg Weight</th></tr></thead><tbody id="tbl-quarterly"></tbody></table>
     <div class="fc-total" id="fc-quarterly-total"></div>
@@ -353,7 +443,7 @@
     <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
   </svg>
   <h2>No opportunities yet</h2>
-  <p>Export opportunities from Dynamics 365 as CSV or Excel and upload to populate the board.</p>
+  <p>Export opportunities from Dynamics 365 or HubSpot as CSV or Excel and upload to populate the board.</p>
   <button id="empty-upload-btn">Upload File</button>
 </div>
 
@@ -363,10 +453,24 @@
 "use strict";
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
-const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity" };
+const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity", fcField:"kb_fc_field" };
+const CONFIG_VERSION = 2;
+
+// ── HubSpot date field labels ──────────────────────────────────────────────────
+const HS_DATE_FIELDS = {
+  "close date":"Close Date","closedate":"Close Date",
+  "est. close or rfx due date":"Close / RFx Date","rfx due date":"RFx Due Date",
+  "est. close date":"Est. Close Date",
+  "create date":"Create Date","createdate":"Create Date","deal created date":"Create Date",
+  "last activity date":"Last Activity Date","notes_last_updated":"Last Activity Date",
+  "last modified date":"Last Modified Date","hs_lastmodifieddate":"Last Modified Date",
+  "last contact date":"Last Contact Date","notes_last_contacted":"Last Contact Date",
+  "due date":"Due Date","expected close date":"Expected Close Date",
+};
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 const DEFAULT_CONFIG = {
+  configVersion: CONFIG_VERSION,
   stages: [
     { id:"C",   label:"C",   weight:10, color:"#64748b" },
     { id:"B",   label:"B",   weight:25, color:"#6366f1" },
@@ -383,147 +487,153 @@ const DEFAULT_CONFIG = {
   ],
 };
 
+// ── Config migration ──────────────────────────────────────────────────────────
+function migrateConfig(saved) {
+  if (!saved) return clone(DEFAULT_CONFIG);
+  // Already current version — use as-is
+  if (saved.configVersion === CONFIG_VERSION) return saved;
+  // Merge: keep user's stages/statuses but fill in any missing structural fields
+  const out = clone(DEFAULT_CONFIG);
+  if (Array.isArray(saved.stages) && saved.stages.length) out.stages = saved.stages.map(s => ({ ...DEFAULT_CONFIG.stages.find(d=>d.id===s.id)||DEFAULT_CONFIG.stages[0], ...s }));
+  if (Array.isArray(saved.statuses) && saved.statuses.length) out.statuses = saved.statuses.map(s => ({ ...DEFAULT_CONFIG.statuses.find(d=>d.id===s.id)||DEFAULT_CONFIG.statuses[0], ...s }));
+  out.configVersion = CONFIG_VERSION;
+  ss(K.config, out);
+  return out;
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let config = clone(DEFAULT_CONFIG);
 let opportunities = [];
-let notes    = {};   // { [oppId]: [{id,text,ts}] }
-let activity = {};   // { [oppId]: isoTimestamp }
+let notes    = {};
+let activity = {};
 let currentView = "kanban";
 let filterOpen = false;
-let filters = { statuses: new Set(), stages: new Set(), dateFrom:"", dateTo:"", valMin:"", valMax:"" };
+let filters = { statuses:new Set(), stages:new Set(), dateFrom:"", dateTo:"", valMin:"", valMax:"", company:"" };
 let listSort = { col:"name", dir:1 };
 let dragCard = null;
 let diffState = null;
 let settingsDraft = null;
 let notesOppId = null;
 let chartMonthly = null, chartQuarterly = null;
+let forecastDateField = "";
+let fcMonthWin = "3m", fcQuarWin = "8q";
+let fcCustomM = { from:"", to:"" }, fcCustomQ = { from:"", to:"" };
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function clone(x) { return JSON.parse(JSON.stringify(x)); }
 function ls(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
-function ss(k,v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function ss(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} }
 function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-
-function fmt(v) {
-  if (!v && v!==0) return "";
-  return new Intl.NumberFormat("en-AU",{style:"currency",currency:"AUD",maximumFractionDigits:0}).format(v);
-}
+function fmt(v) { if(!v&&v!==0) return ""; return new Intl.NumberFormat("en-AU",{style:"currency",currency:"AUD",maximumFractionDigits:0}).format(v); }
 function parseMoney(s) { return parseFloat(String(s||"").replace(/[^0-9.\-]/g,""))||0; }
 function uid() { return Math.random().toString(36).slice(2,9); }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
-// Parse AU (DD/MM/YYYY), ISO (YYYY-MM-DD), or native fallback → Date object
 function parseDate(str) {
-  if (!str) return null;
-  str = String(str).trim();
-  // DD/MM/YYYY or D/M/YYYY
-  const au = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (au) return new Date(+au[3], +au[2]-1, +au[1]);
-  // YYYY-MM-DD
-  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3]);
-  const d = new Date(str);
-  return isNaN(d) ? null : d;
+  if(!str) return null;
+  str=String(str).trim();
+  const au=str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(au) return new Date(+au[3],+au[2]-1,+au[1]);
+  const iso=str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return new Date(+iso[1],+iso[2]-1,+iso[3]);
+  const d=new Date(str); return isNaN(d)?null:d;
 }
-// → internal storage as YYYY-MM-DD
-function toISO(str) {
-  const d = parseDate(str);
-  if (!d) return "";
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-// Display as DD/MM/YYYY
-function fmtDate(iso) {
-  if (!iso) return "";
-  const [y,m,d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
+function toISO(str) { const d=parseDate(str); if(!d) return ""; return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function fmtDate(iso) { if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
 function pad(n) { return String(n).padStart(2,"0"); }
-function daysDiff(iso) {
-  if (!iso) return null;
-  const [y,m,d] = iso.split("-").map(Number);
-  const today = new Date(); today.setHours(0,0,0,0);
-  return Math.floor((new Date(y,m-1,d) - today) / 86400000);
-}
-function fmtTs(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}) + " · " +
-         d.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"});
-}
-function fmtActivityShort(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const diff = Math.floor((Date.now()-d)/86400000);
-  if (diff===0) return "Today";
-  if (diff===1) return "Yesterday";
-  if (diff<7)  return diff+"d ago";
-  return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"});
-}
+function daysDiff(iso) { if(!iso) return null; const [y,m,d]=iso.split("-").map(Number); const t=new Date(); t.setHours(0,0,0,0); return Math.floor((new Date(y,m-1,d)-t)/86400000); }
+function fmtTs(iso) { if(!iso) return ""; const d=new Date(iso); return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})+" · "+d.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"}); }
+function fmtActivityShort(iso) { if(!iso) return ""; const d=new Date(iso); const diff=Math.floor((Date.now()-d)/86400000); if(diff===0) return "Today"; if(diff===1) return "Yesterday"; if(diff<7) return diff+"d ago"; return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"}); }
 
 let toastTimer;
 function showToast(msg,type="") { const el=document.getElementById("toast"); el.textContent=msg; el.className="show"+(type?" "+type:""); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.className="";},3000); }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 function boot() {
-  const sc = ls(K.config); if (sc) config = sc;
+  config = migrateConfig(ls(K.config));
   opportunities = ls(K.data)||[];
   notes    = ls(K.notes)||{};
   activity = ls(K.activity)||{};
+  forecastDateField = localStorage.getItem(K.fcField)||"";
   refreshLastUpload();
   checkNudge();
   buildFilterChips();
-  renderView();
   wireEvents();
+  renderView();
 }
 
 function wireEvents() {
-  document.getElementById("btn-upload").addEventListener("click", ()=>fi().click());
-  document.getElementById("empty-upload-btn").addEventListener("click", ()=>fi().click());
-  document.getElementById("nudge-cta").addEventListener("click", ()=>fi().click());
-  document.getElementById("nudge-dismiss").addEventListener("click", dismissNudge);
-  document.getElementById("diff-dismiss").addEventListener("click", ()=>document.getElementById("diff-banner").classList.remove("show"));
-  fi().addEventListener("change", onFile);
+  document.getElementById("btn-upload").addEventListener("click",()=>fi().click());
+  document.getElementById("empty-upload-btn").addEventListener("click",()=>fi().click());
+  document.getElementById("nudge-cta").addEventListener("click",()=>fi().click());
+  document.getElementById("nudge-dismiss").addEventListener("click",dismissNudge);
+  document.getElementById("diff-dismiss").addEventListener("click",()=>document.getElementById("diff-banner").classList.remove("show"));
+  fi().addEventListener("change",onFile);
 
-  document.querySelectorAll(".view-tab").forEach(b => b.addEventListener("click", ()=>{
+  document.querySelectorAll(".view-tab").forEach(b=>b.addEventListener("click",()=>{
     currentView=b.dataset.view;
     document.querySelectorAll(".view-tab").forEach(x=>x.classList.toggle("active",x===b));
     renderView();
   }));
 
-  document.getElementById("btn-filter").addEventListener("click", toggleFilters);
-  document.getElementById("btn-clear-filters").addEventListener("click", clearFilters);
+  document.getElementById("btn-filter").addEventListener("click",toggleFilters);
+  document.getElementById("btn-clear-filters").addEventListener("click",clearFilters);
   document.getElementById("f-date-from").addEventListener("change",e=>{filters.dateFrom=e.target.value;applyFilters();});
   document.getElementById("f-date-to").addEventListener("change",e=>{filters.dateTo=e.target.value;applyFilters();});
   document.getElementById("f-val-min").addEventListener("input",e=>{filters.valMin=e.target.value;applyFilters();});
   document.getElementById("f-val-max").addEventListener("input",e=>{filters.valMax=e.target.value;applyFilters();});
-  let st; document.getElementById("search").addEventListener("input",()=>{clearTimeout(st);st=setTimeout(renderView,160);});
+  let st,sc;
+  document.getElementById("search").addEventListener("input",()=>{clearTimeout(st);st=setTimeout(renderView,160);});
+  document.getElementById("f-company").addEventListener("input",e=>{clearTimeout(sc);filters.company=e.target.value.trim().toLowerCase();sc=setTimeout(applyFilters,160);});
 
-  document.getElementById("btn-settings").addEventListener("click", openSettings);
-  document.getElementById("sp-close").addEventListener("click", closeSettings);
-  document.getElementById("sp-cancel").addEventListener("click", closeSettings);
-  document.getElementById("sp-save").addEventListener("click", saveSettings);
-  document.getElementById("add-stage-btn").addEventListener("click", addSettingsStage);
-  document.getElementById("add-status-btn").addEventListener("click", addSettingsStatus);
+  document.getElementById("btn-settings").addEventListener("click",openSettings);
+  document.getElementById("sp-close").addEventListener("click",closeSettings);
+  document.getElementById("sp-cancel").addEventListener("click",closeSettings);
+  document.getElementById("sp-save").addEventListener("click",saveSettings);
+  document.getElementById("add-stage-btn").addEventListener("click",addSettingsStage);
+  document.getElementById("add-status-btn").addEventListener("click",addSettingsStatus);
   document.getElementById("settings-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeSettings();});
 
-  document.getElementById("np-close").addEventListener("click", closeNotes);
+  document.getElementById("np-close").addEventListener("click",closeNotes);
   document.getElementById("notes-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeNotes();});
-  document.getElementById("np-submit").addEventListener("click", submitNote);
+  document.getElementById("np-submit").addEventListener("click",submitNote);
   document.getElementById("np-textarea").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();submitNote();}});
 
-  document.getElementById("fc-inc-won").addEventListener("change", renderForecast);
-  document.getElementById("fc-inc-lost").addEventListener("change", renderForecast);
+  document.getElementById("dp-close").addEventListener("click",closeDrill);
+  document.getElementById("drill-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeDrill();});
+
+  document.getElementById("fc-inc-won").addEventListener("change",renderForecast);
+  document.getElementById("fc-inc-lost").addEventListener("change",renderForecast);
+  document.getElementById("fc-date-field").addEventListener("change",e=>{forecastDateField=e.target.value;localStorage.setItem(K.fcField,forecastDateField);renderForecast();});
+
+  // Window preset buttons
+  document.querySelectorAll("[data-win]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const w=btn.dataset.win;
+      const isQ=w.endsWith("q");
+      if(isQ){
+        fcQuarWin=w;
+        document.querySelectorAll("[data-win$='q']").forEach(b=>b.classList.toggle("active",b===btn));
+        document.getElementById("fc-custom-quarterly").classList.toggle("show",w==="customq");
+      } else {
+        fcMonthWin=w;
+        document.querySelectorAll("[data-win$='m']").forEach(b=>b.classList.toggle("active",b===btn));
+        document.getElementById("fc-custom-monthly").classList.toggle("show",w==="customm");
+      }
+      renderForecast();
+    });
+  });
+  document.getElementById("fc-m-from").addEventListener("change",e=>{fcCustomM.from=e.target.value;renderForecast();});
+  document.getElementById("fc-m-to").addEventListener("change",e=>{fcCustomM.to=e.target.value;renderForecast();});
+  document.getElementById("fc-q-from").addEventListener("change",e=>{fcCustomQ.from=e.target.value;renderForecast();});
+  document.getElementById("fc-q-to").addEventListener("change",e=>{fcCustomQ.to=e.target.value;renderForecast();});
 }
 
 function fi() { return document.getElementById("file-input"); }
 
 // ── Nudge ─────────────────────────────────────────────────────────────────────
-function checkNudge() {
-  const ts = localStorage.getItem(K.upload); if (!ts) return;
-  if (localStorage.getItem(K.nudge) === todayStr()) return;
-  if ((Date.now()-new Date(ts))/86400000 >= 3) document.getElementById("nudge-banner").classList.add("show");
-}
-function dismissNudge() { localStorage.setItem(K.nudge, todayStr()); document.getElementById("nudge-banner").classList.remove("show"); }
+function checkNudge() { const ts=localStorage.getItem(K.upload); if(!ts) return; if(localStorage.getItem(K.nudge)===todayStr()) return; if((Date.now()-new Date(ts))/86400000>=3) document.getElementById("nudge-banner").classList.add("show"); }
+function dismissNudge() { localStorage.setItem(K.nudge,todayStr()); document.getElementById("nudge-banner").classList.remove("show"); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
 // ── File handling ─────────────────────────────────────────────────────────────
@@ -532,11 +642,8 @@ function onFile(e) {
   const isXL=/\.(xlsx|xls)$/i.test(file.name);
   const reader=new FileReader();
   reader.onload=ev=>{
-    try {
-      const rows=isXL?parseXLSX(ev.target.result):parseCSV(ev.target.result);
-      if(!rows.length){showToast("No data rows found","err");return;}
-      importData(rows);
-    } catch(err){showToast("Parse error: "+err.message,"err");}
+    try { const rows=isXL?parseXLSX(ev.target.result):parseCSV(ev.target.result); if(!rows.length){showToast("No data rows found","err");return;} importData(rows); }
+    catch(err){showToast("Parse error: "+err.message,"err");}
     e.target.value="";
   };
   if(isXL) reader.readAsArrayBuffer(file); else reader.readAsText(file);
@@ -546,9 +653,7 @@ function parseXLSX(ab) {
   const wb=XLSX.read(ab,{type:"array",cellDates:true});
   const ws=wb.Sheets[wb.SheetNames[0]];
   return XLSX.utils.sheet_to_json(ws,{defval:""}).map(row=>{
-    const low={};
-    Object.keys(row).forEach(k=>{low[k.trim().toLowerCase()]=String(row[k]??"").trim();});
-    return normalise(low);
+    const low={}; Object.keys(row).forEach(k=>{low[k.trim().toLowerCase()]=String(row[k]??"").trim();}); return normalise(low);
   }).filter(Boolean);
 }
 
@@ -559,53 +664,46 @@ function parseCSV(text) {
   const rows=[];
   for(let i=1;i<lines.length;i++){
     if(!lines[i].trim()) continue;
-    const vals=splitRow(lines[i]);
-    const obj={}; headers.forEach((h,j)=>{obj[h]=(vals[j]||"").trim();});
-    const n=normalise(obj); if(n) rows.push(n);
+    const vals=splitRow(lines[i]); const obj={}; headers.forEach((h,j)=>{obj[h]=(vals[j]||"").trim();}); const n=normalise(obj); if(n) rows.push(n);
   }
   return rows;
 }
 
 function splitRow(line) {
   const cols=[];let cur="",inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-    else if(c===","&&!inQ){cols.push(cur);cur="";}
-    else cur+=c;
-  }
-  cols.push(cur); return cols;
+  for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(c===","&&!inQ){cols.push(cur);cur="";}else cur+=c;}
+  cols.push(cur);return cols;
 }
 
 function gf(row,...keys){for(const k of keys)if(row[k]!==undefined&&row[k]!=="")return row[k];return "";}
 
 function normalise(row) {
-  const name=gf(row,"opportunity name","name","topic","subject","title","opportunity");
-  if(!name) return null;
+  const name=gf(row,"opportunity name","name","topic","subject","title","opportunity"); if(!name) return null;
   const id=gf(row,"opportunityid","id","opportunity id","crm id")||slugify(name)+"-"+uid();
   const rawStage=gf(row,"sales stage","stage","stepname","step name","pipeline stage","rating stage","deal stage");
   const stage=matchStage(rawStage);
   const rawStatus=gf(row,"status reason","status","statuscode","state","deal status");
   const status=matchStatus(rawStatus);
-  const rawDate=gf(row,"est. close or rfx due date","est. close or rfx due date","rfx due date","est. close date","close date","estimated close date","closedate","target close date","expected close date","due date");
+  const rawDate=gf(row,"est. close or rfx due date","rfx due date","est. close date","close date","estimated close date","closedate","target close date","expected close date","due date");
   const closeDate=toISO(rawDate);
   const value=parseMoney(gf(row,"est. revenue","estimated revenue","estimated value","revenue","value","deal size","amount","deal value","contract value"));
   const account=gf(row,"account name","account","company","customer","organisation","organization");
   const owner=gf(row,"owner","owning user","assigned to","salesperson","sales rep");
-  return {id,name,account,owner,stage,status,value,closeDate,_isNew:false};
+
+  // Collect all recognised HubSpot date fields present in this row
+  const allDates={};
+  Object.keys(HS_DATE_FIELDS).forEach(key=>{
+    if(row[key]){const iso=toISO(row[key]);if(iso)allDates[HS_DATE_FIELDS[key]]=iso;}
+  });
+
+  return {id,name,account,owner,stage,status,value,closeDate,allDates,_isNew:false};
 }
 
-function matchStage(raw) {
-  if(!raw) return config.stages[0]?.id||"C";
-  const r=raw.trim().toUpperCase();
-  const ex=config.stages.find(s=>s.label.toUpperCase()===r||s.id.toUpperCase()===r);
-  return ex?ex.id:config.stages[0]?.id||"C";
-}
+function matchStage(raw) { if(!raw) return config.stages[0]?.id||"C"; const r=raw.trim().toUpperCase(); const ex=config.stages.find(s=>s.label.toUpperCase()===r||s.id.toUpperCase()===r); return ex?ex.id:config.stages[0]?.id||"C"; }
 function matchStatus(raw) {
   if(!raw) return config.statuses.find(s=>!s.terminal)?.id||"active";
   const r=raw.trim().toLowerCase();
-  const ex=config.statuses.find(s=>s.label.toLowerCase()===r||s.id.toLowerCase()===r);
-  if(ex) return ex.id;
+  const ex=config.statuses.find(s=>s.label.toLowerCase()===r||s.id.toLowerCase()===r); if(ex) return ex.id;
   if(r.includes("won")||r.includes("closed won")) return config.statuses.find(s=>s.id==="won")?.id||config.statuses.find(s=>s.terminal)?.id;
   if(r.includes("lost")||r.includes("closed lost")||r.includes("cancel")) return config.statuses.find(s=>s.id==="lost")?.id||config.statuses.filter(s=>s.terminal)[1]?.id;
   if(r.includes("hold")) return config.statuses.find(s=>s.id==="on-hold"||s.label.toLowerCase().includes("hold"))?.id;
@@ -618,12 +716,9 @@ function importData(incoming) {
   const oldMap=new Map(opportunities.map(o=>[o.id,o]));
   const added=incoming.filter(o=>!oldMap.has(o.id));
   const removed=opportunities.filter(o=>!new Map(incoming.map(x=>[x.id,x])).has(o.id));
-  opportunities=incoming.map(o=>{
-    const old=oldMap.get(o.id);
-    return {...o, stage:old?old.stage:o.stage, status:old?old.status:o.status, value:old?old.value:o.value, _isNew:!old};
-  });
+  opportunities=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,_isNew:!old};});
   persistOpps();
-  localStorage.setItem(K.upload, new Date().toISOString());
+  localStorage.setItem(K.upload,new Date().toISOString());
   refreshLastUpload(); dismissNudge();
   diffState={added,removed};
   showDiff(added,removed);
@@ -636,76 +731,43 @@ function showDiff(added,removed) {
   const tag=(n,c)=>n?`<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:${c==="new"?"#e3fcef":"#ffebe6"};color:${c==="new"?"#006644":"#bf2600"}">${c==="new"?"+":"−"}${n} ${c==="new"?"added":"removed"}</span>`:"";
   document.getElementById("diff-new-tag").innerHTML=tag(added.length,"new");
   document.getElementById("diff-rm-tag").innerHTML=tag(removed.length,"rm");
-  const parts=[];
-  if(added.length) parts.push(added.map(o=>o.name).join(", "));
-  if(removed.length) parts.push("Removed: "+removed.map(o=>o.name).join(", "));
+  const parts=[]; if(added.length) parts.push(added.map(o=>o.name).join(", ")); if(removed.length) parts.push("Removed: "+removed.map(o=>o.name).join(", "));
   document.getElementById("diff-detail").textContent=parts.join(" · ").slice(0,120);
   document.getElementById("diff-banner").classList.add("show");
 }
 
-function refreshLastUpload() {
-  const ts=localStorage.getItem(K.upload);
-  const el=document.getElementById("last-upload");
-  if(!ts){el.textContent="";return;}
-  const diff=Math.floor((Date.now()-new Date(ts))/86400000);
-  el.textContent="Updated "+(diff===0?"today":diff===1?"yesterday":diff+" days ago");
-}
-
-function persistOpps() { ss(K.data, opportunities.map(o=>({...o,_isNew:false}))); }
+function refreshLastUpload() { const ts=localStorage.getItem(K.upload); const el=document.getElementById("last-upload"); if(!ts){el.textContent="";return;} const diff=Math.floor((Date.now()-new Date(ts))/86400000); el.textContent="Updated "+(diff===0?"today":diff===1?"yesterday":diff+" days ago"); }
+function persistOpps() { ss(K.data,opportunities.map(o=>({...o,_isNew:false}))); }
 function touchActivity(id) { activity[id]=new Date().toISOString(); ss(K.activity,activity); }
 
 // ── Stage helpers ─────────────────────────────────────────────────────────────
-function stageWeight(stageId) { return config.stages.find(s=>s.id===stageId)?.weight??0; }
-function stageColor(stageId)  { return config.stages.find(s=>s.id===stageId)?.color??"#888"; }
-function statusObj(statusId)  { return config.statuses.find(s=>s.id===statusId)||null; }
+function stageWeight(id){ return config.stages.find(s=>s.id===id)?.weight??0; }
+function stageColor(id) { return config.stages.find(s=>s.id===id)?.color??"#888"; }
+function statusObj(id)   { return config.statuses.find(s=>s.id===id)||null; }
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 function buildFilterChips() {
-  const sc=document.getElementById("f-status-chips");
-  const gc=document.getElementById("f-stage-chips");
+  const sc=document.getElementById("f-status-chips"); const gc=document.getElementById("f-stage-chips");
   sc.innerHTML=""; gc.innerHTML="";
-  config.statuses.forEach(s=>{
-    const ch=mkChip(s.label,filters.statuses.has(s.id));
-    ch.addEventListener("click",()=>{
-      filters.statuses.has(s.id)?filters.statuses.delete(s.id):filters.statuses.add(s.id);
-      ch.classList.toggle("on"); applyFilters();
-    }); sc.appendChild(ch);
-  });
-  config.stages.forEach(s=>{
-    const ch=mkChip(s.label,filters.stages.has(s.id));
-    ch.addEventListener("click",()=>{
-      filters.stages.has(s.id)?filters.stages.delete(s.id):filters.stages.add(s.id);
-      ch.classList.toggle("on"); applyFilters();
-    }); gc.appendChild(ch);
-  });
+  config.statuses.forEach(s=>{const ch=mkChip(s.label,filters.statuses.has(s.id));ch.addEventListener("click",()=>{filters.statuses.has(s.id)?filters.statuses.delete(s.id):filters.statuses.add(s.id);ch.classList.toggle("on");applyFilters();});sc.appendChild(ch);});
+  config.stages.forEach(s=>{const ch=mkChip(s.label,filters.stages.has(s.id));ch.addEventListener("click",()=>{filters.stages.has(s.id)?filters.stages.delete(s.id):filters.stages.add(s.id);ch.classList.toggle("on");applyFilters();});gc.appendChild(ch);});
 }
-function mkChip(label,active){
-  const el=document.createElement("button");
-  el.className="f-chip"+(active?" on":""); el.textContent=label; return el;
-}
-function toggleFilters(){
-  filterOpen=!filterOpen;
-  document.getElementById("filter-bar").classList.toggle("open",filterOpen);
-  document.getElementById("btn-filter").classList.toggle("active",filterOpen);
-}
-function applyFilters(){ updateFilterCount(); renderView(); }
+function mkChip(label,active){const el=document.createElement("button");el.className="f-chip"+(active?" on":"");el.textContent=label;return el;}
+function toggleFilters(){filterOpen=!filterOpen;document.getElementById("filter-bar").classList.toggle("open",filterOpen);document.getElementById("btn-filter").classList.toggle("active",filterOpen);}
+function applyFilters(){updateFilterCount();renderView();}
 function clearFilters(){
-  filters={statuses:new Set(),stages:new Set(),dateFrom:"",dateTo:"",valMin:"",valMax:""};
-  document.getElementById("f-date-from").value="";
-  document.getElementById("f-date-to").value="";
-  document.getElementById("f-val-min").value="";
-  document.getElementById("f-val-max").value="";
-  buildFilterChips(); applyFilters();
+  filters={statuses:new Set(),stages:new Set(),dateFrom:"",dateTo:"",valMin:"",valMax:"",company:""};
+  document.getElementById("f-date-from").value="";document.getElementById("f-date-to").value="";
+  document.getElementById("f-val-min").value="";document.getElementById("f-val-max").value="";
+  document.getElementById("f-company").value="";
+  buildFilterChips();applyFilters();
 }
-function updateFilterCount(){
-  const n=filters.statuses.size+filters.stages.size+(filters.dateFrom?1:0)+(filters.dateTo?1:0)+(filters.valMin?1:0)+(filters.valMax?1:0);
-  const el=document.getElementById("filter-count");
-  el.textContent=n||""; el.classList.toggle("show",n>0);
-}
+function updateFilterCount(){const n=filters.statuses.size+filters.stages.size+(filters.dateFrom?1:0)+(filters.dateTo?1:0)+(filters.valMin?1:0)+(filters.valMax?1:0)+(filters.company?1:0);const el=document.getElementById("filter-count");el.textContent=n||"";el.classList.toggle("show",n>0);}
 function applyOpFilters(opps){
   const q=document.getElementById("search").value.trim().toLowerCase();
   return opps.filter(o=>{
     if(q&&!o.name.toLowerCase().includes(q)&&!(o.account||"").toLowerCase().includes(q)&&!(o.owner||"").toLowerCase().includes(q)) return false;
+    if(filters.company&&!(o.account||"").toLowerCase().includes(filters.company)) return false;
     if(filters.statuses.size&&!filters.statuses.has(o.status)) return false;
     if(filters.stages.size&&!filters.stages.has(o.stage)) return false;
     if(filters.dateFrom&&o.closeDate&&o.closeDate<filters.dateFrom) return false;
@@ -723,49 +785,28 @@ function renderView() {
   document.getElementById("list-view").classList.remove("show");
   document.getElementById("forecast-view").classList.remove("show");
   document.getElementById("empty-state").classList.remove("show");
-  const filterBar=document.getElementById("filter-bar");
-
-  if(!hasData){ document.getElementById("empty-state").classList.add("show"); return; }
-
-  if(currentView==="kanban"){ document.getElementById("board").style.display="flex"; renderBoard(); filterBar.style.display=""; }
-  else if(currentView==="list"){ document.getElementById("list-view").classList.add("show"); renderList(); filterBar.style.display=""; }
-  else if(currentView==="forecast"){ document.getElementById("forecast-view").classList.add("show"); renderForecast(); filterBar.style.display="none"; }
+  document.getElementById("filter-bar").style.display="";
+  if(!hasData){document.getElementById("empty-state").classList.add("show");return;}
+  if(currentView==="kanban"){document.getElementById("board").style.display="flex";renderBoard();}
+  else if(currentView==="list"){document.getElementById("list-view").classList.add("show");renderList();}
+  else if(currentView==="forecast"){document.getElementById("forecast-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderForecast();}
 }
 
 // ── Kanban rendering ──────────────────────────────────────────────────────────
 function renderBoard() {
-  const board=document.getElementById("board");
-  board.innerHTML="";
+  const board=document.getElementById("board"); board.innerHTML="";
   const visible=applyOpFilters(opportunities);
   const nonTermIds=new Set(config.statuses.filter(s=>!s.terminal).map(s=>s.id));
-  config.stages.forEach(stage=>{
-    const opps=visible.filter(o=>o.stage===stage.id&&nonTermIds.has(o.status));
-    board.appendChild(buildColumn(stage,opps,false));
-  });
-  config.statuses.filter(s=>s.terminal).forEach(st=>{
-    const opps=visible.filter(o=>o.status===st.id);
-    board.appendChild(buildColumn({id:"__"+st.id,label:st.label,weight:null,color:st.color},opps,true));
-  });
+  config.stages.forEach(stage=>{board.appendChild(buildColumn(stage,visible.filter(o=>o.stage===stage.id&&nonTermIds.has(o.status)),false));});
+  config.statuses.filter(s=>s.terminal).forEach(st=>{board.appendChild(buildColumn({id:"__"+st.id,label:st.label,weight:null,color:st.color},visible.filter(o=>o.status===st.id),true));});
 }
 
 function buildColumn(stage,opps,isTerminal){
-  const col=document.createElement("div");
-  col.className="column"+(isTerminal?" terminal":"");
-  col.dataset.key=stage.id;
-  col.style.setProperty("--col-color",stage.color);
+  const col=document.createElement("div"); col.className="column"+(isTerminal?" terminal":""); col.dataset.key=stage.id; col.style.setProperty("--col-color",stage.color);
   const pipeline=opps.reduce((s,o)=>s+(o.value||0),0);
   const weighted=isTerminal?pipeline:opps.reduce((s,o)=>s+(o.value||0)*stageWeight(o.stage)/100,0);
   const wLabel=isTerminal?"":stage.weight+"%";
-  col.innerHTML=`
-    <div class="col-header">
-      <div class="col-h1">
-        <span class="col-name">${esc(stage.label)}</span>
-        ${wLabel?`<span class="col-weight">${wLabel}</span>`:""}
-        <span class="col-count">${opps.length}</span>
-      </div>
-      ${pipeline>0?`<div class="col-h2"><span class="col-pipeline">Pipeline ${fmt(pipeline)}</span><span class="col-weighted">Wtd ${fmt(weighted)}</span></div>`:""}
-    </div>
-    <div class="col-body" data-key="${stage.id}">${!opps.length?'<p class="col-empty">Drop here</p>':""}</div>`;
+  col.innerHTML=`<div class="col-header"><div class="col-h1"><span class="col-name">${esc(stage.label)}</span>${wLabel?`<span class="col-weight">${wLabel}</span>`:""}<span class="col-count">${opps.length}</span></div>${pipeline>0?`<div class="col-h2"><span class="col-pipeline">Pipeline ${fmt(pipeline)}</span><span class="col-weighted">Wtd ${fmt(weighted)}</span></div>`:""}</div><div class="col-body" data-key="${stage.id}">${!opps.length?'<p class="col-empty">Drop here</p>':""}</div>`;
   const body=col.querySelector(".col-body");
   body.addEventListener("dragover",e=>{e.preventDefault();body.classList.add("drag-over");});
   body.addEventListener("dragleave",e=>{if(!body.contains(e.relatedTarget))body.classList.remove("drag-over");});
@@ -775,179 +816,115 @@ function buildColumn(stage,opps,isTerminal){
 }
 
 function buildCard(opp,stage){
-  const card=document.createElement("div");
-  card.className="card";
-  card.draggable=true;
-  card.dataset.id=opp.id;
-  const stObj=statusObj(opp.status);
-  const stColor=stObj?.color||"#888";
-  const weight=stageWeight(opp.stage);
-  const wVal=(opp.value||0)*weight/100;
-  card.style.borderLeftColor=stage.color;
-  card.style.setProperty("--col-color",stage.color);
+  const card=document.createElement("div"); card.className="card"; card.draggable=true; card.dataset.id=opp.id;
+  const stObj=statusObj(opp.status); const stColor=stObj?.color||"#888";
+  const weight=stageWeight(opp.stage); const wVal=(opp.value||0)*weight/100;
+  card.style.borderLeftColor=stage.color; card.style.setProperty("--col-color",stage.color);
   if(stObj&&!stObj.terminal&&opp.status!==config.statuses.find(s=>!s.terminal)?.id) card.classList.add("status-on-hold");
   if(opp._isNew) card.style.outline="2px solid #10b981";
-
-  const diff=daysDiff(opp.closeDate);
-  let dateClass="card-date",dateLabel="";
-  if(opp.closeDate){
-    const label=fmtDate(opp.closeDate);
-    if(diff!==null&&diff<0){dateClass+=" overdue";dateLabel="⚠ "+label;}
-    else if(diff!==null&&diff<=14){dateClass+=" soon";dateLabel="⏳ "+label;}
-    else dateLabel=label;
-  }
-
-  const actTs=activity[opp.id];
   const statusOptions=config.statuses.map(s=>`<option value="${esc(s.id)}"${s.id===opp.status?" selected":""}>${esc(s.label)}</option>`).join("");
-
+  const actTs=activity[opp.id];
   card.innerHTML=`
     ${opp._isNew?'<span class="card-badge badge-new">New</span>':""}
-    <a class="card-name-link" tabindex="0">${esc(opp.name)}</a>
+    <a class="card-name-link">${esc(opp.name)}</a>
     ${opp.account?`<div class="card-account">${esc(opp.account)}</div>`:""}
     <div class="card-value-row">
       <span class="card-value">${opp.value?fmt(opp.value):"—"}</span>
       ${wVal>0?`<span class="card-weighted">Wtd <strong>${fmt(wVal)}</strong></span>`:""}
     </div>
     <div class="card-meta">
-      ${dateLabel?`<span class="${dateClass}">${esc(dateLabel)}</span>`:""}
+      <span class="card-date ${dateCss(opp.closeDate)}" title="Click to edit">${dateLabel(opp.closeDate)}</span>
       <select class="status-pill" style="background:${stColor}20;color:${stColor};border:1.5px solid ${stColor}60">${statusOptions}</select>
     </div>
-    ${actTs?`<div class="card-activity">Last activity: ${fmtActivityShort(actTs)}</div>`:""}`;
+    ${actTs?`<div class="card-activity">Last: ${fmtActivityShort(actTs)}</div>`:""}`;
 
   card.addEventListener("dragstart",e=>{dragCard=card;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",opp.id);});
   card.addEventListener("dragend",()=>{card.classList.remove("dragging");dragCard=null;});
-
   card.querySelector(".card-name-link").addEventListener("click",e=>{e.stopPropagation();openNotes(opp.id);});
-  card.querySelector(".card-value").addEventListener("click",e=>{e.stopPropagation();startValueEdit(opp,card.querySelector(".card-value"),card,()=>renderBoard());});
+  card.querySelector(".card-value").addEventListener("click",e=>{e.stopPropagation();startValueEdit(opp,card.querySelector(".card-value"),()=>renderBoard());});
   card.querySelector(".card-value").addEventListener("mousedown",e=>e.stopPropagation());
+  card.querySelector(".card-date").addEventListener("click",e=>{e.stopPropagation();startDateEdit(opp,card.querySelector(".card-date"),()=>renderBoard());});
+  card.querySelector(".card-date").addEventListener("mousedown",e=>e.stopPropagation());
   const sel=card.querySelector(".status-pill");
   sel.addEventListener("mousedown",e=>e.stopPropagation());
   sel.addEventListener("change",()=>onStatusChange(opp,sel.value,()=>renderBoard()));
   return card;
 }
 
-// ── Inline value edit ─────────────────────────────────────────────────────────
-function startValueEdit(opp,el,container,onDone){
-  const input=document.createElement("input");
-  input.className="card-value-input"; input.type="number";
-  input.value=opp.value||""; input.placeholder="Enter value";
+function dateCss(iso) { const d=daysDiff(iso); if(d===null) return ""; if(d<0) return "overdue"; if(d<=14) return "soon"; return ""; }
+function dateLabel(iso) { if(!iso) return "Set date"; const d=daysDiff(iso); const label=fmtDate(iso); if(d<0) return "⚠ "+label; if(d<=14) return "⏳ "+label; return label; }
+
+// ── Inline edits ──────────────────────────────────────────────────────────────
+function startValueEdit(opp,el,onDone){
+  const input=document.createElement("input"); input.className="card-value-input"; input.type="number"; input.value=opp.value||""; input.placeholder="Enter value";
   el.replaceWith(input); input.focus(); input.select();
-  function commit(){
-    const v=Math.max(0,parseFloat(input.value)||0);
-    opp.value=v; touchActivity(opp.id); persistOpps(); onDone();
-    showToast("Value updated → "+fmt(v));
-  }
+  function commit(){const v=Math.max(0,parseFloat(input.value)||0);opp.value=v;touchActivity(opp.id);persistOpps();onDone();showToast("Value → "+fmt(v));}
   input.addEventListener("blur",commit);
-  input.addEventListener("keydown",e=>{
-    if(e.key==="Enter"){e.preventDefault();input.blur();}
-    if(e.key==="Escape"){input.removeEventListener("blur",commit);onDone();}
-    e.stopPropagation();
-  });
+  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();input.blur();}if(e.key==="Escape"){input.removeEventListener("blur",commit);onDone();}e.stopPropagation();});
   input.addEventListener("mousedown",e=>e.stopPropagation());
 }
 
-// ── Status change ─────────────────────────────────────────────────────────────
-function onStatusChange(opp,newId,onDone){
-  const st=statusObj(newId); if(!st) return;
-  opp.status=newId; touchActivity(opp.id); persistOpps(); onDone();
-  showToast("Status → "+st.label);
+function startDateEdit(opp,el,onDone){
+  const input=document.createElement("input"); input.className="card-date-input"; input.type="date"; input.value=opp.closeDate||"";
+  el.replaceWith(input); input.focus(); input.showPicker?.();
+  function commit(){const v=input.value;opp.closeDate=v;touchActivity(opp.id);persistOpps();onDone();showToast(v?"Close date → "+fmtDate(v):"Close date cleared");}
+  input.addEventListener("blur",commit);
+  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();input.blur();}if(e.key==="Escape"){input.removeEventListener("blur",commit);onDone();}e.stopPropagation();});
+  input.addEventListener("mousedown",e=>e.stopPropagation());
 }
 
-// ── Drag & drop ───────────────────────────────────────────────────────────────
+function onStatusChange(opp,newId,onDone){const st=statusObj(newId);if(!st)return;opp.status=newId;touchActivity(opp.id);persistOpps();onDone();showToast("Status → "+st.label);}
+
 function onDrop(cardEl,targetStage){
-  const id=cardEl.dataset.id;
-  const opp=opportunities.find(o=>o.id===id); if(!opp) return;
+  const id=cardEl.dataset.id; const opp=opportunities.find(o=>o.id===id); if(!opp) return;
   const isTermTarget=targetStage.id.startsWith("__");
-  if(isTermTarget){
-    const statusId=targetStage.id.slice(2);
-    const st=statusObj(statusId);
-    if(st&&st.terminal){opp.status=statusId;touchActivity(opp.id);persistOpps();renderView();showToast("Moved to "+st.label);}
-  } else {
-    const wasTerminal=statusObj(opp.status)?.terminal;
-    opp.stage=targetStage.id;
-    if(wasTerminal) opp.status=config.statuses.find(s=>!s.terminal)?.id||opp.status;
-    touchActivity(opp.id); persistOpps(); renderView();
-    showToast("Moved to "+targetStage.label);
-  }
+  if(isTermTarget){const statusId=targetStage.id.slice(2);const st=statusObj(statusId);if(st&&st.terminal){opp.status=statusId;touchActivity(opp.id);persistOpps();renderView();showToast("Moved to "+st.label);}}
+  else{const wasTerminal=statusObj(opp.status)?.terminal;opp.stage=targetStage.id;if(wasTerminal)opp.status=config.statuses.find(s=>!s.terminal)?.id||opp.status;touchActivity(opp.id);persistOpps();renderView();showToast("Moved to "+targetStage.label);}
 }
 
 // ── List view ─────────────────────────────────────────────────────────────────
-const LIST_COLS=[
-  {key:"name",      label:"Opportunity"},
-  {key:"account",   label:"Account"},
-  {key:"stage",     label:"Stage"},
-  {key:"status",    label:"Status"},
-  {key:"value",     label:"Value",     num:true},
-  {key:"weighted",  label:"Weighted",  num:true},
-  {key:"closeDate", label:"Close Date"},
-  {key:"activity",  label:"Last Activity"},
-  {key:"owner",     label:"Owner"},
-];
+const LIST_COLS=[{key:"name",label:"Opportunity"},{key:"account",label:"Account"},{key:"stage",label:"Stage"},{key:"status",label:"Status"},{key:"value",label:"Value",num:true},{key:"weighted",label:"Weighted",num:true},{key:"closeDate",label:"Close Date"},{key:"activity",label:"Last Activity"},{key:"owner",label:"Owner"}];
 
 function renderList(){
-  const opps=applyOpFilters(opportunities);
-  const sorted=sortOpps(opps);
+  const opps=sortOpps(applyOpFilters(opportunities));
   renderListHead();
-  const tbody=document.getElementById("list-tbody");
-  tbody.innerHTML="";
-  sorted.forEach(o=>{
-    const weight=stageWeight(o.stage);
-    const wVal=(o.value||0)*weight/100;
-    const stObj2=statusObj(o.status);
-    const stColor=stObj2?.color||"#888";
-    const stageObj=config.stages.find(s=>s.id===o.stage);
-    const stagColor=stageObj?.color||"#888";
-    const diff=daysDiff(o.closeDate);
-    let dateStr=fmtDate(o.closeDate),dateStyle="";
-    if(o.closeDate){
-      if(diff!==null&&diff<0) dateStyle="color:#de350b;font-weight:600";
-      else if(diff!==null&&diff<=14) dateStyle="color:#f97316;font-weight:600";
-    }
+  const tbody=document.getElementById("list-tbody"); tbody.innerHTML="";
+  opps.forEach(o=>{
+    const weight=stageWeight(o.stage); const wVal=(o.value||0)*weight/100;
+    const stObj2=statusObj(o.status); const stColor=stObj2?.color||"#888";
+    const stageObj=config.stages.find(s=>s.id===o.stage); const stagColor=stageObj?.color||"#888";
+    const dClass=dateCss(o.closeDate); const dLabel=fmtDate(o.closeDate);
     const actTs=activity[o.id];
     const stOpts=config.statuses.map(s=>`<option value="${esc(s.id)}"${s.id===o.status?" selected":""}>${esc(s.label)}</option>`).join("");
     const stOpts2=config.stages.map(s=>`<option value="${esc(s.id)}"${s.id===o.stage?" selected":""}>${esc(s.label)}</option>`).join("");
-
-    const tr=document.createElement("tr");
-    tr.style.borderLeft=`3px solid ${stagColor}`;
+    const tr=document.createElement("tr"); tr.style.borderLeft=`3px solid ${stagColor}`;
     tr.innerHTML=`
       <td><span class="lt-name">${esc(o.name)}</span> <button class="lt-note-btn" title="Notes">📝</button></td>
       <td>${esc(o.account||"")}</td>
       <td><select class="lt-select lt-stage-sel">${stOpts2}</select></td>
       <td><select class="lt-select lt-status-sel" style="color:${stColor};border-color:${stColor}40">${stOpts}</select></td>
-      <td><span class="lt-val" style="color:var(--text)">${o.value?fmt(o.value):"—"}</span></td>
+      <td><span class="lt-val">${o.value?fmt(o.value):"—"}</span></td>
       <td style="color:${stagColor};font-weight:600">${wVal>0?fmt(wVal):"—"}</td>
-      <td style="${dateStyle}">${dateStr}</td>
+      <td><span class="lt-date${dClass?" "+dClass:""}">${dLabel||"—"}</span></td>
       <td class="lt-activity">${actTs?fmtActivityShort(actTs):""}</td>
       <td>${esc(o.owner||"")}</td>`;
-
     tr.querySelector(".lt-name").addEventListener("click",()=>openNotes(o.id));
     tr.querySelector(".lt-note-btn").addEventListener("click",()=>openNotes(o.id));
-    tr.querySelector(".lt-val").addEventListener("click",e=>{e.stopPropagation();startValueEdit(o,tr.querySelector(".lt-val"),tr,()=>renderList());});
-    tr.querySelector(".lt-stage-sel").addEventListener("change",function(){
-      const wasTerminal=statusObj(o.status)?.terminal;
-      o.stage=this.value;
-      if(wasTerminal) o.status=config.statuses.find(s=>!s.terminal)?.id||o.status;
-      touchActivity(o.id); persistOpps(); renderList();
-      showToast("Stage → "+config.stages.find(s=>s.id===this.value)?.label);
-    });
+    tr.querySelector(".lt-val").addEventListener("click",e=>{e.stopPropagation();startValueEdit(o,tr.querySelector(".lt-val"),()=>renderList());});
+    tr.querySelector(".lt-date").addEventListener("click",e=>{e.stopPropagation();startDateEdit(o,tr.querySelector(".lt-date"),()=>renderList());});
+    tr.querySelector(".lt-stage-sel").addEventListener("change",function(){const wasTerminal=statusObj(o.status)?.terminal;o.stage=this.value;if(wasTerminal)o.status=config.statuses.find(s=>!s.terminal)?.id||o.status;touchActivity(o.id);persistOpps();renderList();showToast("Stage → "+config.stages.find(s=>s.id===this.value)?.label);});
     tr.querySelector(".lt-status-sel").addEventListener("change",function(){onStatusChange(o,this.value,()=>renderList());});
     tbody.appendChild(tr);
   });
 }
 
 function renderListHead(){
-  const row=document.getElementById("list-thead-row");
-  row.innerHTML="";
+  const row=document.getElementById("list-thead-row"); row.innerHTML="";
   LIST_COLS.forEach(col=>{
-    const th=document.createElement("th");
-    const isSorted=listSort.col===col.key;
+    const th=document.createElement("th"); const isSorted=listSort.col===col.key;
     th.innerHTML=`${esc(col.label)}<span class="sort-icon">${isSorted?(listSort.dir===1?"↑":"↓"):"↕"}</span>`;
     if(isSorted) th.classList.add("sorted");
-    th.addEventListener("click",()=>{
-      if(listSort.col===col.key) listSort.dir*=-1;
-      else { listSort.col=col.key; listSort.dir=1; }
-      renderList();
-    });
+    th.addEventListener("click",()=>{if(listSort.col===col.key)listSort.dir*=-1;else{listSort.col=col.key;listSort.dir=1;}renderList();});
     row.appendChild(th);
   });
 }
@@ -955,9 +932,9 @@ function renderListHead(){
 function sortOpps(opps){
   return [...opps].sort((a,b)=>{
     let va,vb;
-    if(listSort.col==="weighted"){ va=(a.value||0)*stageWeight(a.stage)/100; vb=(b.value||0)*stageWeight(b.stage)/100; }
-    else if(listSort.col==="activity"){ va=activity[a.id]||""; vb=activity[b.id]||""; }
-    else{ va=a[listSort.col]||""; vb=b[listSort.col]||""; }
+    if(listSort.col==="weighted"){va=(a.value||0)*stageWeight(a.stage)/100;vb=(b.value||0)*stageWeight(b.stage)/100;}
+    else if(listSort.col==="activity"){va=activity[a.id]||"";vb=activity[b.id]||"";}
+    else{va=a[listSort.col]||"";vb=b[listSort.col]||"";}
     if(typeof va==="number") return (va-vb)*listSort.dir;
     return String(va).localeCompare(String(vb))*listSort.dir;
   });
@@ -965,177 +942,155 @@ function sortOpps(opps){
 
 // ── Notes panel ───────────────────────────────────────────────────────────────
 function openNotes(oppId){
-  notesOppId=oppId;
-  const opp=opportunities.find(o=>o.id===oppId); if(!opp) return;
+  notesOppId=oppId; const opp=opportunities.find(o=>o.id===oppId); if(!opp) return;
   document.getElementById("np-title").textContent=opp.name;
   document.getElementById("np-account").textContent=opp.account||"";
-  const stObj2=statusObj(opp.status);
-  const stColor=stObj2?.color||"#888";
-  const stageObj=config.stages.find(s=>s.id===opp.stage);
-  const weight=stageWeight(opp.stage);
-  const actTs=activity[oppId];
-  document.getElementById("np-meta").innerHTML=`
-    ${stageObj?`<span class="np-badge" style="background:${stageObj.color}20;color:${stageObj.color}">${esc(stageObj.label)} · ${weight}%</span>`:""}
-    ${stObj2?`<span class="np-badge" style="background:${stColor}20;color:${stColor}">${esc(stObj2.label)}</span>`:""}
-    ${opp.value?`<span class="np-value">${fmt(opp.value)}</span>`:""}
-    ${opp.closeDate?`<span class="np-date">Closes ${fmtDate(opp.closeDate)}</span>`:""}
-    ${actTs?`<span class="np-activity">Last activity: ${fmtActivityShort(actTs)}</span>`:""}`;
+  renderNotesMeta(opp);
   renderNotesList(oppId);
   document.getElementById("np-textarea").value="";
   document.getElementById("notes-overlay").classList.add("open");
 }
 
-function closeNotes(){
-  document.getElementById("notes-overlay").classList.remove("open");
-  notesOppId=null;
+function renderNotesMeta(opp){
+  const stObj2=statusObj(opp.status); const stColor=stObj2?.color||"#888";
+  const stageObj=config.stages.find(s=>s.id===opp.stage); const weight=stageWeight(opp.stage);
+  const actTs=activity[opp.id];
+  const meta=document.getElementById("np-meta");
+  meta.innerHTML=`
+    ${stageObj?`<span class="np-badge" style="background:${stageObj.color}20;color:${stageObj.color}">${esc(stageObj.label)} · ${weight}%</span>`:""}
+    ${stObj2?`<span class="np-badge" style="background:${stColor}20;color:${stColor}">${esc(stObj2.label)}</span>`:""}
+    ${opp.value?`<span class="np-value">${fmt(opp.value)}</span>`:""}
+    <span class="np-date" title="Click to edit">${opp.closeDate?"Closes "+fmtDate(opp.closeDate):"Set close date"}</span>
+    ${actTs?`<span class="np-activity">Last: ${fmtActivityShort(actTs)}</span>`:""}`;
+  meta.querySelector(".np-date").addEventListener("click",()=>{
+    startDateEdit(opp,meta.querySelector(".np-date"),()=>{renderNotesMeta(opportunities.find(o=>o.id===opp.id)||opp);});
+  });
 }
 
+function closeNotes(){document.getElementById("notes-overlay").classList.remove("open");notesOppId=null;}
+
 function renderNotesList(oppId){
-  const list=document.getElementById("np-notes-list");
-  const oNotes=[...(notes[oppId]||[])].reverse();
-  if(!oNotes.length){ list.innerHTML='<p class="np-no-notes">No notes yet — add the first one below.</p>'; return; }
-  list.innerHTML=oNotes.map(n=>`
-    <div class="np-note">
-      <div class="np-note-ts">${fmtTs(n.ts)}</div>
-      <div class="np-note-text">${esc(n.text)}</div>
-    </div>`).join("");
+  const list=document.getElementById("np-notes-list"); const oNotes=[...(notes[oppId]||[])].reverse();
+  if(!oNotes.length){list.innerHTML='<p class="np-no-notes">No notes yet — add the first one below.</p>';return;}
+  list.innerHTML=oNotes.map(n=>`<div class="np-note"><div class="np-note-ts">${fmtTs(n.ts)}</div><div class="np-note-text">${esc(n.text)}</div></div>`).join("");
 }
 
 function submitNote(){
-  const ta=document.getElementById("np-textarea");
-  const text=ta.value.trim(); if(!text) return;
+  const ta=document.getElementById("np-textarea"); const text=ta.value.trim(); if(!text) return;
   if(!notes[notesOppId]) notes[notesOppId]=[];
   notes[notesOppId].push({id:uid(),text,ts:new Date().toISOString()});
-  ss(K.notes,notes);
-  touchActivity(notesOppId);
-  ta.value="";
-  renderNotesList(notesOppId);
-  // refresh last-activity display in underlying view
-  const metaEl=document.getElementById("np-meta");
-  const actSpan=metaEl.querySelector(".np-activity");
-  const actText="Last activity: "+fmtActivityShort(activity[notesOppId]);
+  ss(K.notes,notes); touchActivity(notesOppId); ta.value=""; renderNotesList(notesOppId);
+  const actSpan=document.getElementById("np-meta").querySelector(".np-activity");
+  const actText="Last: "+fmtActivityShort(activity[notesOppId]);
   if(actSpan) actSpan.textContent=actText;
-  else metaEl.insertAdjacentHTML("beforeend",`<span class="np-activity">${actText}</span>`);
+  else document.getElementById("np-meta").insertAdjacentHTML("beforeend",`<span class="np-activity">${actText}</span>`);
   showToast("Note added","ok");
 }
 
-// ── Forecast view ─────────────────────────────────────────────────────────────
+// ── Forecast ──────────────────────────────────────────────────────────────────
+function getOppDate(o){ if(!forecastDateField||forecastDateField==="") return o.closeDate; return o.allDates?.[forecastDateField]||""; }
+
 function renderForecast(){
   const incWon=document.getElementById("fc-inc-won").checked;
   const incLost=document.getElementById("fc-inc-lost").checked;
   const termWon=config.statuses.find(s=>s.id==="won"||s.label.toLowerCase()==="won")?.id;
   const termLost=config.statuses.find(s=>s.id==="lost"||s.label.toLowerCase()==="lost")?.id;
-
-  let pool=opportunities.filter(o=>{
-    const st=statusObj(o.status);
-    if(!st) return true;
-    if(st.terminal){
-      if(o.status===termWon) return incWon;
-      if(o.status===termLost) return incLost;
-      return false;
-    }
-    return true;
-  });
-
-  const dated=pool.filter(o=>o.closeDate);
+  let pool=opportunities.filter(o=>{const st=statusObj(o.status);if(!st)return true;if(st.terminal){if(o.status===termWon)return incWon;if(o.status===termLost)return incLost;return false;}return true;});
+  const dated=pool.filter(o=>getOppDate(o));
   const undated=pool.length-dated.length;
-  document.getElementById("fc-undated").textContent=undated>0?`${undated} opp${undated===1?"":"s"} excluded (no close date)`:"";
+  document.getElementById("fc-undated").textContent=undated>0?`${undated} opp${undated===1?"":"s"} excluded (no date)`:"";
+
+  // Populate date field dropdown
+  const allFields=new Set();
+  opportunities.forEach(o=>Object.keys(o.allDates||{}).forEach(k=>allFields.add(k)));
+  const sel=document.getElementById("fc-date-field");
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Close Date (default)</option>';
+  [...allFields].sort().forEach(f=>{ const opt=document.createElement("option"); opt.value=f; opt.textContent=f; opt.selected=(f===prev); sel.appendChild(opt); });
+  if(allFields.size===0) sel.parentElement.style.display="none"; else sel.parentElement.style.display="";
 
   const monthly=groupByMonth(dated);
   const quarterly=groupByQuarter(dated);
-
   renderForecastChart("chart-monthly",monthly,"monthly");
   renderForecastChart("chart-quarterly",quarterly,"quarterly");
-  renderForecastTable("tbl-monthly","fc-monthly-total",monthly);
-  renderForecastTable("tbl-quarterly","fc-quarterly-total",quarterly);
+  renderForecastTable("tbl-monthly","fc-monthly-total",monthly,"monthly");
+  renderForecastTable("tbl-quarterly","fc-quarterly-total",quarterly,"quarterly");
+}
+
+function monthRange(){
+  const today=new Date();
+  if(fcMonthWin==="customm"){
+    if(!fcCustomM.from||!fcCustomM.to) return {start:today,count:12};
+    const s=parseDate(fcCustomM.from), e=parseDate(fcCustomM.to);
+    if(!s||!e) return {start:today,count:12};
+    const count=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1;
+    return {start:s,count:Math.max(1,Math.min(count,60))};
+  }
+  const n=parseInt(fcMonthWin)||12;
+  return {start:today,count:n};
+}
+
+function quarterRange(){
+  const today=new Date();
+  if(fcQuarWin==="customq"){
+    if(!fcCustomQ.from||!fcCustomQ.to) return {startYear:today.getFullYear(),startQ:Math.floor(today.getMonth()/3),count:8};
+    const s=parseDate(fcCustomQ.from), e=parseDate(fcCustomQ.to);
+    if(!s||!e) return {startYear:today.getFullYear(),startQ:Math.floor(today.getMonth()/3),count:8};
+    const sQ=Math.floor(s.getMonth()/3), eQ=Math.floor(e.getMonth()/3);
+    const count=(e.getFullYear()-s.getFullYear())*4+(eQ-sQ)+1;
+    return {startYear:s.getFullYear(),startQ:sQ,count:Math.max(1,Math.min(count,24))};
+  }
+  const n=parseInt(fcQuarWin)||8;
+  return {startYear:today.getFullYear(),startQ:Math.floor(today.getMonth()/3),count:n};
 }
 
 function groupByMonth(opps){
-  const today=new Date();
+  const {start,count}=monthRange();
   const buckets={};
-  for(let i=0;i<12;i++){
-    const d=new Date(today.getFullYear(),today.getMonth()+i,1);
+  for(let i=0;i<count;i++){
+    const d=new Date(start.getFullYear(),start.getMonth()+i,1);
     const key=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
-    buckets[key]={label:d.toLocaleDateString("en-AU",{month:"short",year:"numeric"}),pipeline:0,weighted:0,count:0,totalWeight:0};
+    buckets[key]={label:d.toLocaleDateString("en-AU",{month:"short",year:"numeric"}),pipeline:0,weighted:0,count:0,totalWeight:0,oppIds:[]};
   }
-  opps.forEach(o=>{
-    const key=o.closeDate.slice(0,7);
-    if(!buckets[key]) return;
-    const w=stageWeight(o.stage);
-    buckets[key].pipeline+=(o.value||0);
-    buckets[key].weighted+=(o.value||0)*w/100;
-    buckets[key].count++;
-    buckets[key].totalWeight+=w;
-  });
+  opps.forEach(o=>{const dt=getOppDate(o);if(!dt)return;const key=dt.slice(0,7);if(!buckets[key])return;const w=stageWeight(o.stage);buckets[key].pipeline+=(o.value||0);buckets[key].weighted+=(o.value||0)*w/100;buckets[key].count++;buckets[key].totalWeight+=w;buckets[key].oppIds.push(o.id);});
   return Object.values(buckets);
 }
 
 function groupByQuarter(opps){
-  const today=new Date();
-  const curQ=Math.floor(today.getMonth()/3);
-  const curY=today.getFullYear();
+  const {startYear,startQ,count}=quarterRange();
   const buckets={};
-  for(let i=0;i<8;i++){
-    const q=(curQ+i)%4;
-    const y=curY+Math.floor((curQ+i)/4);
-    const key=`${y}-Q${q+1}`;
-    buckets[key]={label:`Q${q+1} ${y}`,pipeline:0,weighted:0,count:0,totalWeight:0};
-  }
-  opps.forEach(o=>{
-    if(!o.closeDate) return;
-    const [y,m]=o.closeDate.split("-").map(Number);
-    const q=Math.floor((m-1)/3)+1;
-    const key=`${y}-Q${q}`;
-    if(!buckets[key]) return;
-    const w=stageWeight(o.stage);
-    buckets[key].pipeline+=(o.value||0);
-    buckets[key].weighted+=(o.value||0)*w/100;
-    buckets[key].count++;
-    buckets[key].totalWeight+=w;
-  });
+  for(let i=0;i<count;i++){const q=(startQ+i)%4;const y=startYear+Math.floor((startQ+i)/4);const key=`${y}-Q${q+1}`;buckets[key]={label:`Q${q+1} ${y}`,pipeline:0,weighted:0,count:0,totalWeight:0,oppIds:[]};}
+  opps.forEach(o=>{const dt=getOppDate(o);if(!dt)return;const [y,m]=dt.split("-").map(Number);const q=Math.floor((m-1)/3)+1;const key=`${y}-Q${q}`;if(!buckets[key])return;const w=stageWeight(o.stage);buckets[key].pipeline+=(o.value||0);buckets[key].weighted+=(o.value||0)*w/100;buckets[key].count++;buckets[key].totalWeight+=w;buckets[key].oppIds.push(o.id);});
   return Object.values(buckets);
 }
 
 function renderForecastChart(canvasId,data,type){
   const el=document.getElementById(canvasId);
-  if(type==="monthly"){ if(chartMonthly){chartMonthly.destroy();chartMonthly=null;} }
-  else { if(chartQuarterly){chartQuarterly.destroy();chartQuarterly=null;} }
-
-  const labels=data.map(d=>d.label);
-  const pipeline=data.map(d=>d.pipeline);
-  const weighted=data.map(d=>Math.round(d.weighted));
-
+  if(type==="monthly"){if(chartMonthly){chartMonthly.destroy();chartMonthly=null;}}
+  else{if(chartQuarterly){chartQuarterly.destroy();chartQuarterly=null;}}
   const chart=new Chart(el,{
     type:"bar",
-    data:{
-      labels,
-      datasets:[
-        { label:"Pipeline", data:pipeline, backgroundColor:"rgba(0,82,204,.18)", borderColor:"rgba(0,82,204,.7)", borderWidth:1.5, borderRadius:4 },
-        { label:"Weighted", data:weighted, backgroundColor:"rgba(16,185,129,.25)", borderColor:"rgba(16,185,129,.8)", borderWidth:1.5, borderRadius:4 },
-      ]
-    },
+    data:{labels:data.map(d=>d.label),datasets:[
+      {label:"Pipeline",data:data.map(d=>d.pipeline),backgroundColor:"rgba(0,82,204,.18)",borderColor:"rgba(0,82,204,.7)",borderWidth:1.5,borderRadius:4},
+      {label:"Weighted",data:data.map(d=>Math.round(d.weighted)),backgroundColor:"rgba(16,185,129,.25)",borderColor:"rgba(16,185,129,.8)",borderWidth:1.5,borderRadius:4},
+    ]},
     options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:"top", labels:{ font:{size:11}, boxWidth:12 } }, tooltip:{
-        callbacks:{ label:ctx=>" "+ctx.dataset.label+": "+fmt(ctx.parsed.y) }
-      }},
-      scales:{
-        x:{ grid:{display:false}, ticks:{font:{size:11}} },
-        y:{ ticks:{ font:{size:11}, callback:v=>v>=1000000?fmt(v/1000000).replace("AUD","")+"M":v>=1000?fmt(v/1000).replace("AUD","")+"K":fmt(v) }, grid:{color:"rgba(0,0,0,.05)"} }
-      }
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"top",labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>" "+ctx.dataset.label+": "+fmt(ctx.parsed.y)}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{ticks:{font:{size:11},callback:v=>v>=1e6?fmt(v/1e6).replace("A$","")+"M":v>=1000?fmt(v/1000).replace("A$","")+"K":fmt(v)},grid:{color:"rgba(0,0,0,.05)"}}},
+      onClick:(evt,elements)=>{if(elements.length){const b=data[elements[0].index];if(b.oppIds.length)openDrill(b);}}
     }
   });
   if(type==="monthly") chartMonthly=chart; else chartQuarterly=chart;
 }
 
-function renderForecastTable(tbodyId,totalId,data){
+function renderForecastTable(tbodyId,totalId,data,type){
   const tbody=document.getElementById(tbodyId);
   let totalPipeline=0,totalWeighted=0,totalDeals=0;
   tbody.innerHTML=data.map(d=>{
-    totalPipeline+=d.pipeline; totalWeighted+=d.weighted; totalDeals+=d.count;
-    const avgW=d.count>0?Math.round(d.totalWeight/d.count):0;
-    const zero=d.count===0;
-    return `<tr>
+    totalPipeline+=d.pipeline;totalWeighted+=d.weighted;totalDeals+=d.count;
+    const avgW=d.count>0?Math.round(d.totalWeight/d.count):0;const zero=d.count===0;
+    return `<tr data-ids="${esc(JSON.stringify(d.oppIds))}" data-label="${esc(d.label)}" data-pipeline="${d.pipeline}" data-weighted="${Math.round(d.weighted)}" style="cursor:${zero?"default":"pointer"}">
       <td>${esc(d.label)}</td>
       <td class="${zero?"zero":""}">${d.count||"—"}</td>
       <td class="${zero?"zero":""}">${d.pipeline?fmt(d.pipeline):"—"}</td>
@@ -1143,65 +1098,80 @@ function renderForecastTable(tbodyId,totalId,data){
       <td class="${zero?"zero":""}">${d.count?avgW+"%":"—"}</td>
     </tr>`;
   }).join("");
-  document.getElementById(totalId).textContent=totalDeals?`Total: ${totalDeals} deal${totalDeals===1?"":"s"} · Pipeline ${fmt(totalPipeline)} · Weighted ${fmt(Math.round(totalWeighted))}` :"";
+  tbody.querySelectorAll("tr[data-ids]").forEach(tr=>{
+    tr.addEventListener("click",()=>{
+      try{const ids=JSON.parse(tr.dataset.ids);if(!ids.length)return;openDrill({oppIds:ids,label:tr.dataset.label,pipeline:+tr.dataset.pipeline,weighted:+tr.dataset.weighted,count:ids.length});}catch{}
+    });
+  });
+  document.getElementById(totalId).textContent=totalDeals?`Total: ${totalDeals} deal${totalDeals===1?"":"s"} · Pipeline ${fmt(totalPipeline)} · Weighted ${fmt(Math.round(totalWeighted))}`:"";
 }
 
-// ── Settings panel ────────────────────────────────────────────────────────────
-function openSettings(){
-  settingsDraft=clone(config);
-  renderSettingsEditor();
-  document.getElementById("settings-overlay").classList.add("open");
+// ── Drill-down panel ──────────────────────────────────────────────────────────
+function openDrill(bucket){
+  const opps=bucket.oppIds.map(id=>opportunities.find(o=>o.id===id)).filter(Boolean).sort((a,b)=>(b.value||0)-(a.value||0));
+  document.getElementById("dp-title").textContent=bucket.label;
+  document.getElementById("dp-sub").textContent=`${opps.length} deal${opps.length===1?"":"s"} · Pipeline ${fmt(bucket.pipeline)} · Weighted ${fmt(Math.round(bucket.weighted))}`;
+  const tbody=document.getElementById("dp-tbody");
+  if(!opps.length){tbody.innerHTML=`<tr><td colspan="7" class="dp-empty">No deals in this period.</td></tr>`;}
+  else{
+    tbody.innerHTML=opps.map(o=>{
+      const stageObj=config.stages.find(s=>s.id===o.stage);const stObj=statusObj(o.status);const stColor=stObj?.color||"#888";
+      const weight=stageWeight(o.stage);const wVal=(o.value||0)*weight/100;
+      return `<tr>
+        <td><span class="dp-name" data-id="${esc(o.id)}">${esc(o.name)}</span></td>
+        <td>${esc(o.account||"")}</td>
+        <td>${stageObj?`<span class="dp-stage" style="background:${stageObj.color}20;color:${stageObj.color}">${esc(stageObj.label)}</span>`:""}</td>
+        <td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:${stColor}20;color:${stColor}">${esc(stObj?.label||"")}</span></td>
+        <td>${o.value?fmt(o.value):"—"}</td>
+        <td style="color:${stageObj?.color||"#888"};font-weight:600">${wVal>0?fmt(wVal):"—"}</td>
+        <td>${fmtDate(o.closeDate)||"—"}</td>
+      </tr>`;
+    }).join("");
+    tbody.querySelectorAll(".dp-name").forEach(el=>{
+      el.addEventListener("click",()=>{closeDrill();openNotes(el.dataset.id);});
+    });
+  }
+  document.getElementById("drill-overlay").classList.add("open");
 }
-function closeSettings(){ document.getElementById("settings-overlay").classList.remove("open"); settingsDraft=null; }
 
-function renderSettingsEditor(){ renderStagesEditor(); renderStatusesEditor(); }
+function closeDrill(){document.getElementById("drill-overlay").classList.remove("open");}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function openSettings(){settingsDraft=clone(config);renderSettingsEditor();document.getElementById("settings-overlay").classList.add("open");}
+function closeSettings(){document.getElementById("settings-overlay").classList.remove("open");settingsDraft=null;}
+function renderSettingsEditor(){renderStagesEditor();renderStatusesEditor();}
 
 function renderStagesEditor(){
-  const el=document.getElementById("stages-editor"); el.innerHTML="";
+  const el=document.getElementById("stages-editor");el.innerHTML="";
   settingsDraft.stages.forEach((s,i)=>{
-    const row=document.createElement("div"); row.className="stage-row";
-    row.innerHTML=`
-      <input class="sp-input" value="${esc(s.label)}" placeholder="Label" data-field="label" data-i="${i}" />
-      <input class="sp-input" type="number" min="0" max="100" value="${s.weight}" data-field="weight" data-i="${i}" />
-      <input class="sp-color" type="color" value="${s.color}" data-field="color" data-i="${i}" />
-      <span></span>
-      <button class="sp-del" data-i="${i}">×</button>`;
-    row.querySelectorAll("[data-field]").forEach(inp=>{
-      inp.addEventListener("input",()=>{const fi=+inp.dataset.i,f=inp.dataset.field;settingsDraft.stages[fi][f]=f==="weight"?+inp.value:inp.value;});
-      inp.addEventListener("change",()=>{const fi=+inp.dataset.i,f=inp.dataset.field;settingsDraft.stages[fi][f]=f==="weight"?+inp.value:inp.value;});
-    });
+    const row=document.createElement("div");row.className="stage-row";
+    row.innerHTML=`<input class="sp-input" value="${esc(s.label)}" placeholder="Label" data-field="label" data-i="${i}" /><input class="sp-input" type="number" min="0" max="100" value="${s.weight}" data-field="weight" data-i="${i}" /><input class="sp-color" type="color" value="${s.color}" data-field="color" data-i="${i}" /><span></span><button class="sp-del" data-i="${i}">×</button>`;
+    row.querySelectorAll("[data-field]").forEach(inp=>{const u=()=>{const fi=+inp.dataset.i,f=inp.dataset.field;settingsDraft.stages[fi][f]=f==="weight"?+inp.value:inp.value;};inp.addEventListener("input",u);inp.addEventListener("change",u);});
     row.querySelector(".sp-del").addEventListener("click",()=>{settingsDraft.stages.splice(i,1);renderStagesEditor();});
     el.appendChild(row);
   });
 }
 
 function renderStatusesEditor(){
-  const el=document.getElementById("statuses-editor"); el.innerHTML="";
+  const el=document.getElementById("statuses-editor");el.innerHTML="";
   settingsDraft.statuses.forEach((s,i)=>{
-    const row=document.createElement("div"); row.className="status-row";
-    row.innerHTML=`
-      <input class="sp-input" value="${esc(s.label)}" placeholder="Label" data-field="label" data-i="${i}" />
-      <label class="sp-check-wrap"><input type="checkbox" ${s.terminal?"checked":""} data-field="terminal" data-i="${i}" /> Terminal</label>
-      <input class="sp-color" type="color" value="${s.color}" data-field="color" data-i="${i}" />
-      <button class="sp-del" data-i="${i}">×</button>`;
-    row.querySelectorAll("[data-field]").forEach(inp=>{
-      const update=()=>{const fi=+inp.dataset.i,f=inp.dataset.field;settingsDraft.statuses[fi][f]=f==="terminal"?inp.checked:inp.value;};
-      inp.addEventListener("change",update); inp.addEventListener("input",update);
-    });
+    const row=document.createElement("div");row.className="status-row";
+    row.innerHTML=`<input class="sp-input" value="${esc(s.label)}" placeholder="Label" data-field="label" data-i="${i}" /><label class="sp-check-wrap"><input type="checkbox" ${s.terminal?"checked":""} data-field="terminal" data-i="${i}" /> Terminal</label><input class="sp-color" type="color" value="${s.color}" data-field="color" data-i="${i}" /><button class="sp-del" data-i="${i}">×</button>`;
+    row.querySelectorAll("[data-field]").forEach(inp=>{const u=()=>{const fi=+inp.dataset.i,f=inp.dataset.field;settingsDraft.statuses[fi][f]=f==="terminal"?inp.checked:inp.value;};inp.addEventListener("change",u);inp.addEventListener("input",u);});
     row.querySelector(".sp-del").addEventListener("click",()=>{settingsDraft.statuses.splice(i,1);renderStatusesEditor();});
     el.appendChild(row);
   });
 }
 
-function addSettingsStage(){ settingsDraft.stages.push({id:uid(),label:"New",weight:50,color:"#6366f1"}); renderStagesEditor(); }
-function addSettingsStatus(){ settingsDraft.statuses.push({id:uid(),label:"New Status",terminal:false,color:"#6366f1"}); renderStatusesEditor(); }
+function addSettingsStage(){settingsDraft.stages.push({id:uid(),label:"New",weight:50,color:"#6366f1"});renderStagesEditor();}
+function addSettingsStatus(){settingsDraft.statuses.push({id:uid(),label:"New Status",terminal:false,color:"#6366f1"});renderStatusesEditor();}
 
 function saveSettings(){
   settingsDraft.stages.forEach(s=>{if(!s.id||s.id.length<2)s.id=slugify(s.label)||uid();});
   settingsDraft.statuses.forEach(s=>{if(!s.id||s.id.length<2)s.id=slugify(s.label)||uid();});
-  config=clone(settingsDraft);
-  ss(K.config,config);
-  closeSettings(); buildFilterChips(); renderView();
+  settingsDraft.configVersion=CONFIG_VERSION;
+  config=clone(settingsDraft);ss(K.config,config);
+  closeSettings();buildFilterChips();renderView();
   showToast("Settings saved","ok");
 }
 
