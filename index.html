@@ -275,6 +275,14 @@
     .op-calcs { display:flex; gap:16px; flex-wrap:wrap; padding:12px 14px; background:#f8f9fa; border-radius:var(--radius); }
     .op-calc-item { font-size:12px; color:var(--muted); }
     .op-calc-item strong { color:var(--text); }
+    .op-quote-margin-panel { padding:12px 14px; background:#fffbea; border:1px solid #f6d860; border-radius:var(--radius); }
+    .op-push-margin-btn { font-size:11px; font-weight:700; padding:4px 10px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
+    .op-push-margin-btn:hover { opacity:.85; }
+    .op-ps-toggle-row { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f0f6ff; border-radius:var(--radius); border:1px solid #c7d8f8; }
+    .op-ps-body { background:#f8f9fa; border-radius:var(--radius); border:1px solid var(--border); padding:14px; display:flex; flex-direction:column; gap:12px; }
+    .op-ps-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    @media(max-width:600px){.op-ps-grid{grid-template-columns:1fr;}}
+    .op-ps-calcs { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding:10px 12px; background:#fff; border-radius:var(--radius); border:1px solid var(--border); }
     .op-actions { display:flex; gap:8px; padding-top:4px; }
     .op-save-btn { font-size:13px; font-weight:700; padding:9px 20px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; }
     .op-save-btn:hover { background:#0043a8; }
@@ -1040,7 +1048,7 @@ function importData(incoming) {
   const oldMap=new Map(opportunities.filter(o=>!o._manual).map(o=>[o.id,o]));
   const added=incoming.filter(o=>!oldMap.has(o.id));
   const removed=opportunities.filter(o=>!o._manual&&!new Map(incoming.map(x=>[x.id,x])).has(o.id));
-  const imported=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",_manual:false,addedToCRM:false,addedToCRMDate:null,_isNew:!old};});
+  const imported=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",ps:old?(old.ps||null):null,_manual:false,addedToCRM:false,addedToCRMDate:null,_isNew:!old};});
   // Detect manual opps that now appear in the import (by name match)
   const importedNames=new Set(incoming.map(o=>o.name.toLowerCase()));
   const nowInCRM=manuals.filter(o=>!o.addedToCRM&&importedNames.has(o.name.toLowerCase()));
@@ -1644,6 +1652,31 @@ function renderOppDetails(opp){
   const w=stageWeight(opp.stage); const wVal=(opp.value||0)*w/100; const marg=effMargin(opp); const mVal=marginVal(opp);
   const stageOpts=config.stages.map(s=>`<option value="${esc(s.id)}"${s.id===opp.stage?" selected":""}>${esc(s.label)}</option>`).join("");
   const statusOpts=config.statuses.map(s=>`<option value="${esc(s.id)}"${s.id===opp.status?" selected":""}>${esc(s.label)}</option>`).join("");
+  // Margin from quotes
+  const fd=getOppFileData(opp.id);
+  const latestSell=[...fd.sellQuotes].sort((a,b)=>b.addedAt.localeCompare(a.addedAt))[0];
+  const latestBuy=[...fd.buyQuotes].sort((a,b)=>b.addedAt.localeCompare(a.addedAt))[0];
+  const hasQuoteMargin=latestSell?.amount&&latestBuy?.amount&&latestSell.amount>0;
+  const quoteMarginPct=hasQuoteMargin?Math.round(((latestSell.amount-latestBuy.amount)/latestSell.amount)*1000)/10:null;
+  const quotePanelHtml=`<div class="op-quote-margin-panel" id="op-quote-margin-panel">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Margin from Quotes</div>
+    ${hasQuoteMargin?`
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:12px">Sell: <strong>${fmt(latestSell.amount)}</strong></span>
+      <span style="font-size:12px">Buy: <strong>${fmt(latestBuy.amount)}</strong></span>
+      <span style="font-size:13px;font-weight:700;color:${quoteMarginPct>=0?"#10b981":"#de350b"}">${quoteMarginPct}% implied margin</span>
+      <button class="op-push-margin-btn" id="op-push-margin-btn" data-margin="${quoteMarginPct}">↑ Push to Margin</button>
+    </div>`:`<p style="font-size:12px;color:var(--muted);margin:0">Upload both a sell and buy quote with amounts to calculate implied margin.</p>`}
+  </div>`;
+  // Professional services
+  const ps=opp.ps||{};
+  const psEnabled=ps.enabled||false;
+  const psUnits=ps.units||1;
+  const psUnitType=ps.unitType||"days";
+  const psBuy=ps.buy!=null?ps.buy:1200;
+  const psSell=ps.sell!=null?ps.sell:2000;
+  const psSellTotal=psSell*psUnits; const psBuyTotal=psBuy*psUnits;
+  const psMarg=psSell>0?Math.round(((psSell-psBuy)/psSell)*1000)/10:0;
   el.innerHTML=`<div class="op-form">
     <div class="op-2col">
       <div class="op-field"><label class="op-field-label">Opportunity Name</label><input class="op-input" id="op-f-name" value="${esc(opp.name)}" /></div>
@@ -1660,7 +1693,38 @@ function renderOppDetails(opp){
       <span class="op-calc-item">Margin Revenue: <strong>${fmt(mVal)}</strong></span>
       <span class="op-calc-item">Effective Margin: <strong>${marg}%</strong></span>
     </div>
-    <div class="op-field op-field-full"><label class="op-field-label">Description / Notes</label><textarea class="op-textarea" id="op-f-desc" rows="5" placeholder="Add context, key info, or background about this opportunity…">${esc(opp.description||'')}</textarea></div>
+    ${quotePanelHtml}
+    <div class="op-ps-toggle-row">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="op-ps-toggle" ${psEnabled?"checked":""} style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer" />
+        <span style="font-size:13px;font-weight:600">Professional Services</span>
+      </label>
+      <span style="font-size:11px;color:var(--muted)">Add PS labour costs to this deal</span>
+    </div>
+    <div class="op-ps-body" id="op-ps-body" style="display:${psEnabled?"block":"none"}">
+      <div class="op-ps-grid">
+        <div class="op-field"><label class="op-field-label">Units</label>
+          <div style="display:flex;gap:6px">
+            <input class="op-input" id="op-ps-units" type="number" min="0" step="0.5" value="${psUnits}" style="flex:1" />
+            <select class="op-select" id="op-ps-unit-type" style="width:90px">
+              <option value="hours"${psUnitType==="hours"?" selected":""}>Hours</option>
+              <option value="days"${psUnitType==="days"?" selected":""}>Days</option>
+              <option value="weeks"${psUnitType==="weeks"?" selected":""}>Weeks</option>
+            </select>
+          </div>
+        </div>
+        <div class="op-field"><label class="op-field-label">Buy Rate ($ per unit)</label><input class="op-input" id="op-ps-buy" type="number" min="0" value="${psBuy}" /></div>
+        <div class="op-field"><label class="op-field-label">Sell Rate ($ per unit)</label><input class="op-input" id="op-ps-sell" type="number" min="0" value="${psSell}" /></div>
+      </div>
+      <div class="op-ps-calcs" id="op-ps-calcs">
+        <span class="op-calc-item">PS Sell Total: <strong id="ps-sell-tot">${fmt(psSellTotal)}</strong></span>
+        <span class="op-calc-item">PS Buy Total: <strong id="ps-buy-tot">${fmt(psBuyTotal)}</strong></span>
+        <span class="op-calc-item">PS Margin: <strong id="ps-marg">${psMarg}%</strong></span>
+        <button class="op-push-margin-btn" id="op-ps-push-val" style="margin-left:auto">↑ Push Sell to Value</button>
+        <button class="op-push-margin-btn" id="op-ps-push-margin" style="background:#10b981">↑ Push Margin to Deal</button>
+      </div>
+    </div>
+    <div class="op-field op-field-full"><label class="op-field-label">Description / Notes</label><textarea class="op-textarea" id="op-f-desc" rows="4" placeholder="Add context, key info, or background about this opportunity…">${esc(opp.description||'')}</textarea></div>
     <div class="op-actions">
       <button class="op-save-btn" id="op-save-btn">Save Changes</button>
       <button class="op-delete-btn" id="op-delete-btn">Delete Opportunity</button>
@@ -1674,7 +1738,39 @@ function renderOppDetails(opp){
     const sw=stageWeight(stId);
     document.getElementById("op-calcs").innerHTML=`<span class="op-calc-item">Weighted: <strong>${fmt(v*sw/100)}</strong></span><span class="op-calc-item">Margin Revenue: <strong>${fmt(v*m/100)}</strong></span><span class="op-calc-item">Effective Margin: <strong>${m}%</strong></span>`;
   }
+  function psRecalc(){
+    const units=parseFloat(document.getElementById("op-ps-units").value)||0;
+    const buy=parseFloat(document.getElementById("op-ps-buy").value)||0;
+    const sell=parseFloat(document.getElementById("op-ps-sell").value)||0;
+    const sellTot=sell*units; const buyTot=buy*units;
+    const mPct=sell>0?Math.round(((sell-buy)/sell)*1000)/10:0;
+    document.getElementById("ps-sell-tot").textContent=fmt(sellTot);
+    document.getElementById("ps-buy-tot").textContent=fmt(buyTot);
+    document.getElementById("ps-marg").textContent=mPct+"%";
+  }
   ["op-f-value","op-f-margin","op-f-stage"].forEach(id=>document.getElementById(id)?.addEventListener("input",recalc));
+  ["op-ps-units","op-ps-buy","op-ps-sell"].forEach(id=>document.getElementById(id)?.addEventListener("input",psRecalc));
+  document.getElementById("op-ps-toggle").addEventListener("change",function(){
+    document.getElementById("op-ps-body").style.display=this.checked?"block":"none";
+  });
+  document.getElementById("op-ps-push-val")?.addEventListener("click",()=>{
+    const units=parseFloat(document.getElementById("op-ps-units").value)||0;
+    const sell=parseFloat(document.getElementById("op-ps-sell").value)||0;
+    document.getElementById("op-f-value").value=(sell*units).toFixed(2);
+    recalc(); showToast("PS sell total pushed to Value");
+  });
+  document.getElementById("op-ps-push-margin")?.addEventListener("click",()=>{
+    const units=parseFloat(document.getElementById("op-ps-units").value)||0;
+    const buy=parseFloat(document.getElementById("op-ps-buy").value)||0;
+    const sell=parseFloat(document.getElementById("op-ps-sell").value)||0;
+    const mPct=sell>0?Math.round(((sell-buy)/sell)*1000)/10:0;
+    document.getElementById("op-f-margin").value=mPct;
+    recalc(); showToast("PS margin pushed to deal margin");
+  });
+  document.getElementById("op-push-margin-btn")?.addEventListener("click",function(){
+    document.getElementById("op-f-margin").value=this.dataset.margin;
+    recalc(); showToast("Quote margin pushed to deal");
+  });
   document.getElementById("op-save-btn").addEventListener("click",()=>saveOppDetail(opp));
   document.getElementById("op-delete-btn").addEventListener("click",()=>deleteOpp(opp.id));
   updateOppTabCounts(opp.id);
@@ -1691,6 +1787,17 @@ function saveOppDetail(opp){
   opp.margin=mRaw!==""?Math.max(0,Math.min(100,parseFloat(mRaw)||0)):null;
   opp.closeDate=document.getElementById("op-f-closedate").value;
   opp.description=document.getElementById("op-f-desc").value;
+  // Professional services
+  const psEnabled=document.getElementById("op-ps-toggle")?.checked;
+  if(psEnabled){
+    const psUnits=parseFloat(document.getElementById("op-ps-units")?.value)||0;
+    const psUnitType=document.getElementById("op-ps-unit-type")?.value||"days";
+    const psBuy=parseFloat(document.getElementById("op-ps-buy")?.value)||1200;
+    const psSell=parseFloat(document.getElementById("op-ps-sell")?.value)||2000;
+    opp.ps={enabled:true,units:psUnits,unitType:psUnitType,buy:psBuy,sell:psSell};
+  } else {
+    opp.ps=opp.ps?{...opp.ps,enabled:false}:null;
+  }
   touchActivity(opp.id); persistOpps();
   document.getElementById("op-title").textContent=opp.name;
   document.getElementById("op-account-sub").textContent=opp.account||"";
