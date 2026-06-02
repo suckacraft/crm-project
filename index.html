@@ -311,7 +311,7 @@
     .op-file-meta { font-size:11px; color:var(--muted); }
     .op-file-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:20px; padding:4px; border-radius:4px; flex-shrink:0; line-height:1; }
     .op-file-del:hover { background:#ffebe6; color:#de350b; }
-    .card-margin-pill { font-size:10px; color:var(--muted); background:#f0f2f5; padding:1px 5px; border-radius:8px; white-space:nowrap; }
+    .card-margin-pill { font-size:10px; font-weight:600; color:#10b981; background:#f0fdf8; border:1px solid #10b98130; padding:1px 6px; border-radius:8px; white-space:nowrap; }
 
     /* ── Manual deals view ── */
     #manual-view { display:none; flex:1; overflow-y:auto; padding:16px 18px; flex-direction:column; gap:0; }
@@ -887,6 +887,23 @@ function marginVal(opp) { return (opp.value||0) * effMargin(opp) / 100; }
 let toastTimer;
 function showToast(msg,type="") { const el=document.getElementById("toast"); el.textContent=msg; el.className="show"+(type?" "+type:""); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.className="";},3000); }
 
+// ── Logo ──────────────────────────────────────────────────────────────────────
+function updateHeaderLogo(){
+  const src=ls(K.logo);
+  const img=document.getElementById("header-logo");
+  if(img){img.src=src||"";img.style.display=src?"inline-block":"none";}
+}
+
+// ── Expiry badge ──────────────────────────────────────────────────────────────
+function updateExpiryBadge(){
+  const cnt=opportunities.reduce((s,opp)=>{
+    const fd=getOppFileData(opp.id);
+    return s+[...(fd.sellQuotes||[]),...(fd.buyQuotes||[])].filter(f=>f.expiryDate&&(expiryClass(f.expiryDate)==="overdue"||expiryClass(f.expiryDate)==="soon")).length;
+  },0);
+  const badge=document.getElementById("expiry-badge");
+  if(badge){badge.textContent=cnt;badge.style.display=cnt>0?"inline-block":"none";}
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 function boot() {
   config = migrateConfig(ls(K.config));
@@ -900,6 +917,8 @@ function boot() {
   buildFilterChips();
   wireEvents();
   updateManualTabBadge();
+  updateHeaderLogo();
+  updateExpiryBadge();
   renderView();
 }
 
@@ -1265,7 +1284,7 @@ function buildCard(opp,stage){
     <div class="card-value-row">
       <span class="card-value">${opp.value?fmt(opp.value):"—"}</span>
       ${wVal>0?`<span class="card-weighted">Wtd <strong>${fmt(wVal)}</strong></span>`:""}
-      <span class="card-margin-pill">${marg}%</span>
+      ${opp.value?`<span class="card-margin-pill">${marg}% · ${fmt(marginVal(opp))}</span>`:""}
     </div>
     <div class="card-meta">
       <span class="card-date ${dateCss(opp.closeDate)}" title="Click to edit">${dateLabel(opp.closeDate)}</span>
@@ -1681,6 +1700,16 @@ function updateOppTabCounts(oppId){
 }
 
 function renderOppDetails(opp){
+  // Lazy migration: old ps → lineItems
+  if(!opp.lineItems && opp.ps){
+    opp.lineItems={
+      hw:{sell:0,buy:0}, sw:{sell:0,buy:0},
+      ps:{enabled:opp.ps.enabled||false,units:opp.ps.units||1,unitType:opp.ps.unitType||"days",buyRate:opp.ps.buy||1200,sellRate:opp.ps.sell||2000}
+    };
+  } else if(!opp.lineItems){
+    opp.lineItems={hw:{sell:0,buy:0},sw:{sell:0,buy:0},ps:{enabled:false,units:1,unitType:"days",buyRate:1200,sellRate:2000}};
+  }
+  const li=opp.lineItems;
   const el=document.getElementById("op-details-pane");
   const w=stageWeight(opp.stage); const wVal=(opp.value||0)*w/100; const marg=effMargin(opp); const mVal=marginVal(opp);
   const stageOpts=config.stages.map(s=>`<option value="${esc(s.id)}"${s.id===opp.stage?" selected":""}>${esc(s.label)}</option>`).join("");
@@ -1727,34 +1756,67 @@ function renderOppDetails(opp){
       <span class="op-calc-item">Effective Margin: <strong>${marg}%</strong></span>
     </div>
     ${quotePanelHtml}
-    <div class="op-ps-toggle-row">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
-        <input type="checkbox" id="op-ps-toggle" ${psEnabled?"checked":""} style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer" />
-        <span style="font-size:13px;font-weight:600">Professional Services</span>
-      </label>
-      <span style="font-size:11px;color:var(--muted)">Add PS labour costs to this deal</span>
-    </div>
-    <div class="op-ps-body" id="op-ps-body" style="display:${psEnabled?"block":"none"}">
-      <div class="op-ps-grid">
-        <div class="op-field" style="grid-column:1/-1"><label class="op-field-label">Units &amp; Type</label>
-          <div class="op-ps-units-row">
-            <input class="op-input" id="op-ps-units" type="number" min="0" step="0.5" value="${psUnits}" placeholder="0" />
-            <select class="op-select" id="op-ps-unit-type">
-              <option value="hours"${psUnitType==="hours"?" selected":""}>Hours</option>
-              <option value="days"${psUnitType==="days"?" selected":""}>Days</option>
-              <option value="weeks"${psUnitType==="weeks"?" selected":""}>Weeks</option>
-            </select>
-          </div>
-        </div>
-        <div class="op-field"><label class="op-field-label">Buy Rate ($ / unit)</label><input class="op-input" id="op-ps-buy" type="number" min="0" value="${psBuy}" /></div>
-        <div class="op-field"><label class="op-field-label">Sell Rate ($ / unit)</label><input class="op-input" id="op-ps-sell" type="number" min="0" value="${psSell}" /></div>
+    <div class="op-li-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Line Items</span>
+        <button class="op-push-margin-btn" id="op-li-load" style="font-size:11px">Load from Quotes</button>
       </div>
-      <div class="op-ps-calcs" id="op-ps-calcs">
-        <span class="op-calc-item">PS Sell Total: <strong id="ps-sell-tot">${fmt(psSellTotal)}</strong></span>
-        <span class="op-calc-item">PS Buy Total: <strong id="ps-buy-tot">${fmt(psBuyTotal)}</strong></span>
-        <span class="op-calc-item">PS Margin: <strong id="ps-marg">${psMarg}%</strong></span>
-        <button class="op-push-margin-btn" id="op-ps-push-val" style="margin-left:auto">↑ Push Sell to Value</button>
-        <button class="op-push-margin-btn" id="op-ps-push-margin" style="background:#10b981">↑ Push Margin to Deal</button>
+      <table class="op-li-table">
+        <thead><tr><th></th><th>Sell ($)</th><th>Buy ($)</th><th>Margin</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-size:12px;font-weight:600;color:var(--text)">Hardware</td>
+            <td><input class="op-input op-li-input" id="li-hw-sell" type="number" min="0" value="${li.hw.sell||''}" placeholder="0" /></td>
+            <td><input class="op-input op-li-input" id="li-hw-buy" type="number" min="0" value="${li.hw.buy||''}" placeholder="0" /></td>
+            <td><span id="li-hw-marg" class="op-li-marg">—</span></td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;font-weight:600;color:var(--text)">Software</td>
+            <td><input class="op-input op-li-input" id="li-sw-sell" type="number" min="0" value="${li.sw.sell||''}" placeholder="0" /></td>
+            <td><input class="op-input op-li-input" id="li-sw-buy" type="number" min="0" value="${li.sw.buy||''}" placeholder="0" /></td>
+            <td><span id="li-sw-marg" class="op-li-marg">—</span></td>
+          </tr>
+          <tr class="op-li-ps-row">
+            <td style="font-size:12px;font-weight:600;color:var(--text)">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="li-ps-toggle" ${li.ps.enabled?"checked":""} style="accent-color:var(--accent)" />
+                Prof. Services
+              </label>
+              <div id="li-ps-unit-row" style="display:${li.ps.enabled?"flex":"none"};gap:6px;margin-top:6px;align-items:center">
+                <input class="op-input op-li-input" id="li-ps-units" type="number" min="0" step="0.5" value="${li.ps.units}" style="width:60px" />
+                <select class="op-select" id="li-ps-unit-type" style="width:80px;font-size:11px;padding:4px 6px">
+                  <option value="hours"${li.ps.unitType==="hours"?" selected":""}>Hours</option>
+                  <option value="days"${li.ps.unitType==="days"?" selected":""}>Days</option>
+                  <option value="weeks"${li.ps.unitType==="weeks"?" selected":""}>Weeks</option>
+                </select>
+              </div>
+            </td>
+            <td>
+              <div id="li-ps-sell-wrap" style="display:${li.ps.enabled?"block":"none"}">
+                <label class="op-field-label" style="font-size:10px">Per unit</label>
+                <input class="op-input op-li-input" id="li-ps-sell" type="number" min="0" value="${li.ps.sellRate}" placeholder="2000" />
+              </div>
+            </td>
+            <td>
+              <div id="li-ps-buy-wrap" style="display:${li.ps.enabled?"block":"none"}">
+                <label class="op-field-label" style="font-size:10px">Per unit</label>
+                <input class="op-input op-li-input" id="li-ps-buy" type="number" min="0" value="${li.ps.buyRate}" placeholder="1200" />
+              </div>
+            </td>
+            <td><span id="li-ps-marg" class="op-li-marg">—</span></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="op-li-total-row">
+            <td style="font-size:12px;font-weight:700">TOTAL</td>
+            <td style="font-weight:700"><span id="li-total-sell">—</span></td>
+            <td style="font-weight:700"><span id="li-total-buy">—</span></td>
+            <td><span id="li-total-marg" style="font-weight:700;color:var(--accent)">—</span></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="op-save-btn" id="op-li-sync" style="padding:7px 16px;font-size:12px">Sync to Deal Value &amp; Margin</button>
       </div>
     </div>
     <div class="op-field op-field-full"><label class="op-field-label">Description / Notes</label><textarea class="op-textarea" id="op-f-desc" rows="4" placeholder="Add context, key info, or background about this opportunity…">${esc(opp.description||'')}</textarea></div>
@@ -1972,6 +2034,7 @@ function fileItemHtml(f,bucket="files"){
   const expClass=expiryClass(f.expiryDate);
   const expLabel=f.expiryDate?`<span style="font-size:10px;font-weight:600;${expClass==="overdue"?"color:#de350b":expClass==="soon"?"color:#ff8b00":"color:var(--muted)"}">Expires ${fmtDate(f.expiryDate)}${expClass==="overdue"?" ⚠":expClass==="soon"?" ⏳":""}</span>`:"";
   const amtLabel=f.amount?`<span style="font-size:11px;font-weight:700;color:var(--text)">💲${fmt(f.amount)}</span>`:"";
+  const catPills=(f.categories||[]).map(c=>`<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:${c.type==='hw'?'#e8f0fe':c.type==='sw'?'#e6f9f0':'#fff3e0'};color:${c.type==='hw'?'#1a73e8':c.type==='sw'?'#137333':'#e65100'}">${c.type.toUpperCase()}${c.amount?` ${fmt(c.amount)}`:''}</span>`).join('');
   return `<span class="op-file-icon">${fileIcon(f.type)}</span>
     <div class="op-file-info">
       <a class="op-file-name" href="${esc(f.dataUrl)}" download="${esc(f.name)}">${esc(f.name)}</a>
@@ -1979,6 +2042,7 @@ function fileItemHtml(f,bucket="files"){
         ${amtLabel}
         <span class="op-file-meta">${fmtFileSize(f.size)} · ${fmtTs(f.addedAt)}</span>
         ${expLabel}
+        ${catPills?`<div style="display:flex;gap:4px;flex-wrap:wrap">${catPills}</div>`:""}
         <label style="font-size:10px;color:var(--muted)">Expiry: <input class="op-expiry-input" type="date" data-fid="${esc(f.id)}" data-bucket="${esc(bucket)}" value="${f.expiryDate||''}" style="font-size:10px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;outline:none" /></label>
       </div>
     </div>
@@ -1998,6 +2062,18 @@ function openQuoteForm(oppId,type){
       <div><label class="op-field-label">Amount ($)</label><input class="op-input" id="qf-amount" type="number" min="0" placeholder="0" /></div>
       <div><label class="op-field-label">Expiry Date</label><input class="op-input" id="qf-expiry" type="date" /></div>
     </div>
+    <div style="margin-bottom:10px">
+      <label class="op-field-label">Categories (optional)</label>
+      <div id="qf-cats" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        ${['hw','sw','ps'].map(c=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+          <input type="checkbox" class="qf-cat-cb" data-cat="${c}" style="accent-color:var(--accent)" />
+          <span style="width:100px">${c==='hw'?'Hardware':c==='sw'?'Software':'Prof. Services'}</span>
+          <span style="font-size:11px;color:var(--muted)">Amount: $</span>
+          <input class="qf-cat-amt op-input" data-cat="${c}" type="number" min="0" style="width:100px;display:none;padding:3px 6px" placeholder="0" />
+        </label>`).join('')}
+        <div style="font-size:11px;color:var(--muted)" id="qf-unalloc"></div>
+      </div>
+    </div>
     <div style="margin-bottom:10px"><label class="op-field-label">File (required)</label><input type="file" id="qf-file" style="font-size:12px;width:100%" /></div>
     <div style="display:flex;gap:8px">
       <button class="op-save-btn" id="qf-save" style="padding:7px 16px;font-size:12px">Upload Quote</button>
@@ -2005,6 +2081,23 @@ function openQuoteForm(oppId,type){
     </div>
   </div>`;
   document.getElementById("qf-cancel").addEventListener("click",()=>area.innerHTML="");
+  area.querySelectorAll(".qf-cat-cb").forEach(cb=>{
+    cb.addEventListener("change",()=>{
+      const amtEl=area.querySelector(`.qf-cat-amt[data-cat="${cb.dataset.cat}"]`);
+      amtEl.style.display=cb.checked?"inline-block":"none";
+      updateUnalloc();
+    });
+  });
+  function updateUnalloc(){
+    const total=parseFloat(area.querySelector("#qf-amount").value)||0;
+    const catSum=[...area.querySelectorAll(".qf-cat-cb:checked")].reduce((s,cb)=>{
+      return s+(parseFloat(area.querySelector(`.qf-cat-amt[data-cat="${cb.dataset.cat}"]`).value)||0);
+    },0);
+    const ua=area.querySelector("#qf-unalloc");
+    if(ua) ua.textContent=total>0?`Unallocated: ${fmt(total-catSum)}`:"";
+  }
+  area.querySelectorAll(".qf-cat-amt").forEach(i=>i.addEventListener("input",updateUnalloc));
+  area.querySelector("#qf-amount").addEventListener("input",updateUnalloc);
   document.getElementById("qf-save").addEventListener("click",()=>{
     const fileEl=document.getElementById("qf-file");
     const file=fileEl.files[0]; if(!file){showToast("Select a file","err");return;}
@@ -2013,12 +2106,19 @@ function openQuoteForm(oppId,type){
     const expiry=document.getElementById("qf-expiry").value;
     const reader=new FileReader();
     reader.onload=ev=>{
+      const cats=[...area.querySelectorAll(".qf-cat-cb:checked")].map(cb=>{
+        const amt=parseFloat(area.querySelector(`.qf-cat-amt[data-cat="${cb.dataset.cat}"]`)?.value)||null;
+        return {type:cb.dataset.cat,amount:amt};
+      });
+      const checkedCount=area.querySelectorAll(".qf-cat-cb:checked").length;
+      const finalCats=cats.map(c=>({...c,amount:c.amount!=null?c.amount:(checkedCount===1?(parseFloat(area.querySelector("#qf-amount")?.value)||null):null)}));
       const fd=getOppFileData(oppId);
       const bucket=type==="sell"?"sellQuotes":"buyQuotes";
-      fd[bucket].push({id:uid(),name:file.name,type:file.type,size:file.size,addedAt:new Date().toISOString(),expiryDate:expiry||null,amount,dataUrl:ev.target.result});
+      fd[bucket].push({id:uid(),name:file.name,type:file.type,size:file.size,addedAt:new Date().toISOString(),expiryDate:expiry||null,amount,dataUrl:ev.target.result,categories:finalCats.length?finalCats:[]});
       setOppFileData(oppId,fd);
       try{ss(K.files,oppFiles);}catch{showToast("Storage full","err");fd[bucket].pop();return;}
       renderOppFiles(oppId); showToast(`${type==="sell"?"Sell":"Buy"} quote added`,"ok");
+      updateExpiryBadge();
     };
     reader.readAsDataURL(file);
   });
@@ -2144,7 +2244,40 @@ function closeOppDetail(){document.getElementById("opp-overlay").classList.remov
 function openNotes(oppId){openOppDetail(oppId,"notes");}
 
 // ── Settings ──────────────────────────────────────────────────────────────────
-function openSettings(){settingsDraft=clone(config);renderSettingsEditor();document.getElementById("settings-overlay").classList.add("open");}
+function openSettings(){
+  settingsDraft=clone(config);
+  renderSettingsEditor();
+  document.getElementById("settings-overlay").classList.add("open");
+  const savedLogo=ls(K.logo);
+  const prev=document.getElementById("sp-logo-preview");
+  const ph=document.getElementById("sp-logo-placeholder");
+  const clr=document.getElementById("sp-logo-clear");
+  if(savedLogo){prev.src=savedLogo;prev.style.display="inline-block";ph.style.display="none";clr.style.display="inline-block";}
+  else{prev.style.display="none";ph.style.display="inline-block";clr.style.display="none";}
+  // Replace file input to clear previous listeners
+  const oldFileInput=document.getElementById("sp-logo-file");
+  const newFileInput=oldFileInput.cloneNode(true);
+  oldFileInput.parentNode.replaceChild(newFileInput,oldFileInput);
+  newFileInput.addEventListener("change",function(){
+    const f=this.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      if(ev.target.result.length>300000){showToast("Image too large (max ~200KB)","err");return;}
+      prev.src=ev.target.result;prev.style.display="inline-block";ph.style.display="none";clr.style.display="inline-block";
+      document._pendingLogo=ev.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+  // Replace clear button too
+  const oldClr=document.getElementById("sp-logo-clear");
+  const newClr=oldClr.cloneNode(true);
+  oldClr.parentNode.replaceChild(newClr,oldClr);
+  newClr.addEventListener("click",()=>{
+    prev.src="";prev.style.display="none";ph.style.display="inline-block";newClr.style.display="none";
+    document._pendingLogo=null; document._clearLogo=true;
+  });
+  document._pendingLogo=undefined; document._clearLogo=false;
+}
 function closeSettings(){document.getElementById("settings-overlay").classList.remove("open");settingsDraft=null;}
 function renderSettingsEditor(){renderStagesEditor();renderStatusesEditor();document.getElementById("sp-margin").value=settingsDraft.defaultMargin??5;}
 
@@ -2179,6 +2312,9 @@ function saveSettings(){
   settingsDraft.defaultMargin=Math.max(0,Math.min(100,parseFloat(document.getElementById("sp-margin").value)||5));
   settingsDraft.configVersion=CONFIG_VERSION;
   config=clone(settingsDraft);ss(K.config,config);
+  if(document._clearLogo){localStorage.removeItem(K.logo);}
+  else if(document._pendingLogo){try{localStorage.setItem(K.logo,document._pendingLogo);}catch{showToast("Logo too large to store","err");}}
+  updateHeaderLogo();
   closeSettings();buildFilterChips();renderView();
   showToast("Settings saved","ok");
 }
