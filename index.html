@@ -251,7 +251,6 @@
     /* ── Opportunity detail panel ── */
     #opp-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.45); z-index:350; align-items:flex-start; justify-content:flex-end; }
     #opp-overlay.open { display:flex; }
-    #opp-panel { width:780px; height:100vh; background:#fff; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideIn .2s ease; }
     .op-head { display:flex; align-items:flex-start; padding:16px 20px; border-bottom:1px solid var(--border); gap:10px; flex-shrink:0; }
     .op-head-text { flex:1; min-width:0; }
     .op-head-text h2 { font-size:17px; font-weight:700; line-height:1.3; }
@@ -284,6 +283,14 @@
     .op-no-notes { font-size:13px; color:var(--muted); text-align:center; padding:20px 0; }
     .op-file-drop { border:2px dashed var(--border); border-radius:var(--radius); cursor:pointer; transition:border-color .15s,background .15s; margin-bottom:16px; padding:24px; text-align:center; }
     .op-file-drop:hover,.op-file-drop.dragging { border-color:var(--accent); background:#f0f6ff; }
+    .quote-drop-zone { border:2px dashed transparent; border-radius:var(--radius); padding:6px; transition:border-color .15s,background .15s; min-height:48px; }
+    .quote-drop-zone.drag-over { border-color:var(--accent); background:#f0f6ff; }
+    .quote-drop-zone.drag-over-sell { border-color:#0052cc; background:#f0f6ff; }
+    .quote-drop-zone.drag-over-buy  { border-color:#10b981; background:#f0fdf8; }
+    .general-file-item { cursor:grab; }
+    .general-file-item:active { cursor:grabbing; }
+    .general-file-item.dragging-out { opacity:.35; }
+    .drag-hint { font-size:11px; color:var(--muted); font-style:italic; margin-top:4px; }
     .op-file-list { display:flex; flex-direction:column; gap:8px; }
     .op-file-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f8f9fa; border-radius:var(--radius); }
     .op-file-icon { font-size:22px; flex-shrink:0; line-height:1; }
@@ -345,7 +352,7 @@
     .nop-cancel { font-size:13px; padding:9px 18px; border-radius:var(--radius); border:1px solid var(--border); background:#fff; cursor:pointer; }
     .nop-cancel:hover { background:var(--bg); }
 
-    /* ── File preview overlay ── */
+    /* ── File preview overlay (fallback for non-opp contexts) ── */
     #preview-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.75); z-index:500; align-items:center; justify-content:center; padding:24px; }
     #preview-overlay.open { display:flex; }
     #preview-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow-md); max-width:900px; width:100%; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
@@ -361,6 +368,20 @@
     .prev-xl-table td { padding:4px 10px; border:1px solid #f0f2f5; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .prev-xl-table tr:nth-child(even) td { background:#f8f9fa; }
     .prev-unsupported { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px; color:var(--muted); font-size:13px; width:100%; }
+
+    /* ── Opp panel split-pane (inline preview alongside form) ── */
+    #opp-panel { width:780px; height:100vh; background:#fff; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideIn .2s ease; transition:width .2s ease; }
+    #opp-panel.split { width:min(1300px,96vw); flex-direction:column; }
+    .opp-split-body { display:flex; flex:1; overflow:hidden; }
+    .opp-main-side { display:flex; flex-direction:column; width:460px; flex-shrink:0; border-right:1px solid var(--border); overflow:hidden; }
+    .opp-main-side .op-body { flex:1; overflow-y:auto; }
+    .opp-preview-side { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#f0f2f5; min-width:0; }
+    .opp-preview-side .prev-head { background:#fff; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .opp-preview-side #inl-prev-body { flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center; }
+    .opp-preview-side #inl-prev-body iframe { width:100%; height:100%; border:none; background:#fff; }
+    .opp-preview-side #inl-prev-body img { max-width:100%; object-fit:contain; display:block; margin:auto; }
+    .opp-preview-side .prev-xl-wrap { width:100%; overflow:auto; padding:10px; height:100%; }
+    .opp-preview-side .prev-unsupported { height:100%; }
   </style>
 </head>
 <body>
@@ -415,15 +436,26 @@
       </div>
       <button class="op-close" id="op-close">×</button>
     </div>
-    <div class="op-tabs-bar">
-      <button class="op-tab active" data-tab="details">Details</button>
-      <button class="op-tab" data-tab="notes">Notes</button>
-      <button class="op-tab" data-tab="files">Files</button>
-    </div>
-    <div class="op-body">
-      <div class="op-tab-pane active" id="op-details-pane" data-tab="details"></div>
-      <div class="op-tab-pane" id="op-notes-pane" data-tab="notes"></div>
-      <div class="op-tab-pane" id="op-files-pane" data-tab="files"></div>
+    <div class="opp-split-body">
+      <div class="opp-main-side">
+        <div class="op-tabs-bar">
+          <button class="op-tab active" data-tab="details">Details</button>
+          <button class="op-tab" data-tab="notes">Notes</button>
+          <button class="op-tab" data-tab="files">Files</button>
+        </div>
+        <div class="op-body">
+          <div class="op-tab-pane active" id="op-details-pane" data-tab="details"></div>
+          <div class="op-tab-pane" id="op-notes-pane" data-tab="notes"></div>
+          <div class="op-tab-pane" id="op-files-pane" data-tab="files"></div>
+        </div>
+      </div>
+      <div class="opp-preview-side" id="opp-preview-side" style="display:none">
+        <div class="prev-head">
+          <span class="prev-title" id="inl-prev-title"></span>
+          <button class="prev-close" id="inl-prev-close" title="Close preview">×</button>
+        </div>
+        <div id="inl-prev-body"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -833,6 +865,7 @@ function wireEvents() {
 
   document.getElementById("prev-close").addEventListener("click",closePreview);
   document.getElementById("preview-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closePreview();});
+  document.getElementById("inl-prev-close").addEventListener("click",closeInlinePreview);
 
   document.getElementById("dp-close").addEventListener("click",closeDrill);
   document.getElementById("drill-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeDrill();});
@@ -1592,19 +1625,23 @@ function setOppFileData(oppId,data){ oppFiles[oppId]=data; }
 function renderOppFiles(oppId){
   const el=document.getElementById("op-files-pane");
   const fd=getOppFileData(oppId);
+  const hasGeneral=fd.files.length>0;
   el.innerHTML=`
     <div style="margin-bottom:18px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📊 Sell Quotes</div>
-      ${renderQuoteSection(oppId,"sell",fd.sellQuotes)}
-      <button class="sp-add" id="add-sell-btn" style="margin-top:6px">+ Add Sell Quote</button>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text)">📊 Sell Quotes</div>
+      ${hasGeneral?'<p class="drag-hint">Drag a file from General Files here to add as a sell quote</p>':""}
+      <div class="quote-drop-zone" id="sell-drop-zone">${renderQuoteSection(fd.sellQuotes,"sell")}</div>
+      <button class="sp-add" id="add-sell-btn" style="margin-top:6px">+ Add Sell Quote (upload)</button>
     </div>
     <div style="margin-bottom:18px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">🏷 Buy Quotes</div>
-      ${renderQuoteSection(oppId,"buy",fd.buyQuotes)}
-      <button class="sp-add" id="add-buy-btn" style="margin-top:6px">+ Add Buy Quote</button>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text)">🏷 Buy Quotes</div>
+      ${hasGeneral?'<p class="drag-hint">Drag a file from General Files here to add as a buy quote</p>':""}
+      <div class="quote-drop-zone" id="buy-drop-zone">${renderQuoteSection(fd.buyQuotes,"buy")}</div>
+      <button class="sp-add" id="add-buy-btn" style="margin-top:6px">+ Add Buy Quote (upload)</button>
     </div>
     <div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📎 General Files</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text)">📎 General Files</div>
+      ${hasGeneral?'<p class="drag-hint">Drag any file below onto a quote section above to promote it</p>':""}
       <div class="op-file-drop" id="op-file-drop">
         <div style="color:var(--muted);font-size:13px">
           <div style="font-size:24px;margin-bottom:6px">📎</div>
@@ -1614,32 +1651,69 @@ function renderOppFiles(oppId){
         <input type="file" id="op-file-input" multiple style="display:none" />
       </div>
       <div class="op-file-list" id="op-general-list">
-        ${fd.files.length===0?'<p style="font-size:12px;color:var(--muted);padding:4px 0">No files attached yet.</p>':fd.files.map(f=>fileItemHtml(f,false)).join("")}
+        ${!hasGeneral?'<p style="font-size:12px;color:var(--muted);padding:4px 0">No files yet — upload above or drag from desktop.</p>':
+          fd.files.map(f=>`<div class="op-file-item general-file-item" draggable="true" data-fid="${esc(f.id)}">${fileItemHtml(f,"files")}</div>`).join("")}
       </div>
     </div>
     <div id="quote-form-area"></div>`;
 
-  el.querySelectorAll(".op-file-del").forEach(btn=>btn.addEventListener("click",()=>deleteOppFileById(oppId,btn.dataset.fid,btn.dataset.bucket)));
-  el.querySelectorAll(".op-file-prev").forEach(btn=>btn.addEventListener("click",()=>{const fd2=getOppFileData(oppId);const all=[...fd2.files,...fd2.sellQuotes,...fd2.buyQuotes];const f=all.find(x=>x.id===btn.dataset.fid);if(f)openPreview(f);}));
+  // Common wiring
+  el.querySelectorAll(".op-file-del").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();deleteOppFileById(oppId,btn.dataset.fid,btn.dataset.bucket);}));
+  el.querySelectorAll(".op-file-prev").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();const fd2=getOppFileData(oppId);const all=[...fd2.files,...fd2.sellQuotes,...fd2.buyQuotes];const f=all.find(x=>x.id===btn.dataset.fid);if(f)openPreview(f);}));
   el.querySelectorAll(".op-expiry-input").forEach(inp=>inp.addEventListener("change",()=>saveExpiryDate(oppId,inp.dataset.fid,inp.dataset.bucket,inp.value)));
-
   document.getElementById("add-sell-btn").addEventListener("click",()=>openQuoteForm(oppId,"sell"));
   document.getElementById("add-buy-btn").addEventListener("click",()=>openQuoteForm(oppId,"buy"));
   document.getElementById("op-file-input").addEventListener("change",e=>{Array.from(e.target.files).forEach(f=>addOppFile(oppId,f,"files"));e.target.value="";});
-  const drop=document.getElementById("op-file-drop");
-  drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("dragging");});
-  drop.addEventListener("dragleave",()=>drop.classList.remove("dragging"));
-  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("dragging");Array.from(e.dataTransfer.files).forEach(f=>addOppFile(oppId,f,"files"));});
+
+  // External file drops onto the General zone
+  const extDrop=document.getElementById("op-file-drop");
+  extDrop.addEventListener("dragover",e=>{if(e.dataTransfer.types.includes("Files")){e.preventDefault();extDrop.classList.add("dragging");}});
+  extDrop.addEventListener("dragleave",()=>extDrop.classList.remove("dragging"));
+  extDrop.addEventListener("drop",e=>{
+    if(!e.dataTransfer.types.includes("Files")) return;
+    e.preventDefault(); extDrop.classList.remove("dragging");
+    Array.from(e.dataTransfer.files).forEach(f=>addOppFile(oppId,f,"files"));
+  });
+
+  // Drag general items → quote zones
+  let draggedFid=null;
+  el.querySelectorAll(".general-file-item[draggable]").forEach(item=>{
+    item.addEventListener("dragstart",e=>{
+      draggedFid=item.dataset.fid;
+      e.dataTransfer.setData("text/plain",draggedFid);
+      e.dataTransfer.effectAllowed="move";
+      setTimeout(()=>item.classList.add("dragging-out"),0);
+    });
+    item.addEventListener("dragend",()=>{item.classList.remove("dragging-out");draggedFid=null;});
+  });
+
+  ["sell","buy"].forEach(type=>{
+    const zone=document.getElementById(`${type}-drop-zone`);
+    zone.addEventListener("dragover",e=>{
+      if(!draggedFid) return;
+      e.preventDefault(); e.dataTransfer.dropEffect="move";
+      zone.classList.add(`drag-over-${type}`);
+    });
+    zone.addEventListener("dragleave",e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove(`drag-over-${type}`);});
+    zone.addEventListener("drop",e=>{
+      e.preventDefault(); zone.classList.remove(`drag-over-${type}`);
+      const fid=e.dataTransfer.getData("text/plain")||draggedFid; if(!fid) return;
+      const fd2=getOppFileData(oppId); const file=fd2.files.find(x=>x.id===fid); if(!file) return;
+      openPromoteForm(oppId,fid,type);
+    });
+  });
+
   updateOppTabCounts(oppId);
 }
 
-function renderQuoteSection(oppId,type,quotes){
-  if(!quotes||!quotes.length) return `<p style="font-size:12px;color:var(--muted);padding:4px 0">No ${type} quotes yet.</p>`;
+function renderQuoteSection(quotes,type){
+  if(!quotes||!quotes.length) return `<p style="font-size:12px;color:var(--muted);padding:6px 2px">No ${type} quotes yet — upload one or drag a file from General Files.</p>`;
   const sorted=[...quotes].sort((a,b)=>b.addedAt.localeCompare(a.addedAt));
-  return sorted.map((f,i)=>`<div class="op-file-item" style="${i===0?"border:1.5px solid "+( type==="sell"?"#0052cc":"#10b981")+";background:"+(type==="sell"?"#f0f6ff":"#f0fdf8")+"":""}">${i===0?`<span style="font-size:10px;font-weight:700;color:${type==="sell"?"var(--accent)":"#10b981"};margin-right:4px">★ LATEST</span>`:""}${fileItemHtml(f,true,type)}</div>`).join("");
+  const bucket=type==="sell"?"sellQuotes":"buyQuotes";
+  return sorted.map((f,i)=>`<div class="op-file-item" style="${i===0?"border:1.5px solid "+(type==="sell"?"#0052cc":"#10b981")+";background:"+(type==="sell"?"#f0f6ff":"#f0fdf8")+"":""}">${i===0?`<span style="font-size:10px;font-weight:700;color:${type==="sell"?"var(--accent)":"#10b981"};margin-right:4px;flex-shrink:0">★ LATEST</span>`:""}${fileItemHtml(f,bucket)}</div>`).join("");
 }
 
-function fileItemHtml(f,isQuote,bucket="files"){
+function fileItemHtml(f,bucket="files"){
   const expClass=expiryClass(f.expiryDate);
   const expLabel=f.expiryDate?`<span style="font-size:10px;font-weight:600;${expClass==="overdue"?"color:#de350b":expClass==="soon"?"color:#ff8b00":"color:var(--muted)"}">Expires ${fmtDate(f.expiryDate)}${expClass==="overdue"?" ⚠":expClass==="soon"?" ⏳":""}</span>`:"";
   const amtLabel=f.amount?`<span style="font-size:11px;font-weight:700;color:var(--text)">💲${fmt(f.amount)}</span>`:"";
@@ -1654,7 +1728,7 @@ function fileItemHtml(f,isQuote,bucket="files"){
       </div>
     </div>
     <div style="display:flex;gap:4px;flex-shrink:0">
-      <button class="op-file-prev mv-edit-btn" data-fid="${esc(f.id)}" style="font-size:10px;padding:3px 7px">Preview</button>
+      <button class="op-file-prev mv-edit-btn" data-fid="${esc(f.id)}" style="font-size:10px;padding:3px 7px">View</button>
       <button class="op-file-del" data-fid="${esc(f.id)}" data-bucket="${esc(bucket)}">×</button>
     </div>`;
 }
@@ -1696,6 +1770,39 @@ function openQuoteForm(oppId,type){
   area.querySelector("#qf-amount")?.focus();
 }
 
+// Move a file from general → sell/buy quote with optional amount & expiry
+function openPromoteForm(oppId,fid,type){
+  const area=document.getElementById("quote-form-area");
+  const fd=getOppFileData(oppId); const file=fd.files.find(x=>x.id===fid); if(!file) return;
+  const typeLabel=type==="sell"?"Sell":"Buy";
+  area.innerHTML=`<div style="background:${type==="sell"?"#f0f6ff":"#f0fdf8"};border:1.5px solid ${type==="sell"?"#0052cc":"#10b981"};border-radius:var(--radius);padding:14px;margin-top:14px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:4px;color:${type==="sell"?"var(--accent)":"#10b981"}">Move <em>${esc(file.name)}</em> → ${typeLabel} Quote</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">Fill in the quote details then confirm. The file will move from General Files into ${typeLabel} Quotes.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="op-field-label">Amount ($)</label><input class="op-input" id="pf-amount" type="number" min="0" placeholder="0" value="${file.amount||''}" /></div>
+      <div><label class="op-field-label">Expiry Date</label><input class="op-input" id="pf-expiry" type="date" value="${file.expiryDate||''}" /></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="op-save-btn" id="pf-confirm" style="padding:7px 16px;font-size:12px;background:${type==="sell"?"var(--accent)":"#10b981"}">Move to ${typeLabel} Quotes</button>
+      <button class="nop-cancel" id="pf-cancel" style="padding:7px 14px;font-size:12px">Cancel</button>
+    </div>
+  </div>`;
+  area.scrollIntoView({behavior:"smooth",block:"nearest"});
+  document.getElementById("pf-cancel").addEventListener("click",()=>area.innerHTML="");
+  document.getElementById("pf-confirm").addEventListener("click",()=>{
+    const amount=parseFloat(document.getElementById("pf-amount").value)||null;
+    const expiry=document.getElementById("pf-expiry").value||null;
+    const fd2=getOppFileData(oppId);
+    const idx=fd2.files.findIndex(x=>x.id===fid); if(idx<0) return;
+    const [moved]=fd2.files.splice(idx,1);
+    moved.amount=amount; moved.expiryDate=expiry;
+    const bucket=type==="sell"?"sellQuotes":"buyQuotes";
+    fd2[bucket].push(moved);
+    setOppFileData(oppId,fd2); ss(K.files,oppFiles);
+    renderOppFiles(oppId); showToast(`Moved to ${typeLabel} Quotes ✓`,"ok");
+  });
+}
+
 function fileIcon(type){if(!type)return"📄";if(type.startsWith("image/"))return"🖼";if(type.includes("pdf"))return"📕";if(type.includes("excel")||type.includes("spreadsheet"))return"📊";if(type.includes("word")||type.includes("document"))return"📝";return"📄";}
 function fmtFileSize(b){if(b<1024)return b+"B";if(b<1048576)return(b/1024).toFixed(1)+"KB";return(b/1048576).toFixed(1)+"MB";}
 
@@ -1726,13 +1833,12 @@ function saveExpiryDate(oppId,fileId,bucket,val){
 }
 
 // ── File preview ──────────────────────────────────────────────────────────────
-function openPreview(file){
-  document.getElementById("prev-title").textContent=file.name;
-  const body=document.getElementById("prev-body"); body.innerHTML="";
+function buildPreviewContent(file,bodyEl){
+  bodyEl.innerHTML="";
   if(file.type.startsWith("image/")){
-    const img=document.createElement("img"); img.src=file.dataUrl; body.appendChild(img);
+    const img=document.createElement("img"); img.src=file.dataUrl; bodyEl.appendChild(img);
   } else if(file.type.includes("pdf")){
-    const iframe=document.createElement("iframe"); iframe.src=file.dataUrl; body.appendChild(iframe);
+    const iframe=document.createElement("iframe"); iframe.src=file.dataUrl; bodyEl.appendChild(iframe);
   } else if(file.type.includes("excel")||file.type.includes("spreadsheet")||/\.(xlsx|xls)$/i.test(file.name)){
     try{
       const base64=file.dataUrl.split(",")[1];
@@ -1742,15 +1848,42 @@ function openPreview(file){
       const wrap=document.createElement("div"); wrap.className="prev-xl-wrap";
       wrap.innerHTML=html;
       wrap.querySelectorAll("table").forEach(t=>t.className="prev-xl-table");
-      body.appendChild(wrap);
-    }catch{body.innerHTML='<div class="prev-unsupported"><span style="font-size:32px">📊</span><span>Could not parse spreadsheet</span></div>';}
+      bodyEl.appendChild(wrap);
+    }catch{bodyEl.innerHTML='<div class="prev-unsupported"><span style="font-size:32px">📊</span><span>Could not parse spreadsheet</span></div>';}
   } else {
-    body.innerHTML=`<div class="prev-unsupported"><span style="font-size:32px">${fileIcon(file.type)}</span><span>No preview available for this file type.</span><a href="${esc(file.dataUrl)}" download="${esc(file.name)}" style="color:var(--accent);text-decoration:underline">Download instead</a></div>`;
+    bodyEl.innerHTML=`<div class="prev-unsupported"><span style="font-size:32px">${fileIcon(file.type)}</span><span>No preview available for this file type.</span><a href="${esc(file.dataUrl)}" download="${esc(file.name)}" style="color:var(--accent);text-decoration:underline">Download instead</a></div>`;
   }
+}
+
+function openPreview(file){
+  // If the opp detail panel is open, show inline split-pane
+  if(document.getElementById("opp-overlay").classList.contains("open")){
+    openInlinePreview(file); return;
+  }
+  document.getElementById("prev-title").textContent=file.name;
+  buildPreviewContent(file,document.getElementById("prev-body"));
   document.getElementById("preview-overlay").classList.add("open");
 }
 
+function openInlinePreview(file){
+  document.getElementById("inl-prev-title").textContent=file.name;
+  buildPreviewContent(file,document.getElementById("inl-prev-body"));
+  document.getElementById("opp-preview-side").style.display="flex";
+  document.getElementById("opp-preview-side").style.flexDirection="column";
+  document.getElementById("opp-panel").classList.add("split");
+}
+
+function closeInlinePreview(){
+  document.getElementById("opp-preview-side").style.display="none";
+  document.getElementById("inl-prev-body").innerHTML="";
+  document.getElementById("opp-panel").classList.remove("split");
+}
+
 function closePreview(){document.getElementById("preview-overlay").classList.remove("open");}
+
+// also close inline when opp panel closes
+const _origCloseOpp=closeOppDetail;
+function closeOppDetail(){closeInlinePreview();_origCloseOpp();}
 
 function closeOppDetail(){document.getElementById("opp-overlay").classList.remove("open");currentOppDetailId=null;}
 function openNotes(oppId){openOppDetail(oppId,"notes");}
