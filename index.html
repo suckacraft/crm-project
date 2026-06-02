@@ -887,6 +887,115 @@ function marginVal(opp) { return (opp.value||0) * effMargin(opp) / 100; }
 let toastTimer;
 function showToast(msg,type="") { const el=document.getElementById("toast"); el.textContent=msg; el.className="show"+(type?" "+type:""); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.className="";},3000); }
 
+// ── Expiry Dashboard ──────────────────────────────────────────────────────────
+function renderExpiry(){
+  const el=document.getElementById("expiry-view"); el.innerHTML="";
+  const rows=[];
+  opportunities.forEach(opp=>{
+    const fd=getOppFileData(opp.id);
+    ["sellQuotes","buyQuotes"].forEach(bucket=>{
+      (fd[bucket]||[]).forEach(f=>{
+        if(!f.expiryDate) return;
+        rows.push({opp,file:f,quoteType:bucket==="sellQuotes"?"sell":"buy",daysLeft:daysDiff(f.expiryDate),cls:expiryClass(f.expiryDate)});
+      });
+    });
+  });
+  rows.sort((a,b)=>{
+    const order={overdue:0,soon:1,"":2};
+    if(order[a.cls]!==order[b.cls]) return order[a.cls]-order[b.cls];
+    return (a.daysLeft??9999)-(b.daysLeft??9999);
+  });
+  let fStatus="all"; let fType="all"; let fCat="all";
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h2 style="font-size:18px;font-weight:700;margin:0">Quote Expiry</h2>
+      <span id="exp-summary" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:4px">
+        ${["all","overdue","soon",""].map(v=>`<button class="exp-filter-btn" data-group="status" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All":v==="overdue"?"Overdue":v==="soon"?"Soon":"Active"}</button>`).join("")}
+      </div>
+      <div style="display:flex;gap:4px">
+        ${["all","sell","buy"].map(v=>`<button class="exp-filter-btn" data-group="type" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Types":v==="sell"?"Sell":"Buy"}</button>`).join("")}
+      </div>
+      <div style="display:flex;gap:4px">
+        ${["all","hw","sw","ps"].map(v=>`<button class="exp-filter-btn" data-group="cat" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Categories":v==="hw"?"HW":v==="sw"?"SW":"PS"}</button>`).join("")}
+      </div>
+      <span id="exp-count" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Status</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">File</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Type</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Categories</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Amount</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Expiry</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Days Left</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Opportunity</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Account</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Stage</th>
+        </tr></thead>
+        <tbody id="exp-tbody"></tbody>
+      </table>
+    </div>
+    ${!rows.length?'<p style="text-align:center;color:var(--muted);padding:40px">No quotes with expiry dates found. Add expiry dates to your sell and buy quotes.</p>':''}
+  `;
+  const tbody=document.getElementById("exp-tbody");
+  const summary=document.getElementById("exp-summary");
+  const countEl=document.getElementById("exp-count");
+  function renderTable(){
+    const filtered=rows.filter(r=>{
+      if(fStatus!=="all"&&r.cls!==fStatus) return false;
+      if(fType!=="all"&&r.quoteType!==fType) return false;
+      if(fCat!=="all"&&!(r.file.categories||[]).some(c=>c.type===fCat)) return false;
+      return true;
+    });
+    const overdueCnt=rows.filter(r=>r.cls==="overdue").length;
+    const soonCnt=rows.filter(r=>r.cls==="soon").length;
+    tbody.innerHTML=filtered.map(r=>{
+      const stageObj=config.stages.find(s=>s.id===r.opp.stage);
+      const clsColor=r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"#10b981";
+      const clsLabel=r.cls==="overdue"?"OVERDUE":r.cls==="soon"?"SOON":"OK";
+      const catPills=(r.file.categories||[]).map(c=>`<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;background:${c.type==='hw'?'#e8f0fe':c.type==='sw'?'#e6f9f0':'#fff3e0'};color:${c.type==='hw'?'#1a73e8':c.type==='sw'?'#137333':'#e65100'}">${c.type.toUpperCase()}</span>`).join(" ");
+      return `<tr>
+        <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${clsColor}20;color:${clsColor}">${clsLabel}</span></td>
+        <td><a class="exp-file-link" data-oppid="${r.opp.id}" data-fid="${r.file.id}" style="color:var(--accent);font-size:12px;cursor:pointer;text-decoration:none">${esc(r.file.name)}</a></td>
+        <td style="font-size:12px;text-transform:capitalize">${r.quoteType}</td>
+        <td style="font-size:12px">${catPills||'—'}</td>
+        <td style="font-size:12px">${r.file.amount?fmt(r.file.amount):"—"}</td>
+        <td style="font-size:12px">${fmtDate(r.file.expiryDate)}</td>
+        <td style="font-size:12px;color:${r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"var(--text)"}">${r.daysLeft!=null?(r.daysLeft<0?Math.abs(r.daysLeft)+" overdue":r.daysLeft===0?"Today":r.daysLeft+"d"):"—"}</td>
+        <td><a class="exp-opp-link" data-id="${r.opp.id}" style="color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">${esc(r.opp.name)}</a></td>
+        <td style="font-size:12px">${esc(r.opp.account||"—")}</td>
+        <td style="font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:${stageObj?.color||'#888'}20;color:${stageObj?.color||'#888'};font-weight:600">${esc(stageObj?.label||r.opp.stage)}</span></td>
+      </tr>`;
+    }).join("");
+    summary.textContent=`${overdueCnt} overdue · ${soonCnt} expiring soon · ${rows.filter(r=>r.cls==="").length} active`;
+    countEl.textContent=`${filtered.length} quote${filtered.length!==1?"s":""}`;
+  }
+  renderTable();
+  el.querySelectorAll(".exp-filter-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const grp=btn.dataset.group; const val=btn.dataset.val;
+      el.querySelectorAll(`.exp-filter-btn[data-group="${grp}"]`).forEach(b=>{b.style.background="#fff";b.style.color="var(--text)";});
+      btn.style.background="var(--accent)";btn.style.color="#fff";
+      if(grp==="status") fStatus=val;
+      else if(grp==="type") fType=val;
+      else fCat=val;
+      renderTable();
+    });
+  });
+  el.querySelectorAll(".exp-opp-link").forEach(a=>a.addEventListener("click",()=>openOppDetail(a.dataset.id,"files")));
+  el.querySelectorAll(".exp-file-link").forEach(a=>a.addEventListener("click",()=>{
+    const opp2=opportunities.find(o=>o.id===a.dataset.oppid); if(!opp2) return;
+    const fd2=getOppFileData(opp2.id);
+    const all=[...fd2.files,...fd2.sellQuotes,...fd2.buyQuotes];
+    const f=all.find(x=>x.id===a.dataset.fid); if(f) openPreview(f);
+  }));
+}
+
 // ── Logo ──────────────────────────────────────────────────────────────────────
 function updateHeaderLogo(){
   const src=ls(K.logo);
@@ -1105,6 +1214,7 @@ function importData(incoming) {
   if(nowInCRM.length) setTimeout(()=>showToast(`${nowInCRM.length} manual deal${nowInCRM.length>1?"s":""} found in import — check the Manual tab`),1200);
   opportunities=[...imported,...manuals];
   updateManualTabBadge();
+  updateExpiryBadge();
   persistOpps();
   localStorage.setItem(K.upload,new Date().toISOString());
   refreshLastUpload(); dismissNudge();
@@ -1730,15 +1840,6 @@ function renderOppDetails(opp){
       <button class="op-push-margin-btn" id="op-push-margin-btn" data-margin="${quoteMarginPct}">↑ Push to Margin</button>
     </div>`:`<p style="font-size:12px;color:var(--muted);margin:0">Upload both a sell and buy quote with amounts to calculate implied margin.</p>`}
   </div>`;
-  // Professional services
-  const ps=opp.ps||{};
-  const psEnabled=ps.enabled||false;
-  const psUnits=ps.units||1;
-  const psUnitType=ps.unitType||"days";
-  const psBuy=ps.buy!=null?ps.buy:1200;
-  const psSell=ps.sell!=null?ps.sell:2000;
-  const psSellTotal=psSell*psUnits; const psBuyTotal=psBuy*psUnits;
-  const psMarg=psSell>0?Math.round(((psSell-psBuy)/psSell)*1000)/10:0;
   el.innerHTML=`<div class="op-form">
     <div class="op-2col">
       <div class="op-field"><label class="op-field-label">Opportunity Name</label><input class="op-input" id="op-f-name" value="${esc(opp.name)}" /></div>
@@ -1833,34 +1934,78 @@ function renderOppDetails(opp){
     const sw=stageWeight(stId);
     document.getElementById("op-calcs").innerHTML=`<span class="op-calc-item">Weighted: <strong>${fmt(v*sw/100)}</strong></span><span class="op-calc-item">Margin Revenue: <strong>${fmt(v*m/100)}</strong></span><span class="op-calc-item">Effective Margin: <strong>${m}%</strong></span>`;
   }
-  function psRecalc(){
-    const units=parseFloat(document.getElementById("op-ps-units").value)||0;
-    const buy=parseFloat(document.getElementById("op-ps-buy").value)||0;
-    const sell=parseFloat(document.getElementById("op-ps-sell").value)||0;
-    const sellTot=sell*units; const buyTot=buy*units;
-    const mPct=sell>0?Math.round(((sell-buy)/sell)*1000)/10:0;
-    document.getElementById("ps-sell-tot").textContent=fmt(sellTot);
-    document.getElementById("ps-buy-tot").textContent=fmt(buyTot);
-    document.getElementById("ps-marg").textContent=mPct+"%";
+  function liveLineCalc(){
+    const hwSell=parseFloat(document.getElementById("li-hw-sell").value)||0;
+    const hwBuy=parseFloat(document.getElementById("li-hw-buy").value)||0;
+    const swSell=parseFloat(document.getElementById("li-sw-sell").value)||0;
+    const swBuy=parseFloat(document.getElementById("li-sw-buy").value)||0;
+    const psOn=document.getElementById("li-ps-toggle").checked;
+    const psUnits=parseFloat(document.getElementById("li-ps-units")?.value)||0;
+    const psSellRate=parseFloat(document.getElementById("li-ps-sell")?.value)||0;
+    const psBuyRate=parseFloat(document.getElementById("li-ps-buy")?.value)||0;
+    const psSell=psOn?psSellRate*psUnits:0;
+    const psBuy=psOn?psBuyRate*psUnits:0;
+    const rowMarg=(s,b)=>s>0?Math.round((s-b)/s*1000)/10+"%" :"—";
+    document.getElementById("li-hw-marg").textContent=rowMarg(hwSell,hwBuy);
+    document.getElementById("li-sw-marg").textContent=rowMarg(swSell,swBuy);
+    document.getElementById("li-ps-marg").textContent=psOn?rowMarg(psSell,psBuy):"—";
+    const tSell=hwSell+swSell+psSell;
+    const tBuy=hwBuy+swBuy+psBuy;
+    document.getElementById("li-total-sell").textContent=tSell?fmt(tSell):"—";
+    document.getElementById("li-total-buy").textContent=tBuy?fmt(tBuy):"—";
+    document.getElementById("li-total-marg").textContent=rowMarg(tSell,tBuy);
   }
   ["op-f-value","op-f-margin","op-f-stage"].forEach(id=>document.getElementById(id)?.addEventListener("input",recalc));
-  ["op-ps-units","op-ps-buy","op-ps-sell"].forEach(id=>document.getElementById(id)?.addEventListener("input",psRecalc));
-  document.getElementById("op-ps-toggle").addEventListener("change",function(){
-    document.getElementById("op-ps-body").style.display=this.checked?"block":"none";
+  el.querySelectorAll(".op-li-input").forEach(inp=>inp.addEventListener("input",liveLineCalc));
+  document.getElementById("li-ps-toggle").addEventListener("change",function(){
+    document.getElementById("li-ps-unit-row").style.display=this.checked?"flex":"none";
+    document.getElementById("li-ps-sell-wrap").style.display=this.checked?"block":"none";
+    document.getElementById("li-ps-buy-wrap").style.display=this.checked?"block":"none";
+    liveLineCalc();
   });
-  document.getElementById("op-ps-push-val")?.addEventListener("click",()=>{
-    const units=parseFloat(document.getElementById("op-ps-units").value)||0;
-    const sell=parseFloat(document.getElementById("op-ps-sell").value)||0;
-    document.getElementById("op-f-value").value=(sell*units).toFixed(2);
-    recalc(); showToast("PS sell total pushed to Value");
+  liveLineCalc();
+  document.getElementById("op-li-load").addEventListener("click",()=>{
+    const fd2=getOppFileData(opp.id);
+    let loaded=[];
+    ["hw","sw","ps"].forEach(cat=>{
+      const latestSell=[...fd2.sellQuotes].sort((a,b)=>b.addedAt.localeCompare(a.addedAt))
+        .find(q=>(q.categories||[]).some(c=>c.type===cat));
+      const latestBuy=[...fd2.buyQuotes].sort((a,b)=>b.addedAt.localeCompare(a.addedAt))
+        .find(q=>(q.categories||[]).some(c=>c.type===cat));
+      if(latestSell){
+        const catAmt=(latestSell.categories||[]).find(c=>c.type===cat)?.amount||latestSell.amount||0;
+        if(cat==="ps"){const u=parseFloat(document.getElementById("li-ps-units")?.value)||1;document.getElementById("li-ps-sell").value=u>0?Math.round(catAmt/u):catAmt;}
+        else document.getElementById(`li-${cat}-sell`).value=catAmt||"";
+        loaded.push(cat.toUpperCase()+" sell");
+      }
+      if(latestBuy){
+        const catAmt=(latestBuy.categories||[]).find(c=>c.type===cat)?.amount||latestBuy.amount||0;
+        if(cat==="ps"){const u=parseFloat(document.getElementById("li-ps-units")?.value)||1;document.getElementById("li-ps-buy").value=u>0?Math.round(catAmt/u):catAmt;}
+        else document.getElementById(`li-${cat}-buy`).value=catAmt||"";
+        loaded.push(cat.toUpperCase()+" buy");
+      }
+    });
+    liveLineCalc();
+    showToast(loaded.length?`Loaded: ${loaded.join(", ")}`:"No tagged quotes found","ok");
   });
-  document.getElementById("op-ps-push-margin")?.addEventListener("click",()=>{
-    const units=parseFloat(document.getElementById("op-ps-units").value)||0;
-    const buy=parseFloat(document.getElementById("op-ps-buy").value)||0;
-    const sell=parseFloat(document.getElementById("op-ps-sell").value)||0;
-    const mPct=sell>0?Math.round(((sell-buy)/sell)*1000)/10:0;
-    document.getElementById("op-f-margin").value=mPct;
-    recalc(); showToast("PS margin pushed to deal margin");
+  document.getElementById("op-li-sync").addEventListener("click",()=>{
+    const hwSell=parseFloat(document.getElementById("li-hw-sell").value)||0;
+    const hwBuy=parseFloat(document.getElementById("li-hw-buy").value)||0;
+    const swSell=parseFloat(document.getElementById("li-sw-sell").value)||0;
+    const swBuy=parseFloat(document.getElementById("li-sw-buy").value)||0;
+    const psOn=document.getElementById("li-ps-toggle").checked;
+    const psUnits=parseFloat(document.getElementById("li-ps-units")?.value)||0;
+    const psSellRate=parseFloat(document.getElementById("li-ps-sell")?.value)||0;
+    const psBuyRate=parseFloat(document.getElementById("li-ps-buy")?.value)||0;
+    const psSell=psOn?psSellRate*psUnits:0;
+    const psBuy=psOn?psBuyRate*psUnits:0;
+    const tSell=hwSell+swSell+psSell;
+    const tBuy=hwBuy+swBuy+psBuy;
+    const blended=tSell>0?Math.round((tSell-tBuy)/tSell*1000)/10:0;
+    document.getElementById("op-f-value").value=tSell.toFixed(2);
+    document.getElementById("op-f-margin").value=blended;
+    recalc();
+    showToast(`Synced: Value ${fmt(tSell)} · Margin ${blended}%`,"ok");
   });
   document.getElementById("op-push-margin-btn")?.addEventListener("click",function(){
     document.getElementById("op-f-margin").value=this.dataset.margin;
@@ -1882,17 +2027,18 @@ function saveOppDetail(opp){
   opp.margin=mRaw!==""?Math.max(0,Math.min(100,parseFloat(mRaw)||0)):null;
   opp.closeDate=document.getElementById("op-f-closedate").value;
   opp.description=document.getElementById("op-f-desc").value;
-  // Professional services
-  const psEnabled=document.getElementById("op-ps-toggle")?.checked;
-  if(psEnabled){
-    const psUnits=parseFloat(document.getElementById("op-ps-units")?.value)||0;
-    const psUnitType=document.getElementById("op-ps-unit-type")?.value||"days";
-    const psBuy=parseFloat(document.getElementById("op-ps-buy")?.value)||1200;
-    const psSell=parseFloat(document.getElementById("op-ps-sell")?.value)||2000;
-    opp.ps={enabled:true,units:psUnits,unitType:psUnitType,buy:psBuy,sell:psSell};
-  } else {
-    opp.ps=opp.ps?{...opp.ps,enabled:false}:null;
-  }
+  // Line items
+  const liHwSell=parseFloat(document.getElementById("li-hw-sell")?.value)||0;
+  const liHwBuy=parseFloat(document.getElementById("li-hw-buy")?.value)||0;
+  const liSwSell=parseFloat(document.getElementById("li-sw-sell")?.value)||0;
+  const liSwBuy=parseFloat(document.getElementById("li-sw-buy")?.value)||0;
+  const liPsOn=document.getElementById("li-ps-toggle")?.checked||false;
+  const liPsUnits=parseFloat(document.getElementById("li-ps-units")?.value)||1;
+  const liPsUnitType=document.getElementById("li-ps-unit-type")?.value||"days";
+  const liPsSell=parseFloat(document.getElementById("li-ps-sell")?.value)||2000;
+  const liPsBuy=parseFloat(document.getElementById("li-ps-buy")?.value)||1200;
+  opp.lineItems={hw:{sell:liHwSell,buy:liHwBuy},sw:{sell:liSwSell,buy:liSwBuy},ps:{enabled:liPsOn,units:liPsUnits,unitType:liPsUnitType,sellRate:liPsSell,buyRate:liPsBuy}};
+  delete opp.ps;
   touchActivity(opp.id); persistOpps();
   document.getElementById("op-title").textContent=opp.name;
   document.getElementById("op-account-sub").textContent=opp.account||"";
@@ -2021,6 +2167,7 @@ function renderOppFiles(oppId){
   });
 
   updateOppTabCounts(oppId);
+  updateExpiryBadge();
 }
 
 function renderQuoteSection(quotes,type){
