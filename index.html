@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Opportunities Kanban</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -346,7 +347,7 @@
   <span id="last-upload"></span>
   <div id="btn-upload-wrap">
     <button id="btn-upload">⬆ Upload CSV</button>
-    <input id="csv-input" type="file" accept=".csv,text/csv" />
+    <input id="csv-input" type="file" accept=".csv,.xlsx,.xls,text/csv" />
   </div>
 </div>
 
@@ -465,18 +466,32 @@
   function onFileSelected(e) {
     const file = e.target.files[0];
     if (!file) return;
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = ev => {
       try {
-        const parsed = parseCSV(ev.target.result);
-        if (parsed.length === 0) { showToast("CSV contained no rows", true); return; }
+        const parsed = isExcel ? parseXLSX(ev.target.result) : parseCSV(ev.target.result);
+        if (parsed.length === 0) { showToast("File contained no rows", true); return; }
         importData(parsed);
       } catch (err) {
-        showToast("Could not parse CSV: " + err.message, true);
+        showToast("Could not parse file: " + err.message, true);
       }
       e.target.value = "";
     };
-    reader.readAsText(file);
+    if (isExcel) reader.readAsArrayBuffer(file);
+    else reader.readAsText(file);
+  }
+
+  function parseXLSX(arrayBuffer) {
+    const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    // Normalise: SheetJS gives us { HeaderName: value } objects
+    return rows.map(row => {
+      const lower = {};
+      Object.keys(row).forEach(k => { lower[k.trim().toLowerCase()] = String(row[k] ?? "").trim(); });
+      return normaliseRow(lower);
+    }).filter(r => r && r.name);
   }
 
   function parseCSV(text) {
