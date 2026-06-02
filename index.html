@@ -59,6 +59,7 @@
     .f-text:focus { border-color: var(--accent); }
     .f-sep { color: var(--muted); font-size: 12px; }
     #btn-clear-filters { font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
+    #f-date-custom { display: none; align-items: center; gap: 4px; }
 
     /* ── Kanban board ── */
     #board { display: flex; gap: 10px; padding: 12px 14px; overflow-x: auto; flex: 1; align-items: flex-start; }
@@ -577,11 +578,59 @@
     <span class="f-label">Company</span>
     <input class="f-text" id="f-company" type="search" placeholder="Account name…" />
   </div>
-  <div class="f-group">
+  <div class="f-group" id="f-date-group">
     <span class="f-label">Close Date</span>
-    <input class="f-date" id="f-date-from" type="date" title="From" />
-    <span class="f-sep">→</span>
-    <input class="f-date" id="f-date-to" type="date" title="To" />
+    <select class="f-text" id="f-date-preset" style="width:160px">
+      <option value="">Any time</option>
+      <optgroup label="Relative">
+        <option value="today">Today</option>
+        <option value="tomorrow">Tomorrow</option>
+        <option value="this_week">This week</option>
+        <option value="last_week">Last week</option>
+        <option value="next_week">Next week</option>
+        <option value="this_month">This month</option>
+        <option value="last_month">Last month</option>
+        <option value="next_month">Next month</option>
+        <option value="this_quarter">This quarter</option>
+        <option value="last_quarter">Last quarter</option>
+        <option value="next_quarter">Next quarter</option>
+        <option value="this_year">This year</option>
+        <option value="last_year">Last year</option>
+        <option value="next_year">Next year</option>
+        <option value="last_7">Last 7 days</option>
+        <option value="last_30">Last 30 days</option>
+        <option value="last_90">Last 90 days</option>
+        <option value="last_365">Last 365 days</option>
+        <option value="next_30">Next 30 days</option>
+        <option value="next_90">Next 90 days</option>
+      </optgroup>
+      <optgroup label="This Year's Quarters">
+        <option value="q1_this">Q1 this year</option>
+        <option value="q2_this">Q2 this year</option>
+        <option value="q3_this">Q3 this year</option>
+        <option value="q4_this">Q4 this year</option>
+      </optgroup>
+      <optgroup label="Last Year's Quarters">
+        <option value="q1_last">Q1 last year</option>
+        <option value="q2_last">Q2 last year</option>
+        <option value="q3_last">Q3 last year</option>
+        <option value="q4_last">Q4 last year</option>
+      </optgroup>
+      <optgroup label="Next Year's Quarters">
+        <option value="q1_next">Q1 next year</option>
+        <option value="q2_next">Q2 next year</option>
+        <option value="q3_next">Q3 next year</option>
+        <option value="q4_next">Q4 next year</option>
+      </optgroup>
+      <optgroup label="Custom">
+        <option value="custom">Custom range…</option>
+      </optgroup>
+    </select>
+    <span id="f-date-custom" style="display:none;align-items:center;gap:4px">
+      <input class="f-date" id="f-date-from" type="date" title="From" />
+      <span class="f-sep">→</span>
+      <input class="f-date" id="f-date-to" type="date" title="To" />
+    </span>
   </div>
   <div class="f-group">
     <span class="f-label">Value</span>
@@ -831,6 +880,12 @@ function wireEvents() {
 
   document.getElementById("btn-filter").addEventListener("click",toggleFilters);
   document.getElementById("btn-clear-filters").addEventListener("click",clearFilters);
+  document.getElementById("f-date-preset").addEventListener("change",e=>{
+    const v=e.target.value;
+    const custom=document.getElementById("f-date-custom");
+    custom.style.display=v==="custom"?"flex":"none";
+    if(v!=="custom"){const r=resolveDatePreset(v);filters.dateFrom=r.from;filters.dateTo=r.to;applyFilters();}
+  });
   document.getElementById("f-date-from").addEventListener("change",e=>{filters.dateFrom=e.target.value;applyFilters();});
   document.getElementById("f-date-to").addEventListener("change",e=>{filters.dateTo=e.target.value;applyFilters();});
   document.getElementById("f-val-min").addEventListener("input",e=>{filters.valMin=e.target.value;applyFilters();});
@@ -1032,12 +1087,68 @@ function toggleFilters(){filterOpen=!filterOpen;document.getElementById("filter-
 function applyFilters(){updateFilterCount();renderView();}
 function clearFilters(){
   filters={statuses:new Set(),stages:new Set(),dateFrom:"",dateTo:"",valMin:"",valMax:"",company:""};
+  document.getElementById("f-date-preset").value="";
   document.getElementById("f-date-from").value="";document.getElementById("f-date-to").value="";
+  document.getElementById("f-date-custom").style.display="none";
   document.getElementById("f-val-min").value="";document.getElementById("f-val-max").value="";
   document.getElementById("f-company").value="";
   buildFilterChips();applyFilters();
 }
-function updateFilterCount(){const n=filters.statuses.size+filters.stages.size+(filters.dateFrom?1:0)+(filters.dateTo?1:0)+(filters.valMin?1:0)+(filters.valMax?1:0)+(filters.company?1:0);const el=document.getElementById("filter-count");el.textContent=n||"";el.classList.toggle("show",n>0);}
+function updateFilterCount(){const dateActive=(filters.dateFrom||filters.dateTo)?1:0;const n=filters.statuses.size+filters.stages.size+dateActive+(filters.valMin?1:0)+(filters.valMax?1:0)+(filters.company?1:0);const el=document.getElementById("filter-count");el.textContent=n||"";el.classList.toggle("show",n>0);}
+function resolveDatePreset(preset){
+  if(!preset) return {from:"",to:""};
+  const now=new Date(); now.setHours(0,0,0,0);
+  const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+  const fy=(y,m)=>{const d=new Date(y,m,1);return d;};
+  const ly=(y,m)=>{const d=new Date(y,m+1,0);return d;};
+  const y=now.getFullYear(), m=now.getMonth();
+  const qtr=Math.floor(m/3); // 0-3
+  const qStart=(yr,q)=>fy(yr,q*3);
+  const qEnd=(yr,q)=>ly(yr,q*3+2);
+  const weekStart=d=>{const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;};
+  const monthStart=(yr,mo)=>fy(yr,mo);
+  const monthEnd=(yr,mo)=>ly(yr,mo);
+  const map={
+    today:        {from:iso(now),         to:iso(now)},
+    tomorrow:     {from:iso(add(now,1)),  to:iso(add(now,1))},
+    this_week:    {from:iso(weekStart(now)),to:iso(add(weekStart(now),6))},
+    last_week:    {from:iso(add(weekStart(now),-7)),to:iso(add(weekStart(now),-1))},
+    next_week:    {from:iso(add(weekStart(now),7)), to:iso(add(weekStart(now),13))},
+    this_month:   {from:iso(monthStart(y,m)),   to:iso(monthEnd(y,m))},
+    last_month:   {from:iso(monthStart(y,m-1)), to:iso(monthEnd(y,m-1))},
+    next_month:   {from:iso(monthStart(y,m+1)), to:iso(monthEnd(y,m+1))},
+    this_quarter: {from:iso(qStart(y,qtr)),     to:iso(qEnd(y,qtr))},
+    last_quarter: {from:iso(qStart(y,qtr>0?qtr-1:3)), to:iso(qEnd(y,qtr>0?qtr-1:3))},
+    next_quarter: {from:iso(qStart(y,qtr<3?qtr+1:0)), to:iso(qEnd(y,qtr<3?qtr+1:0))},
+    this_year:    {from:iso(fy(y,0)),  to:iso(ly(y,11))},
+    last_year:    {from:iso(fy(y-1,0)),to:iso(ly(y-1,11))},
+    next_year:    {from:iso(fy(y+1,0)),to:iso(ly(y+1,11))},
+    last_7:       {from:iso(add(now,-6)),  to:iso(now)},
+    last_30:      {from:iso(add(now,-29)), to:iso(now)},
+    last_90:      {from:iso(add(now,-89)), to:iso(now)},
+    last_365:     {from:iso(add(now,-364)),to:iso(now)},
+    next_30:      {from:iso(now), to:iso(add(now,30))},
+    next_90:      {from:iso(now), to:iso(add(now,90))},
+    q1_this:{from:iso(qStart(y,0)),  to:iso(qEnd(y,0))},
+    q2_this:{from:iso(qStart(y,1)),  to:iso(qEnd(y,1))},
+    q3_this:{from:iso(qStart(y,2)),  to:iso(qEnd(y,2))},
+    q4_this:{from:iso(qStart(y,3)),  to:iso(qEnd(y,3))},
+    q1_last:{from:iso(qStart(y-1,0)),to:iso(qEnd(y-1,0))},
+    q2_last:{from:iso(qStart(y-1,1)),to:iso(qEnd(y-1,1))},
+    q3_last:{from:iso(qStart(y-1,2)),to:iso(qEnd(y-1,2))},
+    q4_last:{from:iso(qStart(y-1,3)),to:iso(qEnd(y-1,3))},
+    q1_next:{from:iso(qStart(y+1,0)),to:iso(qEnd(y+1,0))},
+    q2_next:{from:iso(qStart(y+1,1)),to:iso(qEnd(y+1,1))},
+    q3_next:{from:iso(qStart(y+1,2)),to:iso(qEnd(y+1,2))},
+    q4_next:{from:iso(qStart(y+1,3)),to:iso(qEnd(y+1,3))},
+  };
+  // handle last_quarter / next_quarter year roll
+  if(preset==="last_quarter"){const lq=qtr===0?3:qtr-1;const ly2=qtr===0?y-1:y;return{from:iso(qStart(ly2,lq)),to:iso(qEnd(ly2,lq))};}
+  if(preset==="next_quarter"){const nq=qtr===3?0:qtr+1;const ny=qtr===3?y+1:y;return{from:iso(qStart(ny,nq)),to:iso(qEnd(ny,nq))};}
+  return map[preset]||{from:"",to:""};
+}
+
 function applyOpFilters(opps){
   const q=document.getElementById("search").value.trim().toLowerCase();
   return opps.filter(o=>{
