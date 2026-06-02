@@ -294,9 +294,116 @@
     .op-file-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:20px; padding:4px; border-radius:4px; flex-shrink:0; line-height:1; }
     .op-file-del:hover { background:#ffebe6; color:#de350b; }
     .card-margin-pill { font-size:10px; color:var(--muted); background:#f0f2f5; padding:1px 5px; border-radius:8px; white-space:nowrap; }
+
+    /* ── Manual deals view ── */
+    #manual-view { display:none; flex:1; overflow-y:auto; padding:16px 18px; flex-direction:column; gap:0; }
+    #manual-view.show { display:flex; }
+    .mv-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+    .mv-header h2 { font-size:15px; font-weight:700; flex:1; }
+    .mv-filter-tabs { display:flex; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .mv-ftab { font-size:11px; font-weight:600; padding:5px 11px; border:none; background:#fff; color:var(--muted); cursor:pointer; white-space:nowrap; }
+    .mv-ftab.active { background:var(--accent); color:#fff; }
+    .mv-add-btn { font-size:12px; font-weight:700; padding:6px 14px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
+    .mv-add-btn:hover { background:#0043a8; }
+    .mv-empty { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; }
+    .mv-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; border-left:3px solid transparent; transition:opacity .15s; }
+    .mv-card.added-crm { opacity:.55; border-left-color:#10b981; }
+    .mv-check { flex-shrink:0; width:22px; height:22px; border-radius:50%; border:2px solid var(--border); background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; transition:border-color .12s,background .12s; margin-top:1px; }
+    .mv-check:hover { border-color:var(--accent); }
+    .mv-check.done { border-color:#10b981; background:#10b981; color:#fff; }
+    .mv-body { flex:1; min-width:0; }
+    .mv-name { font-size:13px; font-weight:700; margin-bottom:3px; cursor:pointer; }
+    .mv-name:hover { color:var(--accent); text-decoration:underline; }
+    .mv-name.done-name { text-decoration:line-through; color:var(--muted); }
+    .mv-meta { font-size:11px; color:var(--muted); display:flex; flex-wrap:wrap; gap:8px; }
+    .mv-badge { font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; }
+    .mv-crm-tag { font-size:11px; font-weight:600; color:#10b981; background:#e3fcef; padding:2px 8px; border-radius:8px; }
+    .mv-actions { display:flex; gap:6px; flex-shrink:0; margin-left:auto; }
+    .mv-edit-btn { font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--radius); border:1px solid var(--border); background:#fff; cursor:pointer; color:var(--text); }
+    .mv-edit-btn:hover { background:var(--bg); }
+    .mv-del-btn { font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--radius); border:1px solid #de350b20; background:#fff; cursor:pointer; color:#de350b; }
+    .mv-del-btn:hover { background:#ffebe6; }
+
+    /* ── New Opp form panel ── */
+    #new-opp-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.45); z-index:400; align-items:flex-start; justify-content:flex-end; }
+    #new-opp-overlay.open { display:flex; }
+    #new-opp-panel { width:520px; height:100vh; background:#fff; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideIn .2s ease; overflow-y:auto; }
+    .nop-head { display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); gap:10px; position:sticky; top:0; background:#fff; z-index:1; }
+    .nop-head h2 { font-size:16px; font-weight:700; flex:1; }
+    .nop-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--muted); line-height:1; }
+    .nop-body { padding:20px; display:flex; flex-direction:column; gap:14px; flex:1; }
+    .nop-field { display:flex; flex-direction:column; gap:4px; }
+    .nop-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+    .nop-input,.nop-select { font-size:13px; padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; background:#fff; }
+    .nop-input:focus,.nop-select:focus { border-color:var(--accent); }
+    .nop-textarea { font-size:13px; padding:9px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; resize:vertical; font-family:inherit; line-height:1.6; min-height:80px; }
+    .nop-textarea:focus { border-color:var(--accent); }
+    .nop-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .nop-footer { display:flex; gap:8px; padding:14px 20px; border-top:1px solid var(--border); position:sticky; bottom:0; background:#fff; }
+    .nop-save { flex:1; font-size:13px; font-weight:700; padding:9px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; }
+    .nop-save:hover { background:#0043a8; }
+    .nop-cancel { font-size:13px; padding:9px 18px; border-radius:var(--radius); border:1px solid var(--border); background:#fff; cursor:pointer; }
+    .nop-cancel:hover { background:var(--bg); }
+
+    /* ── File preview overlay ── */
+    #preview-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.75); z-index:500; align-items:center; justify-content:center; padding:24px; }
+    #preview-overlay.open { display:flex; }
+    #preview-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow-md); max-width:900px; width:100%; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
+    .prev-head { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); gap:10px; flex-shrink:0; }
+    .prev-title { font-size:13px; font-weight:700; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .prev-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--muted); line-height:1; flex-shrink:0; }
+    #prev-body { flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center; min-height:300px; background:#f0f2f5; }
+    #prev-body iframe { width:100%; height:75vh; border:none; background:#fff; }
+    #prev-body img { max-width:100%; max-height:75vh; object-fit:contain; display:block; margin:auto; }
+    .prev-xl-wrap { width:100%; overflow:auto; padding:12px; }
+    .prev-xl-table { border-collapse:collapse; font-size:12px; background:#fff; }
+    .prev-xl-table th { background:#f8f9fa; font-weight:700; text-align:left; padding:5px 10px; border:1px solid var(--border); font-size:11px; position:sticky; top:0; }
+    .prev-xl-table td { padding:4px 10px; border:1px solid #f0f2f5; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .prev-xl-table tr:nth-child(even) td { background:#f8f9fa; }
+    .prev-unsupported { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px; color:var(--muted); font-size:13px; width:100%; }
   </style>
 </head>
 <body>
+
+<!-- New Opportunity form panel -->
+<div id="new-opp-overlay">
+  <div id="new-opp-panel">
+    <div class="nop-head"><h2>New Opportunity</h2><button class="nop-close" id="nop-close">×</button></div>
+    <div class="nop-body">
+      <div class="nop-field"><label class="nop-label">Opportunity Name <span style="color:#de350b">*</span></label><input class="nop-input" id="nop-name" placeholder="e.g. TechCorp — Platform Expansion" /></div>
+      <div class="nop-field"><label class="nop-label">Account / Company</label><input class="nop-input" id="nop-account" placeholder="Company name" /></div>
+      <div class="nop-2col">
+        <div class="nop-field"><label class="nop-label">Stage</label><select class="nop-select" id="nop-stage"></select></div>
+        <div class="nop-field"><label class="nop-label">Status</label><select class="nop-select" id="nop-status"></select></div>
+      </div>
+      <div class="nop-2col">
+        <div class="nop-field"><label class="nop-label">Value ($)</label><input class="nop-input" id="nop-value" type="number" min="0" placeholder="0" /></div>
+        <div class="nop-field"><label class="nop-label">Margin %</label><input class="nop-input" id="nop-margin" type="number" min="0" max="100" step="0.1" placeholder="5 (default)" /></div>
+      </div>
+      <div class="nop-2col">
+        <div class="nop-field"><label class="nop-label">Close Date</label><input class="nop-input" id="nop-closedate" type="date" /></div>
+        <div class="nop-field"><label class="nop-label">Owner</label><input class="nop-input" id="nop-owner" placeholder="Your name" /></div>
+      </div>
+      <div class="nop-field"><label class="nop-label">Description / Notes</label><textarea class="nop-textarea" id="nop-desc" placeholder="Context, key contacts, background…"></textarea></div>
+      <p style="font-size:11px;color:var(--muted);background:#fffae6;border-radius:var(--radius);padding:8px 10px">This deal will appear across all views (Kanban, List, Forecast) and on the Manual tab until you mark it as Added to CRM.</p>
+    </div>
+    <div class="nop-footer">
+      <button class="nop-cancel" id="nop-cancel">Cancel</button>
+      <button class="nop-save" id="nop-save">Create Opportunity</button>
+    </div>
+  </div>
+</div>
+
+<!-- File preview overlay -->
+<div id="preview-overlay">
+  <div id="preview-panel">
+    <div class="prev-head">
+      <span class="prev-title" id="prev-title"></span>
+      <button class="prev-close" id="prev-close">×</button>
+    </div>
+    <div id="prev-body"></div>
+  </div>
+</div>
 
 <!-- Opportunity detail panel -->
 <div id="opp-overlay">
@@ -419,6 +526,7 @@
     <button class="view-tab active" data-view="kanban">Kanban</button>
     <button class="view-tab" data-view="list">List</button>
     <button class="view-tab" data-view="forecast">Forecast</button>
+    <button class="view-tab" data-view="manual" id="manual-tab-btn">Manual</button>
   </div>
   <input id="search" type="search" placeholder="Search…" />
   <button class="tb-btn" id="btn-filter">⚡ Filters <span id="filter-count"></span></button>
@@ -524,6 +632,20 @@
   </div>
 </div>
 
+<!-- Manual deals view -->
+<div id="manual-view">
+  <div class="mv-header">
+    <h2>Manual Deals</h2>
+    <div class="mv-filter-tabs">
+      <button class="mv-ftab active" data-mf="pending">Pending</button>
+      <button class="mv-ftab" data-mf="added">Added to CRM</button>
+      <button class="mv-ftab" data-mf="all">All</button>
+    </div>
+    <button class="mv-add-btn" id="mv-add-btn">+ New Opportunity</button>
+  </div>
+  <div id="mv-list"></div>
+</div>
+
 <!-- Empty state -->
 <div id="empty-state">
   <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -611,6 +733,7 @@ let fcMonthWin = "3m", fcQuarWin = "8q";
 let fcCustomM = { from:"", to:"" }, fcCustomQ = { from:"", to:"" };
 let currentOppDetailId = null;
 let currentOppTab = "details";
+let manualFilter = "pending";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function clone(x) { return JSON.parse(JSON.stringify(x)); }
@@ -656,6 +779,7 @@ function boot() {
   checkNudge();
   buildFilterChips();
   wireEvents();
+  updateManualTabBadge();
   renderView();
 }
 
@@ -699,6 +823,16 @@ function wireEvents() {
   document.getElementById("op-close").addEventListener("click",closeOppDetail);
   document.getElementById("opp-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeOppDetail();});
   document.querySelectorAll(".op-tab").forEach(t=>t.addEventListener("click",()=>switchOppTab(t.dataset.tab)));
+
+  document.getElementById("mv-add-btn").addEventListener("click",openNewOppForm);
+  document.getElementById("nop-close").addEventListener("click",closeNewOppForm);
+  document.getElementById("nop-cancel").addEventListener("click",closeNewOppForm);
+  document.getElementById("nop-save").addEventListener("click",createManualOpp);
+  document.getElementById("new-opp-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeNewOppForm();});
+  document.querySelectorAll(".mv-ftab").forEach(b=>b.addEventListener("click",()=>{manualFilter=b.dataset.mf;document.querySelectorAll(".mv-ftab").forEach(x=>x.classList.toggle("active",x===b));renderManual();}));
+
+  document.getElementById("prev-close").addEventListener("click",closePreview);
+  document.getElementById("preview-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closePreview();});
 
   document.getElementById("dp-close").addEventListener("click",closeDrill);
   document.getElementById("drill-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeDrill();});
@@ -797,7 +931,7 @@ function normalise(row) {
     if(row[key]){const iso=toISO(row[key]);if(iso)allDates[HS_DATE_FIELDS[key]]=iso;}
   });
 
-  return {id,name,account,owner,stage,status,value,closeDate,allDates,margin:null,description:"",_isNew:false};
+  return {id,name,account,owner,stage,status,value,closeDate,allDates,margin:null,description:"",_manual:false,addedToCRM:false,addedToCRMDate:null,_isNew:false};
 }
 
 function matchStage(raw) { if(!raw) return config.stages[0]?.id||"C"; const r=raw.trim().toUpperCase(); const ex=config.stages.find(s=>s.label.toUpperCase()===r||s.id.toUpperCase()===r); return ex?ex.id:config.stages[0]?.id||"C"; }
@@ -814,10 +948,17 @@ function slugify(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(
 
 // ── Import & diff ─────────────────────────────────────────────────────────────
 function importData(incoming) {
-  const oldMap=new Map(opportunities.map(o=>[o.id,o]));
+  const manuals=opportunities.filter(o=>o._manual);
+  const oldMap=new Map(opportunities.filter(o=>!o._manual).map(o=>[o.id,o]));
   const added=incoming.filter(o=>!oldMap.has(o.id));
-  const removed=opportunities.filter(o=>!new Map(incoming.map(x=>[x.id,x])).has(o.id));
-  opportunities=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",_isNew:!old};});
+  const removed=opportunities.filter(o=>!o._manual&&!new Map(incoming.map(x=>[x.id,x])).has(o.id));
+  const imported=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",_manual:false,addedToCRM:false,addedToCRMDate:null,_isNew:!old};});
+  // Detect manual opps that now appear in the import (by name match)
+  const importedNames=new Set(incoming.map(o=>o.name.toLowerCase()));
+  const nowInCRM=manuals.filter(o=>!o.addedToCRM&&importedNames.has(o.name.toLowerCase()));
+  if(nowInCRM.length) setTimeout(()=>showToast(`${nowInCRM.length} manual deal${nowInCRM.length>1?"s":""} found in import — check the Manual tab`),1200);
+  opportunities=[...imported,...manuals];
+  updateManualTabBadge();
   persistOpps();
   localStorage.setItem(K.upload,new Date().toISOString());
   refreshLastUpload(); dismissNudge();
@@ -881,16 +1022,18 @@ function applyOpFilters(opps){
 
 // ── View routing ──────────────────────────────────────────────────────────────
 function renderView() {
-  const hasData=opportunities.length>0;
+  const hasData=opportunities.length>0||currentView==="manual";
   document.getElementById("board").style.display="none";
   document.getElementById("list-view").classList.remove("show");
   document.getElementById("forecast-view").classList.remove("show");
+  document.getElementById("manual-view").classList.remove("show");
   document.getElementById("empty-state").classList.remove("show");
   document.getElementById("filter-bar").style.display="";
   if(!hasData){document.getElementById("empty-state").classList.add("show");return;}
   if(currentView==="kanban"){document.getElementById("board").style.display="flex";renderBoard();}
   else if(currentView==="list"){document.getElementById("list-view").classList.add("show");renderList();}
   else if(currentView==="forecast"){document.getElementById("forecast-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderForecast();}
+  else if(currentView==="manual"){document.getElementById("manual-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderManual();}
 }
 
 // ── Kanban rendering ──────────────────────────────────────────────────────────
@@ -1043,6 +1186,105 @@ function sortOpps(opps){
     if(typeof va==="number") return (va-vb)*listSort.dir;
     return String(va).localeCompare(String(vb))*listSort.dir;
   });
+}
+
+// ── Manual deals view ────────────────────────────────────────────────────────
+function updateManualTabBadge(){
+  const pending=opportunities.filter(o=>o._manual&&!o.addedToCRM).length;
+  const btn=document.getElementById("manual-tab-btn");
+  if(btn) btn.textContent=pending>0?`Manual (${pending})`:"Manual";
+}
+
+function renderManual(){
+  const all=opportunities.filter(o=>o._manual);
+  const visible=manualFilter==="pending"?all.filter(o=>!o.addedToCRM):manualFilter==="added"?all.filter(o=>o.addedToCRM):all;
+  const el=document.getElementById("mv-list");
+  if(!visible.length){
+    el.innerHTML=`<div class="mv-empty">${all.length===0?"No manual deals yet. Click <strong>+ New Opportunity</strong> to add one.":"No deals match this filter."}</div>`;
+    return;
+  }
+  el.innerHTML="";
+  visible.sort((a,b)=>{if(a.addedToCRM!==b.addedToCRM)return a.addedToCRM?1:-1;return (b.value||0)-(a.value||0);}).forEach(o=>{
+    const stageObj=config.stages.find(s=>s.id===o.stage);
+    const stObj=statusObj(o.status);const stColor=stObj?.color||"#888";
+    const card=document.createElement("div"); card.className="mv-card"+(o.addedToCRM?" added-crm":"");
+    if(stageObj) card.style.borderLeftColor=stageObj.color;
+    const noteCount=(notes[o.id]||[]).length;
+    const fileData=oppFiles[o.id]||{files:[],sellQuotes:[],buyQuotes:[]};
+    const fileCount=(fileData.files||[]).length+(fileData.sellQuotes||[]).length+(fileData.buyQuotes||[]).length;
+    card.innerHTML=`
+      <button class="mv-check${o.addedToCRM?" done":""}" data-id="${esc(o.id)}" title="${o.addedToCRM?"Mark as not added":"Mark as added to CRM"}">${o.addedToCRM?"✓":""}</button>
+      <div class="mv-body">
+        <div class="mv-name${o.addedToCRM?" done-name":""}">${esc(o.name)}</div>
+        <div class="mv-meta">
+          ${stageObj?`<span class="mv-badge" style="background:${stageObj.color}20;color:${stageObj.color}">${esc(stageObj.label)}</span>`:""}
+          ${stObj?`<span class="mv-badge" style="background:${stColor}20;color:${stColor}">${esc(stObj.label)}</span>`:""}
+          ${o.account?`<span>🏢 ${esc(o.account)}</span>`:""}
+          ${o.value?`<span>💰 ${fmt(o.value)} · ${effMargin(o)}% margin</span>`:""}
+          ${o.closeDate?`<span>📅 Closes ${fmtDate(o.closeDate)}</span>`:""}
+          ${noteCount?`<span>📝 ${noteCount} note${noteCount>1?"s":""}</span>`:""}
+          ${fileCount?`<span>📎 ${fileCount} file${fileCount>1?"s":""}</span>`:""}
+          ${o.addedToCRM&&o.addedToCRMDate?`<span class="mv-crm-tag">✓ Added to CRM ${fmtDate(o.addedToCRMDate)}</span>`:""}
+        </div>
+      </div>
+      <div class="mv-actions">
+        <button class="mv-edit-btn" data-id="${esc(o.id)}">Edit</button>
+        <button class="mv-del-btn" data-id="${esc(o.id)}">Delete</button>
+      </div>`;
+    card.querySelector(".mv-name").addEventListener("click",()=>openOppDetail(o.id,"details"));
+    card.querySelector(".mv-check").addEventListener("click",()=>toggleAddedToCRM(o.id));
+    card.querySelector(".mv-edit-btn").addEventListener("click",()=>openOppDetail(o.id,"details"));
+    card.querySelector(".mv-del-btn").addEventListener("click",()=>{if(confirm("Delete this opportunity?"))deleteOpp(o.id);});
+    el.appendChild(card);
+  });
+}
+
+function toggleAddedToCRM(id){
+  const o=opportunities.find(x=>x.id===id); if(!o) return;
+  o.addedToCRM=!o.addedToCRM;
+  o.addedToCRMDate=o.addedToCRM?todayStr():null;
+  persistOpps(); renderManual(); updateManualTabBadge();
+  showToast(o.addedToCRM?"Marked as Added to CRM ✓":"Unmarked","ok");
+}
+
+function openNewOppForm(){
+  const over=document.getElementById("new-opp-overlay");
+  document.getElementById("nop-name").value="";
+  document.getElementById("nop-account").value="";
+  document.getElementById("nop-value").value="";
+  document.getElementById("nop-margin").value="";
+  document.getElementById("nop-closedate").value="";
+  document.getElementById("nop-owner").value="";
+  document.getElementById("nop-desc").value="";
+  const ss=document.getElementById("nop-stage"); ss.innerHTML=config.stages.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join("");
+  const st=document.getElementById("nop-status"); st.innerHTML=config.statuses.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join("");
+  over.classList.add("open");
+  setTimeout(()=>document.getElementById("nop-name").focus(),100);
+}
+
+function closeNewOppForm(){document.getElementById("new-opp-overlay").classList.remove("open");}
+
+function createManualOpp(){
+  const name=document.getElementById("nop-name").value.trim();
+  if(!name){document.getElementById("nop-name").focus();showToast("Name is required","err");return;}
+  const mRaw=document.getElementById("nop-margin").value;
+  const opp={
+    id:"manual-"+uid(), name,
+    account:document.getElementById("nop-account").value.trim(),
+    owner:document.getElementById("nop-owner").value.trim(),
+    stage:document.getElementById("nop-stage").value,
+    status:document.getElementById("nop-status").value,
+    value:Math.max(0,parseFloat(document.getElementById("nop-value").value)||0),
+    closeDate:document.getElementById("nop-closedate").value,
+    allDates:{}, margin:mRaw!==""?parseFloat(mRaw)||null:null,
+    description:document.getElementById("nop-desc").value,
+    _manual:true, addedToCRM:false, addedToCRMDate:null, _isNew:false
+  };
+  opportunities.push(opp);
+  persistOpps(); closeNewOppForm(); updateManualTabBadge();
+  if(currentView==="manual") renderManual();
+  else { renderView(); }
+  showToast("Opportunity created","ok");
 }
 
 // ── Notes panel (legacy — redirects to detail panel) ──────────────────────────
@@ -1242,7 +1484,7 @@ function switchOppTab(tab){
 }
 
 function updateOppTabCounts(oppId){
-  const nc=(notes[oppId]||[]).length; const fc=(oppFiles[oppId]||[]).length;
+  const nc=(notes[oppId]||[]).length; const fd=getOppFileData(oppId); const fc=fd.files.length+fd.sellQuotes.length+fd.buyQuotes.length;
   const nt=document.querySelector(".op-tab[data-tab='notes']");
   const ft=document.querySelector(".op-tab[data-tab='files']");
   if(nt) nt.textContent=nc>0?`Notes (${nc})`:"Notes";
@@ -1306,7 +1548,8 @@ function saveOppDetail(opp){
   document.getElementById("op-account-sub").textContent=opp.account||"";
   renderOppDetails(opp);
   showToast("Changes saved","ok");
-  if(currentView==="kanban") renderBoard(); else if(currentView==="list") renderList();
+  updateManualTabBadge();
+  if(currentView==="kanban") renderBoard(); else if(currentView==="list") renderList(); else if(currentView==="manual") renderManual();
 }
 
 function deleteOpp(id){
@@ -1338,47 +1581,176 @@ function submitOppNote(oppId){
   showToast("Note added","ok");
 }
 
+function getOppFileData(oppId){
+  const raw=oppFiles[oppId];
+  if(!raw) return {files:[],sellQuotes:[],buyQuotes:[]};
+  if(Array.isArray(raw)) return {files:raw,sellQuotes:[],buyQuotes:[]};
+  return {files:raw.files||[],sellQuotes:raw.sellQuotes||[],buyQuotes:raw.buyQuotes||[]};
+}
+function setOppFileData(oppId,data){ oppFiles[oppId]=data; }
+
 function renderOppFiles(oppId){
   const el=document.getElementById("op-files-pane");
-  const files=oppFiles[oppId]||[];
-  el.innerHTML=`<div class="op-file-drop" id="op-file-drop">
-    <div style="color:var(--muted);font-size:13px">
-      <div style="font-size:28px;margin-bottom:8px">📎</div>
-      <div>Drop files here or <label for="op-file-input" style="color:var(--accent);cursor:pointer;text-decoration:underline">browse</label></div>
-      <div style="font-size:11px;margin-top:4px">Max 2 MB per file · Stored in browser</div>
+  const fd=getOppFileData(oppId);
+  el.innerHTML=`
+    <div style="margin-bottom:18px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📊 Sell Quotes</div>
+      ${renderQuoteSection(oppId,"sell",fd.sellQuotes)}
+      <button class="sp-add" id="add-sell-btn" style="margin-top:6px">+ Add Sell Quote</button>
     </div>
-    <input type="file" id="op-file-input" multiple style="display:none" />
-  </div>
-  <div class="op-file-list" id="op-file-list">${files.length===0?'<p style="font-size:13px;color:var(--muted);padding:4px 0">No files attached yet.</p>':files.map(f=>`<div class="op-file-item" data-fid="${esc(f.id)}"><span class="op-file-icon">${fileIcon(f.type)}</span><div class="op-file-info"><a class="op-file-name" href="${esc(f.dataUrl)}" download="${esc(f.name)}">${esc(f.name)}</a><span class="op-file-meta">${fmtFileSize(f.size)} · ${f.addedDate}</span></div><button class="op-file-del" data-fid="${esc(f.id)}">×</button></div>`).join("")}</div>`;
-  document.getElementById("op-file-input").addEventListener("change",e=>{Array.from(e.target.files).forEach(f=>addOppFile(oppId,f));e.target.value="";});
+    <div style="margin-bottom:18px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">🏷 Buy Quotes</div>
+      ${renderQuoteSection(oppId,"buy",fd.buyQuotes)}
+      <button class="sp-add" id="add-buy-btn" style="margin-top:6px">+ Add Buy Quote</button>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)">📎 General Files</div>
+      <div class="op-file-drop" id="op-file-drop">
+        <div style="color:var(--muted);font-size:13px">
+          <div style="font-size:24px;margin-bottom:6px">📎</div>
+          <div>Drop files or <label for="op-file-input" style="color:var(--accent);cursor:pointer;text-decoration:underline">browse</label></div>
+          <div style="font-size:11px;margin-top:3px">Max 2 MB · Stored in browser</div>
+        </div>
+        <input type="file" id="op-file-input" multiple style="display:none" />
+      </div>
+      <div class="op-file-list" id="op-general-list">
+        ${fd.files.length===0?'<p style="font-size:12px;color:var(--muted);padding:4px 0">No files attached yet.</p>':fd.files.map(f=>fileItemHtml(f,false)).join("")}
+      </div>
+    </div>
+    <div id="quote-form-area"></div>`;
+
+  el.querySelectorAll(".op-file-del").forEach(btn=>btn.addEventListener("click",()=>deleteOppFileById(oppId,btn.dataset.fid,btn.dataset.bucket)));
+  el.querySelectorAll(".op-file-prev").forEach(btn=>btn.addEventListener("click",()=>{const fd2=getOppFileData(oppId);const all=[...fd2.files,...fd2.sellQuotes,...fd2.buyQuotes];const f=all.find(x=>x.id===btn.dataset.fid);if(f)openPreview(f);}));
+  el.querySelectorAll(".op-expiry-input").forEach(inp=>inp.addEventListener("change",()=>saveExpiryDate(oppId,inp.dataset.fid,inp.dataset.bucket,inp.value)));
+
+  document.getElementById("add-sell-btn").addEventListener("click",()=>openQuoteForm(oppId,"sell"));
+  document.getElementById("add-buy-btn").addEventListener("click",()=>openQuoteForm(oppId,"buy"));
+  document.getElementById("op-file-input").addEventListener("change",e=>{Array.from(e.target.files).forEach(f=>addOppFile(oppId,f,"files"));e.target.value="";});
   const drop=document.getElementById("op-file-drop");
   drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("dragging");});
   drop.addEventListener("dragleave",()=>drop.classList.remove("dragging"));
-  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("dragging");Array.from(e.dataTransfer.files).forEach(f=>addOppFile(oppId,f));});
-  el.querySelectorAll(".op-file-del").forEach(btn=>btn.addEventListener("click",()=>deleteOppFile(oppId,btn.dataset.fid)));
+  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("dragging");Array.from(e.dataTransfer.files).forEach(f=>addOppFile(oppId,f,"files"));});
   updateOppTabCounts(oppId);
+}
+
+function renderQuoteSection(oppId,type,quotes){
+  if(!quotes||!quotes.length) return `<p style="font-size:12px;color:var(--muted);padding:4px 0">No ${type} quotes yet.</p>`;
+  const sorted=[...quotes].sort((a,b)=>b.addedAt.localeCompare(a.addedAt));
+  return sorted.map((f,i)=>`<div class="op-file-item" style="${i===0?"border:1.5px solid "+( type==="sell"?"#0052cc":"#10b981")+";background:"+(type==="sell"?"#f0f6ff":"#f0fdf8")+"":""}">${i===0?`<span style="font-size:10px;font-weight:700;color:${type==="sell"?"var(--accent)":"#10b981"};margin-right:4px">★ LATEST</span>`:""}${fileItemHtml(f,true,type)}</div>`).join("");
+}
+
+function fileItemHtml(f,isQuote,bucket="files"){
+  const expClass=expiryClass(f.expiryDate);
+  const expLabel=f.expiryDate?`<span style="font-size:10px;font-weight:600;${expClass==="overdue"?"color:#de350b":expClass==="soon"?"color:#ff8b00":"color:var(--muted)"}">Expires ${fmtDate(f.expiryDate)}${expClass==="overdue"?" ⚠":expClass==="soon"?" ⏳":""}</span>`:"";
+  const amtLabel=f.amount?`<span style="font-size:11px;font-weight:700;color:var(--text)">💲${fmt(f.amount)}</span>`:"";
+  return `<span class="op-file-icon">${fileIcon(f.type)}</span>
+    <div class="op-file-info">
+      <a class="op-file-name" href="${esc(f.dataUrl)}" download="${esc(f.name)}">${esc(f.name)}</a>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px">
+        ${amtLabel}
+        <span class="op-file-meta">${fmtFileSize(f.size)} · ${fmtTs(f.addedAt)}</span>
+        ${expLabel}
+        <label style="font-size:10px;color:var(--muted)">Expiry: <input class="op-expiry-input" type="date" data-fid="${esc(f.id)}" data-bucket="${esc(bucket)}" value="${f.expiryDate||''}" style="font-size:10px;border:1px solid var(--border);border-radius:3px;padding:1px 4px;outline:none" /></label>
+      </div>
+    </div>
+    <div style="display:flex;gap:4px;flex-shrink:0">
+      <button class="op-file-prev mv-edit-btn" data-fid="${esc(f.id)}" style="font-size:10px;padding:3px 7px">Preview</button>
+      <button class="op-file-del" data-fid="${esc(f.id)}" data-bucket="${esc(bucket)}">×</button>
+    </div>`;
+}
+
+function expiryClass(iso){const d=daysDiff(iso);if(d===null)return"";if(d<0)return"overdue";if(d<=14)return"soon";return"";}
+
+function openQuoteForm(oppId,type){
+  const area=document.getElementById("quote-form-area");
+  area.innerHTML=`<div style="background:#f8f9fa;border-radius:var(--radius);padding:14px;margin-top:14px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:10px">${type==="sell"?"Sell":"Buy"} Quote Details</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="op-field-label">Amount ($)</label><input class="op-input" id="qf-amount" type="number" min="0" placeholder="0" /></div>
+      <div><label class="op-field-label">Expiry Date</label><input class="op-input" id="qf-expiry" type="date" /></div>
+    </div>
+    <div style="margin-bottom:10px"><label class="op-field-label">File (required)</label><input type="file" id="qf-file" style="font-size:12px;width:100%" /></div>
+    <div style="display:flex;gap:8px">
+      <button class="op-save-btn" id="qf-save" style="padding:7px 16px;font-size:12px">Upload Quote</button>
+      <button class="nop-cancel" id="qf-cancel" style="padding:7px 14px;font-size:12px">Cancel</button>
+    </div>
+  </div>`;
+  document.getElementById("qf-cancel").addEventListener("click",()=>area.innerHTML="");
+  document.getElementById("qf-save").addEventListener("click",()=>{
+    const fileEl=document.getElementById("qf-file");
+    const file=fileEl.files[0]; if(!file){showToast("Select a file","err");return;}
+    if(file.size>2*1024*1024){showToast("File too large (max 2MB)","err");return;}
+    const amount=parseFloat(document.getElementById("qf-amount").value)||null;
+    const expiry=document.getElementById("qf-expiry").value;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const fd=getOppFileData(oppId);
+      const bucket=type==="sell"?"sellQuotes":"buyQuotes";
+      fd[bucket].push({id:uid(),name:file.name,type:file.type,size:file.size,addedAt:new Date().toISOString(),expiryDate:expiry||null,amount,dataUrl:ev.target.result});
+      setOppFileData(oppId,fd);
+      try{ss(K.files,oppFiles);}catch{showToast("Storage full","err");fd[bucket].pop();return;}
+      renderOppFiles(oppId); showToast(`${type==="sell"?"Sell":"Buy"} quote added`,"ok");
+    };
+    reader.readAsDataURL(file);
+  });
+  area.querySelector("#qf-amount")?.focus();
 }
 
 function fileIcon(type){if(!type)return"📄";if(type.startsWith("image/"))return"🖼";if(type.includes("pdf"))return"📕";if(type.includes("excel")||type.includes("spreadsheet"))return"📊";if(type.includes("word")||type.includes("document"))return"📝";return"📄";}
 function fmtFileSize(b){if(b<1024)return b+"B";if(b<1048576)return(b/1024).toFixed(1)+"KB";return(b/1048576).toFixed(1)+"MB";}
 
-function addOppFile(oppId,file){
+function addOppFile(oppId,file,bucket="files"){
   if(file.size>2*1024*1024){showToast("File too large (max 2MB)","err");return;}
   const reader=new FileReader();
   reader.onload=ev=>{
-    if(!oppFiles[oppId])oppFiles[oppId]=[];
-    oppFiles[oppId].push({id:uid(),name:file.name,type:file.type,size:file.size,addedDate:todayStr(),dataUrl:ev.target.result});
-    try{ss(K.files,oppFiles);}catch{showToast("Storage full — file not saved","err");oppFiles[oppId].pop();return;}
+    const fd=getOppFileData(oppId);
+    fd[bucket].push({id:uid(),name:file.name,type:file.type,size:file.size,addedAt:new Date().toISOString(),expiryDate:null,dataUrl:ev.target.result});
+    setOppFileData(oppId,fd);
+    try{ss(K.files,oppFiles);}catch{showToast("Storage full — file not saved","err");fd[bucket].pop();return;}
     renderOppFiles(oppId); showToast("File added: "+file.name,"ok");
   };
   reader.readAsDataURL(file);
 }
 
-function deleteOppFile(oppId,fileId){
-  if(!oppFiles[oppId])return;
-  oppFiles[oppId]=oppFiles[oppId].filter(f=>f.id!==fileId);
-  ss(K.files,oppFiles); renderOppFiles(oppId);
+function deleteOppFileById(oppId,fileId,bucket="files"){
+  const fd=getOppFileData(oppId);
+  fd[bucket]=fd[bucket].filter(f=>f.id!==fileId);
+  setOppFileData(oppId,fd); ss(K.files,oppFiles); renderOppFiles(oppId);
 }
+
+function saveExpiryDate(oppId,fileId,bucket,val){
+  const fd=getOppFileData(oppId);
+  const f=(fd[bucket]||[]).find(x=>x.id===fileId); if(!f) return;
+  f.expiryDate=val||null; setOppFileData(oppId,fd); ss(K.files,oppFiles);
+  showToast(val?"Expiry date saved":"Expiry date cleared");
+}
+
+// ── File preview ──────────────────────────────────────────────────────────────
+function openPreview(file){
+  document.getElementById("prev-title").textContent=file.name;
+  const body=document.getElementById("prev-body"); body.innerHTML="";
+  if(file.type.startsWith("image/")){
+    const img=document.createElement("img"); img.src=file.dataUrl; body.appendChild(img);
+  } else if(file.type.includes("pdf")){
+    const iframe=document.createElement("iframe"); iframe.src=file.dataUrl; body.appendChild(iframe);
+  } else if(file.type.includes("excel")||file.type.includes("spreadsheet")||/\.(xlsx|xls)$/i.test(file.name)){
+    try{
+      const base64=file.dataUrl.split(",")[1];
+      const wb=XLSX.read(base64,{type:"base64"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const html=XLSX.utils.sheet_to_html(ws,{editable:false});
+      const wrap=document.createElement("div"); wrap.className="prev-xl-wrap";
+      wrap.innerHTML=html;
+      wrap.querySelectorAll("table").forEach(t=>t.className="prev-xl-table");
+      body.appendChild(wrap);
+    }catch{body.innerHTML='<div class="prev-unsupported"><span style="font-size:32px">📊</span><span>Could not parse spreadsheet</span></div>';}
+  } else {
+    body.innerHTML=`<div class="prev-unsupported"><span style="font-size:32px">${fileIcon(file.type)}</span><span>No preview available for this file type.</span><a href="${esc(file.dataUrl)}" download="${esc(file.name)}" style="color:var(--accent);text-decoration:underline">Download instead</a></div>`;
+  }
+  document.getElementById("preview-overlay").classList.add("open");
+}
+
+function closePreview(){document.getElementById("preview-overlay").classList.remove("open");}
 
 function closeOppDetail(){document.getElementById("opp-overlay").classList.remove("open");currentOppDetailId=null;}
 function openNotes(oppId){openOppDetail(oppId,"notes");}
