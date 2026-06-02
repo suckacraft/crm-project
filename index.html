@@ -959,17 +959,17 @@ function renderExpiry(){
       const clsColor=r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"#10b981";
       const clsLabel=r.cls==="overdue"?"OVERDUE":r.cls==="soon"?"SOON":"OK";
       const catPills=(r.file.categories||[]).map(c=>`<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;background:${c.type==='hw'?'#e8f0fe':c.type==='sw'?'#e6f9f0':'#fff3e0'};color:${c.type==='hw'?'#1a73e8':c.type==='sw'?'#137333':'#e65100'}">${c.type.toUpperCase()}</span>`).join(" ");
-      return `<tr>
-        <td><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${clsColor}20;color:${clsColor}">${clsLabel}</span></td>
-        <td><a class="exp-file-link" data-oppid="${r.opp.id}" data-fid="${r.file.id}" style="color:var(--accent);font-size:12px;cursor:pointer;text-decoration:none">${esc(r.file.name)}</a></td>
-        <td style="font-size:12px;text-transform:capitalize">${r.quoteType}</td>
-        <td style="font-size:12px">${catPills||'—'}</td>
-        <td style="font-size:12px">${r.file.amount?fmt(r.file.amount):"—"}</td>
-        <td style="font-size:12px">${fmtDate(r.file.expiryDate)}</td>
-        <td style="font-size:12px;color:${r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"var(--text)"}">${r.daysLeft!=null?(r.daysLeft<0?Math.abs(r.daysLeft)+" overdue":r.daysLeft===0?"Today":r.daysLeft+"d"):"—"}</td>
-        <td><a class="exp-opp-link" data-id="${r.opp.id}" style="color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">${esc(r.opp.name)}</a></td>
-        <td style="font-size:12px">${esc(r.opp.account||"—")}</td>
-        <td style="font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:${stageObj?.color||'#888'}20;color:${stageObj?.color||'#888'};font-weight:600">${esc(stageObj?.label||r.opp.stage)}</span></td>
+      return `<tr class="exp-row" style="border-bottom:1px solid var(--border);transition:background .1s;cursor:default" data-oppid="${r.opp.id}" data-fid="${r.file.id}">
+        <td style="padding:8px 6px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${clsColor}20;color:${clsColor}">${clsLabel}</span></td>
+        <td style="padding:8px 6px"><a class="exp-file-link" data-oppid="${r.opp.id}" data-fid="${r.file.id}" style="color:var(--accent);font-size:12px;cursor:pointer;text-decoration:none;font-weight:600" title="Open file in opportunity">${esc(r.file.name)}</a></td>
+        <td style="padding:8px 6px;font-size:12px;text-transform:capitalize">${r.quoteType}</td>
+        <td style="padding:8px 6px;font-size:12px">${catPills||'—'}</td>
+        <td style="padding:8px 6px;font-size:12px;font-weight:600">${r.file.amount?fmt(r.file.amount):"—"}</td>
+        <td style="padding:8px 6px;font-size:12px">${fmtDate(r.file.expiryDate)}</td>
+        <td style="padding:8px 6px;font-size:12px;font-weight:600;color:${r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"var(--text)"}">${r.daysLeft!=null?(r.daysLeft<0?Math.abs(r.daysLeft)+"d overdue":r.daysLeft===0?"Today":r.daysLeft+"d"):"—"}</td>
+        <td style="padding:8px 6px"><a class="exp-opp-link" data-id="${r.opp.id}" style="color:var(--accent);font-size:12px;cursor:pointer;font-weight:600" title="Open opportunity">${esc(r.opp.name)}</a></td>
+        <td style="padding:8px 6px;font-size:12px;color:var(--muted)">${esc(r.opp.account||"—")}</td>
+        <td style="padding:8px 6px;font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:${stageObj?.color||'#888'}20;color:${stageObj?.color||'#888'};font-weight:600">${esc(stageObj?.label||r.opp.stage)}</span></td>
       </tr>`;
     }).join("");
     summary.textContent=`${overdueCnt} overdue · ${soonCnt} expiring soon · ${rows.filter(r=>r.cls==="").length} active`;
@@ -987,12 +987,27 @@ function renderExpiry(){
       renderTable();
     });
   });
-  el.querySelectorAll(".exp-opp-link").forEach(a=>a.addEventListener("click",()=>openOppDetail(a.dataset.id,"files")));
-  el.querySelectorAll(".exp-file-link").forEach(a=>a.addEventListener("click",()=>{
+  // Row hover highlight
+  el.querySelectorAll(".exp-row").forEach(tr=>{
+    tr.addEventListener("mouseenter",()=>tr.style.background="#f8f9fa");
+    tr.addEventListener("mouseleave",()=>tr.style.background="");
+  });
+  // Opp link → open opp detail panel to Files tab
+  el.querySelectorAll(".exp-opp-link").forEach(a=>a.addEventListener("click",e=>{
+    e.stopPropagation();
+    openOppDetail(a.dataset.id,"files");
+  }));
+  // File link → open opp detail panel to Files tab, then open inline preview
+  el.querySelectorAll(".exp-file-link").forEach(a=>a.addEventListener("click",e=>{
+    e.stopPropagation();
     const opp2=opportunities.find(o=>o.id===a.dataset.oppid); if(!opp2) return;
     const fd2=getOppFileData(opp2.id);
     const all=[...fd2.files,...fd2.sellQuotes,...fd2.buyQuotes];
-    const f=all.find(x=>x.id===a.dataset.fid); if(f) openPreview(f);
+    const f=all.find(x=>x.id===a.dataset.fid); if(!f) return;
+    // Open the opp panel first so the preview renders inline within it
+    openOppDetail(opp2.id,"files");
+    // Small delay to let the panel render, then trigger inline preview
+    setTimeout(()=>openPreview(f),120);
   }));
 }
 
