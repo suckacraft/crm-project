@@ -3,903 +3,852 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Opportunities Kanban</title>
+  <title>Opportunities CRM</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #f0f2f5;
-      --col-bg: #ebecf0;
-      --card-bg: #fff;
-      --card-shadow: 0 1px 3px rgba(0,0,0,.12);
-      --accent: #0052cc;
-      --accent-light: #e6f0ff;
-      --danger: #de350b;
-      --success: #00875a;
-      --warn: #ff8b00;
-      --text: #172b4d;
-      --muted: #6b778c;
-      --border: #dfe1e6;
-      --radius: 6px;
+      --bg: #f0f2f5; --col-bg: #e8eaed; --card-bg: #fff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.10); --shadow-md: 0 4px 16px rgba(0,0,0,.15);
+      --accent: #0052cc; --text: #172b4d; --muted: #5e6c84; --border: #dfe1e6;
+      --radius: 7px; --topbar-h: 52px;
     }
+    body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    /* ── Nudge banner ── */
-    #nudge-banner {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      background: #fffae6;
-      border-bottom: 1px solid #ffe380;
-      font-size: 13px;
-      flex-shrink: 0;
-    }
-    #nudge-banner.show { display: flex; }
-    #nudge-banner strong { color: #974f0c; }
-    #nudge-banner .nudge-cta {
-      background: var(--warn);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      padding: 5px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    #nudge-banner .nudge-dismiss {
-      margin-left: auto;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    /* ── Diff banner ── */
-    #diff-banner {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      padding: 10px 20px;
-      background: #e3fcef;
-      border-bottom: 1px solid #abf5d1;
-      font-size: 13px;
-      flex-shrink: 0;
-    }
-    #diff-banner.show { display: flex; }
-    #diff-banner .diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    #diff-banner .tag {
-      font-size: 11px; font-weight: 600;
-      padding: 2px 7px; border-radius: 10px;
-    }
-    .tag-new     { background: #e3fcef; color: #006644; border: 1px solid #abf5d1; }
-    .tag-removed { background: #ffebe6; color: #bf2600; border: 1px solid #ffbdad; }
-    #diff-banner .diff-dismiss {
-      margin-left: auto; align-self: flex-start;
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); font-size: 18px; line-height: 1;
-    }
-
-    /* ── Top bar ── */
-    #topbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 16px;
-      height: 52px;
-      background: #fff;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    #topbar h1 { font-size: 15px; font-weight: 700; flex: 1; }
-
-    #search {
-      font-size: 13px;
-      padding: 5px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: 180px;
-      outline: none;
-    }
+    /* ── Topbar ── */
+    #topbar { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: var(--topbar-h); background: #fff; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 20; }
+    #topbar h1 { font-size: 15px; font-weight: 700; margin-right: 2px; }
+    .view-tabs { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .view-tab { font-size: 12px; font-weight: 600; padding: 5px 12px; border: none; background: #fff; color: var(--muted); cursor: pointer; white-space: nowrap; }
+    .view-tab.active { background: var(--accent); color: #fff; }
+    #search { font-size: 13px; padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius); width: 160px; outline: none; }
     #search:focus { border-color: var(--accent); }
-
+    .tb-btn { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; }
+    .tb-btn:hover { background: var(--bg); }
+    .tb-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tb-btn.primary:hover { background: #0043a8; }
+    .tb-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    #tb-spacer { flex: 1; }
     #last-upload { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    #filter-count { display: none; font-size: 10px; font-weight: 700; background: #de350b; color: #fff; border-radius: 8px; padding: 1px 5px; margin-left: -6px; margin-right: 2px; }
+    #filter-count.show { display: inline; }
+    #file-input { display: none; }
 
-    /* Upload button */
-    #btn-upload-wrap { position: relative; }
-    #btn-upload {
-      font-size: 13px; font-weight: 600;
-      padding: 6px 14px;
-      border-radius: var(--radius);
-      border: none;
-      background: var(--accent);
-      color: #fff;
-      cursor: pointer;
-      transition: background .15s;
-    }
-    #btn-upload:hover { background: #0043a8; }
-    #csv-input { display: none; }
+    /* ── Banners ── */
+    .banner { display: none; align-items: center; gap: 10px; padding: 9px 14px; font-size: 13px; flex-shrink: 0; }
+    .banner.show { display: flex; }
+    #nudge-banner { background: #fffae6; border-bottom: 1px solid #ffe380; }
+    #nudge-banner strong { color: #974f0c; }
+    .banner-cta { font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: var(--radius); border: none; cursor: pointer; background: #ff8b00; color: #fff; }
+    .banner-dismiss { margin-left: auto; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; }
+    #diff-banner { background: #e3fcef; border-bottom: 1px solid #abf5d1; }
 
-    /* Group-by toggle */
-    #groupby-wrap { display: flex; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .gb-btn {
-      font-size: 12px; font-weight: 500;
-      padding: 5px 10px;
-      border: none; background: #fff; color: var(--muted); cursor: pointer;
-    }
-    .gb-btn.active { background: var(--accent); color: #fff; }
+    /* ── Filter bar ── */
+    #filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0 14px; background: #fff; border-bottom: 1px solid var(--border); overflow: hidden; max-height: 0; transition: max-height .25s ease, padding .25s ease; flex-shrink: 0; }
+    #filter-bar.open { max-height: 120px; padding: 10px 14px; }
+    .f-group { display: flex; align-items: center; gap: 6px; }
+    .f-label { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .f-chip { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; white-space: nowrap; }
+    .f-chip.on { border-color: var(--accent); background: #e6f0ff; color: var(--accent); }
+    .f-date { font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; }
+    .f-date:focus { border-color: var(--accent); }
+    .f-num { font-size: 12px; padding: 4px 8px; width: 90px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; }
+    .f-num:focus { border-color: var(--accent); }
+    .f-text { font-size: 12px; padding: 4px 9px; width: 150px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; }
+    .f-text:focus { border-color: var(--accent); }
+    .f-sep { color: var(--muted); font-size: 12px; }
+    #btn-clear-filters { font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
+    #f-date-custom { display: none; align-items: center; gap: 4px; }
 
-    /* ── Board ── */
-    #board {
-      display: flex;
-      gap: 12px;
-      padding: 14px 16px;
-      overflow-x: auto;
-      flex: 1;
-      align-items: flex-start;
-    }
-
-    /* ── Column ── */
-    .column {
-      flex-shrink: 0;
-      width: 272px;
-      display: flex;
-      flex-direction: column;
-      background: var(--col-bg);
-      border-radius: var(--radius);
-      max-height: calc(100vh - 120px);
-    }
-    .column-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 12px;
-      background: #fff;
-      border-radius: var(--radius) var(--radius) 0 0;
-      font-weight: 600;
-      font-size: 13px;
-      border-left: 3px solid var(--accent);
-    }
-    .column-header .col-total { font-size: 11px; color: var(--muted); font-weight: 400; }
-    .column-header .count {
-      margin-left: auto;
-      font-size: 11px; font-weight: 600;
-      background: var(--border); color: var(--muted);
-      border-radius: 10px; padding: 1px 7px;
-    }
-    .column-body {
-      padding: 8px;
-      overflow-y: auto;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-    .column-body.drag-over { background: #d0e4ff; border-radius: 0 0 var(--radius) var(--radius); }
+    /* ── Kanban board ── */
+    #board { display: flex; gap: 10px; padding: 12px 14px; overflow-x: auto; flex: 1; align-items: flex-start; }
+    #board::-webkit-scrollbar { height: 6px; }
+    #board::-webkit-scrollbar-thumb { background: #c1c7d0; border-radius: 3px; }
+    .column { flex-shrink: 0; width: 240px; display: flex; flex-direction: column; background: var(--col-bg); border-radius: var(--radius); max-height: calc(100vh - var(--topbar-h) - 24px); }
+    .column.terminal { opacity: .85; }
+    .col-header { padding: 10px 11px 8px; background: #fff; border-radius: var(--radius) var(--radius) 0 0; border-top: 3px solid var(--col-color,#888); }
+    .col-h1 { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .col-name { font-size: 14px; font-weight: 700; }
+    .col-weight { font-size: 11px; font-weight: 700; background: color-mix(in srgb,var(--col-color,#888) 15%,white); color: var(--col-color,#888); border-radius: 8px; padding: 1px 6px; }
+    .col-count { margin-left: auto; font-size: 11px; font-weight: 600; background: var(--border); color: var(--muted); border-radius: 9px; padding: 1px 7px; }
+    .col-h2 { display: flex; flex-direction: column; gap: 1px; }
+    .col-pipeline { font-size: 11px; color: var(--muted); }
+    .col-weighted { font-size: 11px; font-weight: 600; color: var(--col-color,#888); }
+    .col-body { padding: 7px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .col-body::-webkit-scrollbar { width: 4px; }
+    .col-body::-webkit-scrollbar-thumb { background: #c1c7d0; border-radius: 2px; }
+    .col-body.drag-over { background: #d0e4ff; outline: 2px dashed var(--accent); outline-offset: -4px; border-radius: 0 0 var(--radius) var(--radius); }
+    .col-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 18px 0; }
 
     /* ── Card ── */
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 9px 11px;
-      box-shadow: var(--card-shadow);
-      cursor: grab;
-      transition: box-shadow .15s, opacity .15s;
-      user-select: none;
-      border-left: 3px solid transparent;
-      position: relative;
-    }
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 9px 10px; box-shadow: var(--shadow-sm); cursor: grab; user-select: none; border-left: 3px solid transparent; position: relative; transition: box-shadow .12s, opacity .15s; }
+    .card:hover { box-shadow: var(--shadow-md); }
     .card:active { cursor: grabbing; }
-    .card.dragging { opacity: .35; }
-    .card.saving { opacity: .55; pointer-events: none; }
-    .card.card-new { border-left-color: var(--success) !important; }
-    .card.card-removed {
-      border-left-color: var(--danger) !important;
-      opacity: .6;
-      text-decoration: line-through;
-    }
-
-    .card-badge {
-      position: absolute;
-      top: 6px; right: 8px;
-      font-size: 9px; font-weight: 700;
-      padding: 1px 5px; border-radius: 8px;
-      text-transform: uppercase;
-    }
-    .badge-new     { background: #e3fcef; color: var(--success); }
-    .badge-removed { background: #ffebe6; color: var(--danger); }
-
-    .card-title {
-      font-size: 13px; font-weight: 600;
-      line-height: 1.3; margin-bottom: 5px;
-      padding-right: 44px;
-    }
-    .card-account {
-      font-size: 11px; color: var(--muted);
-      margin-bottom: 7px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .card.dragging { opacity: .3; }
+    .card.status-on-hold { opacity: .72; }
+    .card-badge { position: absolute; top: 7px; right: 8px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; text-transform: uppercase; }
+    .badge-new { background: #e3fcef; color: #006644; }
+    .card-name-link { font-size: 12px; font-weight: 600; line-height: 1.35; margin-bottom: 2px; padding-right: 36px; cursor: pointer; color: var(--text); display: block; border-bottom: 1px solid transparent; transition: border-color .12s; }
+    .card-name-link:hover { border-bottom-color: var(--accent); color: var(--accent); }
+    .card-account { font-size: 11px; color: var(--muted); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-value-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .card-value { font-size: 13px; font-weight: 700; cursor: text; border-bottom: 1px dashed transparent; padding: 0 2px; }
+    .card-value:hover { border-bottom-color: var(--accent); }
+    .card-value-input { font-size: 13px; font-weight: 700; color: var(--text); border: 1.5px solid var(--accent); border-radius: 4px; padding: 1px 5px; width: 110px; outline: none; background: #f0f6ff; }
+    .card-weighted { font-size: 11px; color: var(--muted); margin-left: auto; }
+    .card-weighted strong { color: var(--col-color,#888); }
     .card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .card-value { font-size: 12px; font-weight: 600; }
+    .card-date { font-size: 11px; color: var(--muted); white-space: nowrap; cursor: pointer; border-bottom: 1px dashed transparent; }
+    .card-date:hover { border-bottom-color: var(--accent); color: var(--accent); }
+    .card-date.overdue { color: #de350b; font-weight: 600; }
+    .card-date.soon { color: #ff8b00; font-weight: 600; }
+    .card-date-input { font-size: 11px; border: 1.5px solid var(--accent); border-radius: 4px; padding: 1px 4px; outline: none; background: #f0f6ff; cursor: pointer; }
+    .card-activity { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .status-pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; border: none; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; white-space: nowrap; }
+    .status-pill:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-    /* Stage chip (shown when grouping by status) */
-    .stage-chip {
-      font-size: 10px; font-weight: 600;
-      padding: 2px 6px; border-radius: 10px;
-      background: var(--accent-light); color: var(--accent);
-      white-space: nowrap;
-    }
+    /* ── List view ── */
+    #list-view { display: none; flex: 1; overflow: auto; padding: 12px 14px; }
+    #list-view.show { display: block; }
+    .list-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .list-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 10px 12px; background: #f8f9fa; border-bottom: 2px solid var(--border); cursor: pointer; white-space: nowrap; user-select: none; }
+    .list-table th:hover { background: #eef0f3; }
+    .list-table th .sort-icon { margin-left: 4px; opacity: .4; }
+    .list-table th.sorted .sort-icon { opacity: 1; }
+    .list-table td { padding: 9px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+    .list-table tr:last-child td { border-bottom: none; }
+    .list-table tr:hover td { background: #fafbfc; }
+    .list-table tr { border-left: 3px solid transparent; }
+    .lt-name { font-weight: 600; cursor: pointer; color: var(--text); }
+    .lt-name:hover { color: var(--accent); text-decoration: underline; }
+    .lt-val { font-weight: 600; cursor: text; border-bottom: 1px dashed transparent; display: inline-block; }
+    .lt-val:hover { border-bottom-color: var(--accent); }
+    .lt-date { cursor: pointer; border-bottom: 1px dashed transparent; display: inline-block; }
+    .lt-date:hover { border-bottom-color: var(--accent); color: var(--accent); }
+    .lt-select { font-size: 12px; border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; background: #f8f9fa; color: var(--text); cursor: pointer; outline: none; }
+    .lt-select:focus { border-color: var(--accent); }
+    .lt-activity { font-size: 11px; color: var(--muted); }
+    .lt-note-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 2px 4px; border-radius: 4px; }
+    .lt-note-btn:hover { background: var(--bg); color: var(--accent); }
 
-    /* Inline status select */
-    .status-select {
-      font-size: 11px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 2px 4px;
-      background: #f4f5f7;
-      color: var(--text);
-      cursor: pointer;
-      outline: none;
-      max-width: 120px;
-    }
-    .status-select:focus { border-color: var(--accent); background: #fff; }
+    /* ── Forecast view ── */
+    #forecast-view { display: none; flex: 1; overflow-y: auto; padding: 14px 18px; gap: 18px; flex-direction: column; }
+    #forecast-view.show { display: flex; }
+    .fc-controls { display: flex; align-items: center; gap: 12px; background: #fff; padding: 11px 14px; border-radius: var(--radius); box-shadow: var(--shadow-sm); flex-shrink: 0; flex-wrap: wrap; }
+    .fc-controls label { display: flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+    .fc-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+    .fc-select { font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; color: var(--text); outline: none; cursor: pointer; }
+    .fc-select:focus { border-color: var(--accent); }
+    .fc-undated { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .fc-section { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 16px 18px; }
+    .fc-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .fc-section-head h3 { font-size: 14px; font-weight: 700; }
+    .win-btn { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; }
+    .win-btn.active { border-color: var(--accent); background: #e6f0ff; color: var(--accent); }
+    .fc-custom-range { display: none; align-items: center; gap: 6px; font-size: 12px; }
+    .fc-custom-range.show { display: flex; }
+    .fc-chart-wrap { position: relative; height: 230px; margin-bottom: 14px; }
+    .fc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .fc-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+    .fc-table td { padding: 7px 10px; border-bottom: 1px solid #f0f2f5; cursor: pointer; }
+    .fc-table tr:last-child td { border-bottom: none; }
+    .fc-table tr:hover td { background: #f5f7fa; }
+    .fc-table td:not(:first-child) { font-weight: 600; }
+    .fc-table td.zero { color: var(--muted); font-weight: 400; }
+    .fc-total { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: right; }
 
-    /* Weight input */
-    .weight-wrap { margin-left: auto; display: flex; align-items: center; gap: 3px; }
-    .weight-label { font-size: 10px; color: var(--muted); }
-    .weight-input {
-      width: 44px; font-size: 12px; font-weight: 600;
-      text-align: center;
-      border: 1px solid var(--border); border-radius: 4px;
-      padding: 2px 3px;
-      background: #f4f5f7; color: var(--text);
-      outline: none; cursor: text;
-    }
-    .weight-input:focus { border-color: var(--accent); background: #fff; }
-    .weight-pct { font-size: 11px; color: var(--muted); }
+    /* ── Drill-down panel ── */
+    #drill-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.45); z-index: 250; align-items: flex-start; justify-content: flex-end; }
+    #drill-overlay.open { display: flex; }
+    #drill-panel { width: 560px; height: 100vh; background: #fff; display: flex; flex-direction: column; box-shadow: var(--shadow-md); animation: slideIn .2s ease; }
+    .dp-head { display: flex; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 10px; flex-shrink: 0; }
+    .dp-head-text { flex: 1; }
+    .dp-head-text h2 { font-size: 15px; font-weight: 700; }
+    .dp-head-text .dp-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .dp-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--muted); line-height: 1; flex-shrink: 0; }
+    .dp-body { flex: 1; overflow-y: auto; }
+    .dp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dp-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 10px 14px; background: #f8f9fa; border-bottom: 2px solid var(--border); position: sticky; top: 0; }
+    .dp-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+    .dp-table tr:last-child td { border-bottom: none; }
+    .dp-table tr:hover td { background: #fafbfc; }
+    .dp-name { font-weight: 600; cursor: pointer; color: var(--text); }
+    .dp-name:hover { color: var(--accent); text-decoration: underline; }
+    .dp-stage { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+    .dp-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 30px; }
 
-    /* Rating dot */
-    .rating-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .r-hot  { background: var(--danger); }
-    .r-warm { background: var(--warn); }
-    .r-cold { background: #8993a4; }
+    /* ── Notes panel ── */
+    #notes-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.45); z-index: 300; align-items: flex-start; justify-content: flex-end; }
+    #notes-overlay.open { display: flex; }
+    #notes-panel { width: 440px; height: 100vh; background: #fff; display: flex; flex-direction: column; box-shadow: var(--shadow-md); animation: slideIn .2s ease; }
+    .np-head { display: flex; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 10px; flex-shrink: 0; }
+    .np-head-text { flex: 1; min-width: 0; }
+    .np-head-text h2 { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .np-head-text .np-account { font-size: 12px; color: var(--muted); }
+    .np-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--muted); line-height: 1; flex-shrink: 0; }
+    .np-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .np-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .np-value { font-size: 13px; font-weight: 700; }
+    .np-date { font-size: 12px; color: var(--muted); cursor: pointer; border-bottom: 1px dashed transparent; }
+    .np-date:hover { border-bottom-color: var(--accent); color: var(--accent); }
+    .np-activity { font-size: 11px; color: var(--muted); margin-left: auto; }
+    .np-notes-wrap { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .np-no-notes { font-size: 13px; color: var(--muted); text-align: center; padding: 20px 0; }
+    .np-note { background: #f8f9fa; border-radius: var(--radius); padding: 10px 12px; }
+    .np-note-ts { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .np-note-text { font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+    .np-add { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .np-textarea { font-size: 13px; padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius); resize: none; height: 80px; outline: none; font-family: inherit; line-height: 1.5; }
+    .np-textarea:focus { border-color: var(--accent); }
+    .np-submit { font-size: 13px; font-weight: 600; padding: 8px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; cursor: pointer; }
+    .np-submit:hover { background: #0043a8; }
+
+    /* ── Settings overlay ── */
+    #settings-overlay { display: none; position: fixed; inset: 0; background: rgba(9,30,66,.5); z-index: 200; align-items: flex-start; justify-content: flex-end; }
+    #settings-overlay.open { display: flex; }
+    #settings-panel { width: 520px; height: 100vh; background: #fff; overflow-y: auto; display: flex; flex-direction: column; box-shadow: var(--shadow-md); animation: slideIn .2s ease; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .sp-head { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 10px; position: sticky; top: 0; background: #fff; z-index: 1; }
+    .sp-head h2 { font-size: 16px; font-weight: 700; flex: 1; }
+    .sp-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--muted); line-height: 1; }
+    .sp-section { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+    .sp-section h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .sp-section p { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .stage-row { display: grid; grid-template-columns: 1fr 70px 80px 44px 32px; gap: 7px; align-items: center; margin-bottom: 7px; }
+    .stage-row.hdr { margin-bottom: 4px; }
+    .stage-row.hdr span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .sp-input { font-size: 13px; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; width: 100%; }
+    .sp-input:focus { border-color: var(--accent); }
+    .sp-color { width: 44px; height: 32px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+    .sp-del { background: none; border: none; cursor: pointer; color: #de350b; font-size: 16px; line-height: 1; padding: 4px; border-radius: 4px; }
+    .sp-del:hover { background: #ffebe6; }
+    .sp-add { font-size: 12px; font-weight: 600; color: var(--accent); background: none; border: 1px dashed var(--border); border-radius: var(--radius); padding: 6px 12px; cursor: pointer; width: 100%; margin-top: 4px; }
+    .sp-add:hover { background: var(--bg); }
+    .status-row { display: grid; grid-template-columns: 1fr 80px 44px 32px; gap: 7px; align-items: center; margin-bottom: 7px; }
+    .status-row.hdr { margin-bottom: 4px; }
+    .status-row.hdr span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .sp-check-wrap { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+    .sp-footer { padding: 14px 20px; display: flex; gap: 8px; position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--border); }
+    .sp-save { flex: 1; font-size: 13px; font-weight: 700; padding: 9px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; cursor: pointer; }
+    .sp-save:hover { background: #0043a8; }
+    .sp-cancel { font-size: 13px; padding: 9px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: #fff; cursor: pointer; }
+    .sp-cancel:hover { background: var(--bg); }
 
     /* ── Empty state ── */
-    #empty-state {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      flex: 1;
-      color: var(--muted);
-    }
+    #empty-state { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; flex: 1; color: var(--muted); }
     #empty-state.show { display: flex; }
-    #empty-state svg { opacity: .25; }
+    #empty-state svg { opacity: .22; }
     #empty-state h2 { font-size: 18px; font-weight: 600; color: var(--text); }
-    #empty-state p { font-size: 13px; max-width: 340px; text-align: center; }
-    #empty-state button {
-      font-size: 14px; font-weight: 600;
-      padding: 9px 22px;
-      border-radius: var(--radius); border: none;
-      background: var(--accent); color: #fff; cursor: pointer;
-    }
-    #empty-state button:hover { background: #0043a8; }
+    #empty-state p { font-size: 13px; max-width: 360px; text-align: center; line-height: 1.5; }
+    #empty-state button { font-size: 14px; font-weight: 600; padding: 9px 22px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; cursor: pointer; }
 
     /* ── Toast ── */
-    #toast {
-      position: fixed; bottom: 18px; right: 18px;
-      background: #253858; color: #fff;
-      font-size: 13px; padding: 9px 15px;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,.2);
-      opacity: 0; transform: translateY(6px);
-      transition: opacity .2s, transform .2s;
-      pointer-events: none; z-index: 999; max-width: 300px;
-    }
-    #toast.show { opacity: 1; transform: translateY(0); }
-    #toast.error { background: var(--danger); }
-    #toast.success { background: var(--success); }
+    #toast { position: fixed; bottom: 16px; right: 16px; background: #253858; color: #fff; font-size: 13px; padding: 9px 14px; border-radius: var(--radius); box-shadow: var(--shadow-md); max-width: 300px; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; pointer-events: none; z-index: 999; }
+    #toast.show { opacity: 1; transform: none; }
+    #toast.ok  { background: #006644; }
+    #toast.err { background: #de350b; }
 
-    .empty-col { font-size: 12px; color: var(--muted); text-align: center; padding: 16px 0; }
+    /* ── Opportunity detail panel ── */
+    #opp-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.45); z-index:350; align-items:flex-start; justify-content:flex-end; }
+    #opp-overlay.open { display:flex; }
+    .op-head { display:flex; align-items:flex-start; padding:16px 20px; border-bottom:1px solid var(--border); gap:10px; flex-shrink:0; }
+    .op-head-text { flex:1; min-width:0; }
+    .op-head-text h2 { font-size:17px; font-weight:700; line-height:1.3; }
+    .op-account-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+    .op-close { background:none; border:none; cursor:pointer; font-size:24px; color:var(--muted); line-height:1; flex-shrink:0; }
+    .op-tabs-bar { display:flex; border-bottom:2px solid var(--border); padding:0 20px; flex-shrink:0; }
+    .op-tab { font-size:13px; font-weight:600; padding:10px 16px; border:none; background:none; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+    .op-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .op-body { flex:1; overflow-y:auto; }
+    .op-tab-pane { display:none; padding:20px; }
+    .op-tab-pane.active { display:block; }
+    .op-form { display:flex; flex-direction:column; gap:16px; }
+    .op-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .op-field { display:flex; flex-direction:column; gap:4px; }
+    .op-field-full { grid-column:1/-1; }
+    .op-field-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+    .op-input,.op-select { font-size:13px; padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; background:#fff; }
+    .op-input:focus,.op-select:focus { border-color:var(--accent); }
+    .op-textarea { font-size:13px; padding:9px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; resize:vertical; font-family:inherit; line-height:1.6; min-height:100px; }
+    .op-textarea:focus { border-color:var(--accent); }
+    .op-calcs { display:flex; gap:16px; flex-wrap:wrap; padding:12px 14px; background:#f8f9fa; border-radius:var(--radius); }
+    .op-calc-item { font-size:12px; color:var(--muted); }
+    .op-calc-item strong { color:var(--text); }
+    .op-quote-margin-panel { padding:12px 14px; background:#fffbea; border:1px solid #f6d860; border-radius:var(--radius); }
+    .op-push-margin-btn { font-size:11px; font-weight:700; padding:4px 10px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
+    .op-push-margin-btn:hover { opacity:.85; }
+    .op-ps-toggle-row { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f0f6ff; border-radius:var(--radius); border:1px solid #c7d8f8; }
+    .op-ps-body { background:#f8f9fa; border-radius:var(--radius); border:1px solid var(--border); padding:14px; display:flex; flex-direction:column; gap:12px; }
+    .op-ps-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .op-ps-units-row { display:flex; gap:6px; align-items:flex-end; }
+    .op-ps-units-row input { flex:1; min-width:60px; }
+    .op-ps-units-row select { width:100px; flex-shrink:0; }
+    .op-ps-calcs { display:flex; gap:12px; flex-wrap:wrap; align-items:center; padding:10px 12px; background:#fff; border-radius:var(--radius); border:1px solid var(--border); }
+    .op-actions { display:flex; gap:8px; padding-top:4px; }
+    .op-save-btn { font-size:13px; font-weight:700; padding:9px 20px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; }
+    .op-save-btn:hover { background:#0043a8; }
+    .op-delete-btn { font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid #de350b; background:#fff; color:#de350b; cursor:pointer; margin-left:auto; }
+    .op-delete-btn:hover { background:#ffebe6; }
+    .op-notes-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; max-height:50vh; overflow-y:auto; }
+    .op-no-notes { font-size:13px; color:var(--muted); text-align:center; padding:20px 0; }
+    .op-file-drop { border:2px dashed var(--border); border-radius:var(--radius); cursor:pointer; transition:border-color .15s,background .15s; margin-bottom:16px; padding:24px; text-align:center; }
+    .op-file-drop:hover,.op-file-drop.dragging { border-color:var(--accent); background:#f0f6ff; }
+    .quote-drop-zone { border:2px dashed transparent; border-radius:var(--radius); padding:6px; transition:border-color .15s,background .15s; min-height:48px; }
+    .quote-drop-zone.drag-over { border-color:var(--accent); background:#f0f6ff; }
+    .quote-drop-zone.drag-over-sell { border-color:#0052cc; background:#f0f6ff; }
+    .quote-drop-zone.drag-over-buy  { border-color:#10b981; background:#f0fdf8; }
+    .general-file-item { cursor:grab; }
+    .general-file-item:active { cursor:grabbing; }
+    .general-file-item.dragging-out { opacity:.35; }
+    .drag-hint { font-size:11px; color:var(--muted); font-style:italic; margin-top:4px; }
+    .op-file-list { display:flex; flex-direction:column; gap:8px; }
+    .op-file-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f8f9fa; border-radius:var(--radius); }
+    .op-file-icon { font-size:22px; flex-shrink:0; line-height:1; }
+    .op-file-info { flex:1; min-width:0; }
+    .op-file-name { font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+    .op-file-name:hover { text-decoration:underline; }
+    .op-file-meta { font-size:11px; color:var(--muted); }
+    .op-file-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:20px; padding:4px; border-radius:4px; flex-shrink:0; line-height:1; }
+    .op-file-del:hover { background:#ffebe6; color:#de350b; }
+    .card-margin-pill { font-size:10px; font-weight:600; color:#10b981; background:#f0fdf8; border:1px solid #10b98130; padding:1px 6px; border-radius:8px; white-space:nowrap; }
+
+    /* ── Manual deals view ── */
+    #manual-view { display:none; flex:1; overflow-y:auto; padding:16px 18px; flex-direction:column; gap:0; }
+    #manual-view.show { display:flex; }
+    .mv-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+    .mv-header h2 { font-size:15px; font-weight:700; flex:1; }
+    .mv-filter-tabs { display:flex; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .mv-ftab { font-size:11px; font-weight:600; padding:5px 11px; border:none; background:#fff; color:var(--muted); cursor:pointer; white-space:nowrap; }
+    .mv-ftab.active { background:var(--accent); color:#fff; }
+    .mv-add-btn { font-size:12px; font-weight:700; padding:6px 14px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; }
+    .mv-add-btn:hover { background:#0043a8; }
+    .mv-empty { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; }
+    .mv-card { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:14px; border-left:3px solid transparent; transition:opacity .15s; }
+    .mv-card.added-crm { opacity:.55; border-left-color:#10b981; }
+    .mv-check { flex-shrink:0; width:22px; height:22px; border-radius:50%; border:2px solid var(--border); background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; transition:border-color .12s,background .12s; margin-top:1px; }
+    .mv-check:hover { border-color:var(--accent); }
+    .mv-check.done { border-color:#10b981; background:#10b981; color:#fff; }
+    .mv-body { flex:1; min-width:0; }
+    .mv-name { font-size:13px; font-weight:700; margin-bottom:3px; cursor:pointer; }
+    .mv-name:hover { color:var(--accent); text-decoration:underline; }
+    .mv-name.done-name { text-decoration:line-through; color:var(--muted); }
+    .mv-meta { font-size:11px; color:var(--muted); display:flex; flex-wrap:wrap; gap:8px; }
+    .mv-badge { font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; }
+    .mv-crm-tag { font-size:11px; font-weight:600; color:#10b981; background:#e3fcef; padding:2px 8px; border-radius:8px; }
+    .mv-actions { display:flex; gap:6px; flex-shrink:0; margin-left:auto; }
+    .mv-edit-btn { font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--radius); border:1px solid var(--border); background:#fff; cursor:pointer; color:var(--text); }
+    .mv-edit-btn:hover { background:var(--bg); }
+    .mv-del-btn { font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--radius); border:1px solid #de350b20; background:#fff; cursor:pointer; color:#de350b; }
+    .mv-del-btn:hover { background:#ffebe6; }
+
+    /* ── New Opp form panel ── */
+    #new-opp-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.45); z-index:400; align-items:flex-start; justify-content:flex-end; }
+    #new-opp-overlay.open { display:flex; }
+    #new-opp-panel { width:520px; height:100vh; background:#fff; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideIn .2s ease; overflow-y:auto; }
+    .nop-head { display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); gap:10px; position:sticky; top:0; background:#fff; z-index:1; }
+    .nop-head h2 { font-size:16px; font-weight:700; flex:1; }
+    .nop-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--muted); line-height:1; }
+    .nop-body { padding:20px; display:flex; flex-direction:column; gap:14px; flex:1; }
+    .nop-field { display:flex; flex-direction:column; gap:4px; }
+    .nop-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+    .nop-input,.nop-select { font-size:13px; padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; background:#fff; }
+    .nop-input:focus,.nop-select:focus { border-color:var(--accent); }
+    .nop-textarea { font-size:13px; padding:9px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; resize:vertical; font-family:inherit; line-height:1.6; min-height:80px; }
+    .nop-textarea:focus { border-color:var(--accent); }
+    .nop-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .nop-footer { display:flex; gap:8px; padding:14px 20px; border-top:1px solid var(--border); position:sticky; bottom:0; background:#fff; }
+    .nop-save { flex:1; font-size:13px; font-weight:700; padding:9px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; }
+    .nop-save:hover { background:#0043a8; }
+    .nop-cancel { font-size:13px; padding:9px 18px; border-radius:var(--radius); border:1px solid var(--border); background:#fff; cursor:pointer; }
+    .nop-cancel:hover { background:var(--bg); }
+
+    /* ── File preview overlay (fallback for non-opp contexts) ── */
+    #preview-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.75); z-index:500; align-items:center; justify-content:center; padding:24px; }
+    #preview-overlay.open { display:flex; }
+    #preview-panel { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow-md); max-width:900px; width:100%; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
+    .prev-head { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); gap:10px; flex-shrink:0; }
+    .prev-title { font-size:13px; font-weight:700; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .prev-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--muted); line-height:1; flex-shrink:0; }
+    #prev-body { flex:1; overflow:hidden; display:flex; align-items:flex-start; justify-content:center; min-height:300px; background:#f0f2f5; }
+    #prev-body iframe { width:100%; height:75vh; border:none; background:#fff; }
+    #prev-body img { max-width:100%; max-height:75vh; object-fit:contain; display:block; margin:auto; }
+    .prev-xl-wrap { display:flex; flex-direction:column; width:100%; height:100%; overflow:hidden; background:#fff; }
+    .prev-xl-toolbar { display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border); background:#f8f9fa; flex-shrink:0; flex-wrap:wrap; }
+    .prev-xl-search { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:var(--radius); outline:none; width:160px; }
+    .prev-xl-search:focus { border-color:var(--accent); }
+    .prev-xl-info { font-size:11px; color:var(--muted); margin-left:auto; }
+    .prev-xl-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); background:#f0f2f5; flex-shrink:0; overflow-x:auto; }
+    .prev-xl-tab { font-size:11px; font-weight:600; padding:6px 14px; border:none; border-right:1px solid var(--border); background:none; cursor:pointer; color:var(--muted); white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .prev-xl-tab.active { background:#fff; color:var(--accent); border-bottom-color:var(--accent); }
+    .prev-xl-tab:hover:not(.active) { background:#fff; color:var(--text); }
+    .prev-xl-body { flex:1; overflow:auto; }
+    .prev-xl-table { border-collapse:collapse; font-size:12px; background:#fff; table-layout:auto; }
+    .prev-xl-table th { background:#e8eaed; font-weight:400; text-align:center; padding:4px 8px; border:1px solid #cdd1d8; font-size:10px; position:sticky; top:0; z-index:2; white-space:nowrap; color:var(--muted); }
+    .prev-xl-table th.row-num { background:#e8eaed; color:var(--muted); font-weight:400; width:36px; text-align:center; position:sticky; top:0; left:0; z-index:3; }
+    .prev-xl-table td { padding:3px 8px; border:1px solid #e2e6ea; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default; font-size:12px; }
+    .prev-xl-table td.row-num { background:#f0f2f5; color:var(--muted); font-size:10px; text-align:center; position:sticky; left:0; z-index:1; border-right:1px solid #cdd1d8; user-select:none; }
+    .prev-xl-table tr:nth-child(even) td:not(.row-num) { background:#fafbfc; }
+    .prev-xl-table tr:hover td { background:#f0f6ff !important; }
+    .prev-xl-table td.xl-match { background:#fff3cd !important; }
+    .prev-xl-table td.xl-num { text-align:right; font-variant-numeric:tabular-nums; }
+    .prev-xl-table td.xl-selected { outline:2px solid var(--accent); outline-offset:-1px; }
+    .prev-unsupported { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px; color:var(--muted); font-size:13px; width:100%; }
+
+    /* ── Opp panel split-pane (inline preview alongside form) ── */
+    #opp-panel { width:860px; height:100vh; background:#fff; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideIn .2s ease; transition:width .2s ease; }
+    #opp-panel.split { width:min(1300px,96vw); flex-direction:column; }
+    .opp-split-body { display:flex; flex:1; overflow:hidden; }
+    .opp-main-side { display:flex; flex-direction:column; width:520px; flex-shrink:0; border-right:1px solid var(--border); overflow:hidden; }
+    .opp-main-side .op-body { flex:1; overflow-y:auto; }
+    .opp-preview-side { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#f0f2f5; min-width:0; }
+    .opp-preview-side .prev-head { background:#fff; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .opp-preview-side #inl-prev-body { flex:1; overflow:hidden; display:flex; align-items:flex-start; justify-content:center; }
+    .opp-preview-side #inl-prev-body iframe { width:100%; height:100%; border:none; background:#fff; }
+    .opp-preview-side #inl-prev-body img { max-width:100%; object-fit:contain; display:block; margin:auto; }
+    .opp-preview-side #inl-prev-body .prev-xl-wrap { width:100%; height:100%; padding:0; }
+    .opp-preview-side .prev-unsupported { height:100%; }
+
+    /* ── Manual badge ── */
+    .manual-badge { display:inline-block; font-size:9px; font-weight:700; background:#de350b; color:#fff; border-radius:8px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
+
+    /* ── Auth overlay ── */
+    #auth-overlay { position:fixed; inset:0; background:linear-gradient(135deg,#0052cc 0%,#003d99 100%); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    #auth-overlay.hidden { display:none; }
+    .auth-card { background:#fff; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,.25); padding:40px; width:100%; max-width:400px; }
+    .auth-logo-wrap { text-align:center; margin-bottom:24px; }
+    .auth-logo-wrap img { max-height:48px; margin-bottom:8px; display:none; }
+    .auth-logo-wrap h1 { font-size:20px; font-weight:700; color:#172b4d; }
+    .auth-logo-wrap p { font-size:12px; color:#5e6c84; margin-top:4px; }
+    .auth-tabs { display:flex; border-bottom:2px solid #dfe1e6; margin-bottom:24px; }
+    .auth-tab { flex:1; padding:10px; border:none; background:none; font-size:13px; font-weight:600; color:#5e6c84; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .auth-tab.active { color:#0052cc; border-bottom-color:#0052cc; }
+    .auth-field { margin-bottom:16px; }
+    .auth-field label { display:block; font-size:12px; font-weight:600; color:#5e6c84; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+    .auth-input { width:100%; padding:10px 12px; border:1.5px solid #dfe1e6; border-radius:7px; font-size:14px; outline:none; transition:border-color .15s; }
+    .auth-input:focus { border-color:#0052cc; }
+    .auth-btn { width:100%; padding:12px; border:none; border-radius:7px; background:#0052cc; color:#fff; font-size:14px; font-weight:700; cursor:pointer; margin-top:4px; transition:background .15s; }
+    .auth-btn:hover { background:#003d99; }
+    .auth-err { font-size:12px; color:#de350b; margin-top:8px; min-height:16px; }
+    .auth-footer { text-align:center; font-size:11px; color:#5e6c84; margin-top:16px; }
+
+    /* ── Line Items section ── */
+    .op-li-section { background:#f8f9fa; border-radius:var(--radius); border:1px solid var(--border); padding:14px; }
+    .op-li-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .op-li-table th { text-align:left; font-size:11px; color:var(--muted); font-weight:600; padding:4px 6px 8px; border-bottom:1px solid var(--border); }
+    .op-li-table td { padding:6px; vertical-align:top; }
+    .op-li-table tfoot td { border-top:2px solid var(--border); padding-top:8px; }
+    .op-li-input { padding:4px 6px; font-size:12px; }
+    .op-li-marg { font-size:12px; color:var(--muted); }
   </style>
 </head>
 <body>
 
-<!-- Twice-weekly nudge banner -->
-<div id="nudge-banner">
-  <span>⏰ <strong>Time to refresh your pipeline.</strong> Upload a new CSV export from Dynamics to keep the board up to date.</span>
-  <button class="nudge-cta" id="nudge-cta-btn">Upload CSV</button>
-  <button class="nudge-dismiss" id="nudge-dismiss" title="Dismiss">×</button>
-</div>
-
-<!-- Diff banner (shown after upload with changes) -->
-<div id="diff-banner">
-  <div class="diff-row">
-    <strong>CSV imported</strong>
-    <span id="diff-new-tags"></span>
-    <span id="diff-removed-tags"></span>
-    <button class="diff-dismiss" id="diff-dismiss">×</button>
+<!-- Auth overlay -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo-wrap">
+      <img id="auth-logo" />
+      <h1>Opportunities CRM</h1>
+      <p id="auth-sub">Sign in to your account</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="auth-tab-login">Sign In</button>
+      <button class="auth-tab" id="auth-tab-register">Create Account</button>
+    </div>
+    <div id="auth-login-form">
+      <div class="auth-field"><label>Email / Username</label><input class="auth-input" id="auth-username" type="text" placeholder="you@company.com" autocomplete="username" /></div>
+      <div class="auth-field"><label>Password</label><input class="auth-input" id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" /></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5e6c84;margin-bottom:12px;cursor:pointer"><input type="checkbox" id="auth-remember" checked style="accent-color:#0052cc" /> Remember me</label>
+      <button class="auth-btn" id="auth-login-btn">Sign In</button>
+      <div class="auth-err" id="auth-login-err"></div>
+    </div>
+    <div id="auth-register-form" style="display:none">
+      <div class="auth-field"><label>Full Name</label><input class="auth-input" id="reg-name" type="text" placeholder="Jane Smith" autocomplete="name" /></div>
+      <div class="auth-field"><label>Email / Username</label><input class="auth-input" id="reg-username" type="text" placeholder="you@company.com" autocomplete="username" /></div>
+      <div class="auth-field"><label>Password</label><input class="auth-input" id="reg-password" type="password" placeholder="Min 6 characters" autocomplete="new-password" /></div>
+      <div class="auth-field"><label>Confirm Password</label><input class="auth-input" id="reg-confirm" type="password" placeholder="••••••••" autocomplete="new-password" /></div>
+      <button class="auth-btn" id="auth-reg-btn">Create Account</button>
+      <div class="auth-err" id="auth-reg-err"></div>
+    </div>
+    <div class="auth-footer" id="auth-footer"></div>
   </div>
-  <div id="diff-detail" style="font-size:12px;color:var(--muted)"></div>
 </div>
 
-<!-- Top bar -->
+<!-- New Opportunity form panel -->
+<div id="new-opp-overlay">
+  <div id="new-opp-panel">
+    <div class="nop-head"><h2>New Opportunity</h2><button class="nop-close" id="nop-close">×</button></div>
+    <div class="nop-body">
+      <div class="nop-field"><label class="nop-label">Opportunity Name <span style="color:#de350b">*</span></label><input class="nop-input" id="nop-name" placeholder="e.g. TechCorp — Platform Expansion" /></div>
+      <div class="nop-field"><label class="nop-label">Account / Company</label><input class="nop-input" id="nop-account" placeholder="Company name" /></div>
+      <div class="nop-2col">
+        <div class="nop-field"><label class="nop-label">Stage</label><select class="nop-select" id="nop-stage"></select></div>
+        <div class="nop-field"><label class="nop-label">Status</label><select class="nop-select" id="nop-status"></select></div>
+      </div>
+      <div class="nop-2col">
+        <div class="nop-field"><label class="nop-label">Value ($)</label><input class="nop-input" id="nop-value" type="number" min="0" placeholder="0" /></div>
+        <div class="nop-field"><label class="nop-label">Margin %</label><input class="nop-input" id="nop-margin" type="number" min="0" max="100" step="0.1" placeholder="5 (default)" /></div>
+      </div>
+      <div class="nop-2col">
+        <div class="nop-field"><label class="nop-label">Close Date</label><input class="nop-input" id="nop-closedate" type="date" /></div>
+        <div class="nop-field"><label class="nop-label">Owner</label><input class="nop-input" id="nop-owner" placeholder="Your name" /></div>
+      </div>
+      <div class="nop-field"><label class="nop-label">Description / Notes</label><textarea class="nop-textarea" id="nop-desc" placeholder="Context, key contacts, background…"></textarea></div>
+      <p style="font-size:11px;color:var(--muted);background:#fffae6;border-radius:var(--radius);padding:8px 10px">This deal will appear across all views (Kanban, List, Forecast) and on the Manual tab until you mark it as Added to CRM.</p>
+    </div>
+    <div class="nop-footer">
+      <button class="nop-cancel" id="nop-cancel">Cancel</button>
+      <button class="nop-save" id="nop-save">Create Opportunity</button>
+    </div>
+  </div>
+</div>
+
+<!-- File preview overlay -->
+<div id="preview-overlay">
+  <div id="preview-panel">
+    <div class="prev-head">
+      <span class="prev-title" id="prev-title"></span>
+      <button class="prev-close" id="prev-close">×</button>
+    </div>
+    <div id="prev-body"></div>
+  </div>
+</div>
+
+<!-- Opportunity detail panel -->
+<div id="opp-overlay">
+  <div id="opp-panel">
+    <div class="op-head">
+      <div class="op-head-text">
+        <h2 id="op-title"></h2>
+        <div class="op-account-sub" id="op-account-sub"></div>
+      </div>
+      <button class="op-close" id="op-close">×</button>
+    </div>
+    <div class="opp-split-body">
+      <div class="opp-main-side">
+        <div class="op-tabs-bar">
+          <button class="op-tab active" data-tab="details">Details</button>
+          <button class="op-tab" data-tab="notes">Notes</button>
+          <button class="op-tab" data-tab="files">Files</button>
+        </div>
+        <div class="op-body">
+          <div class="op-tab-pane active" id="op-details-pane" data-tab="details"></div>
+          <div class="op-tab-pane" id="op-notes-pane" data-tab="notes"></div>
+          <div class="op-tab-pane" id="op-files-pane" data-tab="files"></div>
+        </div>
+      </div>
+      <div class="opp-preview-side" id="opp-preview-side" style="display:none">
+        <div class="prev-head">
+          <span class="prev-title" id="inl-prev-title"></span>
+          <button class="prev-close" id="inl-prev-close" title="Close preview">×</button>
+        </div>
+        <div id="inl-prev-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings overlay -->
+<div id="settings-overlay">
+  <div id="settings-panel">
+    <div class="sp-head"><h2>⚙ Pipeline Settings</h2><button class="sp-close" id="sp-close">×</button></div>
+    <div class="sp-section">
+      <h3>Branding</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Upload your company logo. Displayed in the app header.</p>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <img id="sp-logo-preview" style="display:none;max-height:48px;border-radius:4px;border:1px solid var(--border)" />
+        <span id="sp-logo-placeholder" style="font-size:12px;color:var(--muted)">No logo uploaded</span>
+        <label style="font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;cursor:pointer;white-space:nowrap">Choose Image <input type="file" id="sp-logo-file" accept="image/*" style="display:none" /></label>
+        <button id="sp-logo-clear" style="display:none;font-size:12px;padding:6px 10px;border-radius:var(--radius);border:1px solid #de350b;background:#fff;color:#de350b;cursor:pointer">Remove</button>
+      </div>
+    </div>
+    <div class="sp-section">
+      <h3>Deal Stages</h3>
+      <p>Each stage has a default weight applied to all deals in that column. Your changes here are saved permanently in the browser.</p>
+      <div class="stage-row hdr"><span>Label</span><span>Weight %</span><span>Color</span><span></span><span></span></div>
+      <div id="stages-editor"></div>
+      <button class="sp-add" id="add-stage-btn">+ Add Stage</button>
+    </div>
+    <div class="sp-section">
+      <h3>Deal Statuses</h3>
+      <p>Terminal statuses (Won / Lost) get their own Kanban columns.</p>
+      <div class="status-row hdr"><span>Label</span><span>Terminal</span><span>Color</span><span></span></div>
+      <div id="statuses-editor"></div>
+      <button class="sp-add" id="add-status-btn">+ Add Status</button>
+    </div>
+    <div class="sp-section">
+      <h3>Default Deal Margin</h3>
+      <p>Gross margin % assumed for all deals unless overridden on an individual deal.</p>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="sp-input" type="number" id="sp-margin" min="0" max="100" step="0.1" style="width:80px" placeholder="5" />
+        <span style="font-size:13px;color:var(--muted)">% gross margin</span>
+      </div>
+    </div>
+    <div class="sp-footer">
+      <button class="sp-cancel" id="sp-cancel">Cancel</button>
+      <button class="sp-save" id="sp-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Drill-down panel -->
+<div id="drill-overlay">
+  <div id="drill-panel">
+    <div class="dp-head">
+      <div class="dp-head-text">
+        <h2 id="dp-title"></h2>
+        <div class="dp-sub" id="dp-sub"></div>
+      </div>
+      <button class="dp-close" id="dp-close">×</button>
+    </div>
+    <div class="dp-body">
+      <table class="dp-table">
+        <thead><tr>
+          <th>Opportunity</th><th>Account</th><th>Stage</th><th>Status</th>
+          <th>Value</th><th>Weighted</th><th>Close Date</th>
+        </tr></thead>
+        <tbody id="dp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Notes panel -->
+<div id="notes-overlay">
+  <div id="notes-panel">
+    <div class="np-head">
+      <div class="np-head-text">
+        <h2 id="np-title"></h2>
+        <div class="np-account" id="np-account"></div>
+      </div>
+      <button class="np-close" id="np-close">×</button>
+    </div>
+    <div class="np-meta" id="np-meta"></div>
+    <div class="np-notes-wrap" id="np-notes-list"></div>
+    <div class="np-add">
+      <textarea class="np-textarea" id="np-textarea" placeholder="Add a note… (Ctrl+Enter to save)"></textarea>
+      <button class="np-submit" id="np-submit">Add Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nudge banner -->
+<div class="banner" id="nudge-banner">
+  <span>⏰ <strong>Time to refresh your pipeline.</strong> Upload a fresh CSV or Excel export from Dynamics.</span>
+  <button class="banner-cta" id="nudge-cta">Upload File</button>
+  <button class="banner-dismiss" id="nudge-dismiss">×</button>
+</div>
+
+<!-- Diff banner -->
+<div class="banner" id="diff-banner">
+  <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
+    <strong>Import complete</strong>
+    <span id="diff-new-tag"></span><span id="diff-rm-tag"></span>
+    <span id="diff-detail" style="font-size:11px;color:#5e6c84"></span>
+  </div>
+  <button class="banner-dismiss" id="diff-dismiss">×</button>
+</div>
+
+<!-- Topbar -->
 <div id="topbar">
-  <h1>Opportunities Kanban</h1>
-  <input id="search" type="search" placeholder="Search…" />
-  <div id="groupby-wrap">
-    <button class="gb-btn active" data-gb="stage">By Stage</button>
-    <button class="gb-btn" data-gb="status">By Status</button>
+  <div class="tb-brand" id="tb-brand" style="display:flex;align-items:center;gap:8px;margin-right:12px">
+    <img id="header-logo" style="display:none;max-height:32px;border-radius:3px" />
   </div>
+  <h1>Opportunities</h1>
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="kanban">Kanban</button>
+    <button class="view-tab" data-view="list">List</button>
+    <button class="view-tab" data-view="forecast">Forecast</button>
+    <button class="view-tab" data-view="manual" id="manual-tab-btn">Manual</button>
+    <button class="view-tab" data-view="expiry" id="btn-expiry">Expiry<span class="manual-badge" id="expiry-badge" style="display:none"></span></button>
+  </div>
+  <input id="search" type="search" placeholder="Search…" />
+  <button class="tb-btn" id="btn-filter">⚡ Filters <span id="filter-count"></span></button>
+  <div id="tb-spacer"></div>
   <span id="last-upload"></span>
-  <div id="btn-upload-wrap">
-    <button id="btn-upload">⬆ Upload CSV</button>
-    <input id="csv-input" type="file" accept=".csv,text/csv" />
+  <button class="tb-btn" id="btn-settings">⚙ Settings</button>
+  <button class="tb-btn primary" id="btn-upload">⬆ Upload</button>
+  <input id="file-input" type="file" accept=".csv,.xlsx,.xls,text/csv" />
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <span id="topbar-user" style="font-size:12px;font-weight:600;color:#5e6c84"></span>
+    <button class="tb-btn" id="btn-logout" style="font-size:12px">Sign Out</button>
   </div>
 </div>
 
-<!-- Board (hidden when empty) -->
+<!-- Filter bar -->
+<div id="filter-bar">
+  <div class="f-group"><span class="f-label">Status</span><div id="f-status-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div></div>
+  <div class="f-group"><span class="f-label">Stage</span><div id="f-stage-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div></div>
+  <div class="f-group">
+    <span class="f-label">Company</span>
+    <input class="f-text" id="f-company" type="search" placeholder="Account name…" />
+  </div>
+  <div class="f-group" id="f-date-group">
+    <span class="f-label">Close Date</span>
+    <select class="f-text" id="f-date-preset" style="width:160px">
+      <option value="">Any time</option>
+      <optgroup label="Relative">
+        <option value="today">Today</option>
+        <option value="tomorrow">Tomorrow</option>
+        <option value="this_week">This week</option>
+        <option value="last_week">Last week</option>
+        <option value="next_week">Next week</option>
+        <option value="this_month">This month</option>
+        <option value="last_month">Last month</option>
+        <option value="next_month">Next month</option>
+        <option value="this_quarter">This quarter</option>
+        <option value="last_quarter">Last quarter</option>
+        <option value="next_quarter">Next quarter</option>
+        <option value="this_year">This year</option>
+        <option value="last_year">Last year</option>
+        <option value="next_year">Next year</option>
+        <option value="last_7">Last 7 days</option>
+        <option value="last_30">Last 30 days</option>
+        <option value="last_90">Last 90 days</option>
+        <option value="last_365">Last 365 days</option>
+        <option value="next_30">Next 30 days</option>
+        <option value="next_90">Next 90 days</option>
+      </optgroup>
+      <optgroup label="This Year's Quarters">
+        <option value="q1_this">Q1 this year</option>
+        <option value="q2_this">Q2 this year</option>
+        <option value="q3_this">Q3 this year</option>
+        <option value="q4_this">Q4 this year</option>
+      </optgroup>
+      <optgroup label="Last Year's Quarters">
+        <option value="q1_last">Q1 last year</option>
+        <option value="q2_last">Q2 last year</option>
+        <option value="q3_last">Q3 last year</option>
+        <option value="q4_last">Q4 last year</option>
+      </optgroup>
+      <optgroup label="Next Year's Quarters">
+        <option value="q1_next">Q1 next year</option>
+        <option value="q2_next">Q2 next year</option>
+        <option value="q3_next">Q3 next year</option>
+        <option value="q4_next">Q4 next year</option>
+      </optgroup>
+      <optgroup label="Custom">
+        <option value="custom">Custom range…</option>
+      </optgroup>
+    </select>
+    <span id="f-date-custom" style="display:none;align-items:center;gap:4px">
+      <input class="f-date" id="f-date-from" type="date" title="From" />
+      <span class="f-sep">→</span>
+      <input class="f-date" id="f-date-to" type="date" title="To" />
+    </span>
+  </div>
+  <div class="f-group">
+    <span class="f-label">Value</span>
+    <input class="f-num" id="f-val-min" type="number" placeholder="Min $" />
+    <span class="f-sep">–</span>
+    <input class="f-num" id="f-val-max" type="number" placeholder="Max $" />
+  </div>
+  <button id="btn-clear-filters">Clear all</button>
+</div>
+
+<!-- Kanban board -->
 <div id="board"></div>
+
+<!-- List view -->
+<div id="list-view">
+  <table class="list-table" id="list-table">
+    <thead><tr id="list-thead-row"></tr></thead>
+    <tbody id="list-tbody"></tbody>
+  </table>
+</div>
+
+<!-- Forecast view -->
+<div id="forecast-view">
+  <div class="fc-controls">
+    <label><input type="checkbox" id="fc-inc-won" /> Include Won</label>
+    <label><input type="checkbox" id="fc-inc-lost" /> Include Lost</label>
+    <div class="fc-sep"></div>
+    <span class="f-label">Date field</span>
+    <select class="fc-select" id="fc-date-field"><option value="">Close Date (default)</option></select>
+    <span class="fc-undated" id="fc-undated"></span>
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-section-head">
+      <h3>Monthly Forecast</h3>
+      <button class="win-btn active" data-win="3m">3M</button>
+      <button class="win-btn" data-win="6m">6M</button>
+      <button class="win-btn" data-win="12m">12M</button>
+      <button class="win-btn" data-win="24m">24M</button>
+      <button class="win-btn" data-win="customm">Custom</button>
+      <div class="fc-custom-range" id="fc-custom-monthly">
+        <span class="f-label">From</span>
+        <input class="f-date" id="fc-m-from" type="date" />
+        <span class="f-sep">→</span>
+        <input class="f-date" id="fc-m-to" type="date" />
+      </div>
+    </div>
+    <div class="fc-chart-wrap"><canvas id="chart-monthly"></canvas></div>
+    <table class="fc-table"><thead><tr><th>Month</th><th>Deals</th><th>Pipeline</th><th>Weighted</th><th>Avg Weight</th></tr></thead><tbody id="tbl-monthly"></tbody></table>
+    <div class="fc-total" id="fc-monthly-total"></div>
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-section-head">
+      <h3>Quarterly Forecast</h3>
+      <button class="win-btn" data-win="4q">4Q</button>
+      <button class="win-btn active" data-win="8q">8Q</button>
+      <button class="win-btn" data-win="12q">12Q</button>
+      <button class="win-btn" data-win="customq">Custom</button>
+      <div class="fc-custom-range" id="fc-custom-quarterly">
+        <span class="f-label">From</span>
+        <input class="f-date" id="fc-q-from" type="date" />
+        <span class="f-sep">→</span>
+        <input class="f-date" id="fc-q-to" type="date" />
+      </div>
+    </div>
+    <div class="fc-chart-wrap"><canvas id="chart-quarterly"></canvas></div>
+    <table class="fc-table"><thead><tr><th>Quarter</th><th>Deals</th><th>Pipeline</th><th>Weighted</th><th>Avg Weight</th></tr></thead><tbody id="tbl-quarterly"></tbody></table>
+    <div class="fc-total" id="fc-quarterly-total"></div>
+  </div>
+
+  <div class="fc-section">
+    <div class="fc-section-head">
+      <h3>Margin Forecast</h3>
+      <span style="font-size:12px;color:var(--muted);margin-left:4px">Revenue × deal margin % (monthly view)</span>
+    </div>
+    <div class="fc-chart-wrap"><canvas id="chart-margin"></canvas></div>
+    <table class="fc-table"><thead><tr><th>Month</th><th>Deals</th><th>Avg Margin</th><th>Margin Revenue</th><th>Wtd Margin</th></tr></thead><tbody id="tbl-margin"></tbody></table>
+    <div class="fc-total" id="fc-margin-total"></div>
+  </div>
+</div>
+
+<!-- Manual deals view -->
+<div id="manual-view">
+  <div class="mv-header">
+    <h2>Manual Deals</h2>
+    <div class="mv-filter-tabs">
+      <button class="mv-ftab active" data-mf="pending">Pending</button>
+      <button class="mv-ftab" data-mf="added">Added to CRM</button>
+      <button class="mv-ftab" data-mf="all">All</button>
+    </div>
+    <button class="mv-add-btn" id="mv-add-btn">+ New Opportunity</button>
+  </div>
+  <div id="mv-list"></div>
+</div>
+
+<!-- Expiry view -->
+<div id="expiry-view" style="display:none;padding:24px;overflow-y:auto;flex:1"></div>
 
 <!-- Empty state -->
 <div id="empty-state">
-  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+  <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
   </svg>
   <h2>No opportunities yet</h2>
-  <p>Export your opportunities from Dynamics 365 as a CSV and upload it here to populate the board.</p>
-  <button id="empty-upload-btn">Upload CSV</button>
+  <p>Export opportunities from Dynamics 365 or HubSpot as CSV or Excel and upload to populate the board.</p>
+  <button id="empty-upload-btn">Upload File</button>
 </div>
 
 <div id="toast"></div>
 
-<script>
-(function () {
-  "use strict";
-
-  // ── Storage keys ──────────────────────────────────────────────────────────
-  const KEY_DATA       = "kanban_opportunities";   // array of opp objects
-  const KEY_UPLOAD_TS  = "kanban_last_upload";     // ISO timestamp
-  const KEY_STATUSES   = "kanban_statuses";        // { id: stage }  manual overrides
-  const KEY_WEIGHTS    = "kanban_weights";         // { id: number } manual overrides
-  const KEY_NUDGE_DIS  = "kanban_nudge_dismissed"; // ISO date dismissed
-
-  // ── State ─────────────────────────────────────────────────────────────────
-  let opportunities = [];   // current canonical list
-  let manualStatuses = {};  // id → stage (drag overrides)
-  let manualWeights  = {};  // id → number (weight overrides)
-  let groupBy = "stage";    // "stage" | "status"
-  let dragSourceCard = null;
-  let diffState = null;     // { added: [], removed: [] }
-
-  // ── Boot ──────────────────────────────────────────────────────────────────
-  function boot() {
-    opportunities   = load(KEY_DATA) || [];
-    manualStatuses  = load(KEY_STATUSES) || {};
-    manualWeights   = load(KEY_WEIGHTS) || {};
-
-    const savedGb = localStorage.getItem("kanban_groupby");
-    if (savedGb) { groupBy = savedGb; syncGbButtons(); }
-
-    refreshLastUploadLabel();
-    checkNudge();
-    renderBoard();
-
-    // Wire events
-    document.getElementById("btn-upload").addEventListener("click", () => csvInput().click());
-    document.getElementById("empty-upload-btn").addEventListener("click", () => csvInput().click());
-    document.getElementById("nudge-cta-btn").addEventListener("click", () => { csvInput().click(); });
-    document.getElementById("nudge-dismiss").addEventListener("click", dismissNudge);
-    document.getElementById("diff-dismiss").addEventListener("click", () => {
-      document.getElementById("diff-banner").classList.remove("show");
-    });
-
-    csvInput().addEventListener("change", onFileSelected);
-
-    document.querySelectorAll(".gb-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        groupBy = btn.dataset.gb;
-        localStorage.setItem("kanban_groupby", groupBy);
-        syncGbButtons();
-        renderBoard();
-      });
-    });
-
-    let searchTimer;
-    document.getElementById("search").addEventListener("input", () => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(renderBoard, 180);
-    });
-  }
-
-  function csvInput() { return document.getElementById("csv-input"); }
-
-  // ── localStorage helpers ──────────────────────────────────────────────────
-  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
-  function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
-
-  // ── Nudge: twice-weekly check ─────────────────────────────────────────────
-  function checkNudge() {
-    const lastUpload = localStorage.getItem(KEY_UPLOAD_TS);
-    if (!lastUpload) {
-      // No data yet — nudge shown via empty state, not banner
-      return;
-    }
-
-    const dismissedDate = localStorage.getItem(KEY_NUDGE_DIS);
-    const today = todayStr();
-    if (dismissedDate === today) return; // already dismissed today
-
-    const lastUploadDate = new Date(lastUpload);
-    const now = new Date();
-    const daysSince = (now - lastUploadDate) / 86400000;
-
-    // Show banner if it's been 3+ days since last upload
-    if (daysSince >= 3) {
-      document.getElementById("nudge-banner").classList.add("show");
-    }
-  }
-
-  function dismissNudge() {
-    localStorage.setItem(KEY_NUDGE_DIS, todayStr());
-    document.getElementById("nudge-banner").classList.remove("show");
-  }
-
-  function todayStr() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  // ── CSV parsing ───────────────────────────────────────────────────────────
-  function onFileSelected(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const parsed = parseCSV(ev.target.result);
-        if (parsed.length === 0) { showToast("CSV contained no rows", true); return; }
-        importData(parsed);
-      } catch (err) {
-        showToast("Could not parse CSV: " + err.message, true);
-      }
-      e.target.value = "";
-    };
-    reader.readAsText(file);
-  }
-
-  function parseCSV(text) {
-    const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-    if (lines.length < 2) return [];
-
-    const headers = splitCSVRow(lines[0]).map(h => h.trim().toLowerCase());
-
-    const rows = [];
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      const vals = splitCSVRow(lines[i]);
-      const row = {};
-      headers.forEach((h, j) => { row[h] = (vals[j] || "").trim(); });
-      rows.push(row);
-    }
-    return rows.map(normaliseRow).filter(r => r.name);
-  }
-
-  function splitCSVRow(line) {
-    const cols = [];
-    let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') {
-        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-        else inQ = !inQ;
-      } else if (c === "," && !inQ) {
-        cols.push(cur); cur = "";
-      } else {
-        cur += c;
-      }
-    }
-    cols.push(cur);
-    return cols;
-  }
-
-  // Map flexible Dynamics export column names → our internal schema
-  function normaliseRow(row) {
-    const g = (...candidates) => {
-      for (const c of candidates) {
-        if (row[c] !== undefined && row[c] !== "") return row[c];
-      }
-      return "";
-    };
-
-    const name = g("opportunity name", "name", "topic", "subject", "title", "opportunity");
-    if (!name) return null;
-
-    // Stable ID: prefer an explicit ID field, otherwise hash the name
-    const id = g("opportunityid", "id", "opportunity id", "crm id") || slugify(name);
-
-    const stage = g(
-      "sales stage", "stage", "stepname", "step name", "pipeline stage",
-      "bpf stage", "process stage"
-    ) || "Unknown";
-
-    const status = g("status reason", "statuscode", "status", "state") || "Open";
-    const account = g("account name", "account", "company", "customer", "organisation", "organization");
-    const owner = g("owner", "owning user", "assigned to", "salesperson", "sales rep");
-    const estValue = parseMoney(g("est. revenue", "estimated revenue", "estimated value", "revenue", "value", "deal size", "amount"));
-    const probability = parseFloat(g("probability", "close probability", "closeprobability", "weight", "likelihood")) || 0;
-    const closeDate = g("est. close date", "close date", "estimated close date", "closedate", "target close date");
-    const rating = g("rating", "lead rating", "opportunityratingcode");
-
-    return { id, name, stage, status, account, owner, estValue, probability, closeDate, rating };
-  }
-
-  function parseMoney(s) {
-    if (!s) return 0;
-    return parseFloat(s.replace(/[^0-9.\-]/g, "")) || 0;
-  }
-
-  function slugify(s) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  }
-
-  // ── Import & diff ─────────────────────────────────────────────────────────
-  function importData(newRows) {
-    const oldMap = new Map(opportunities.map(o => [o.id, o]));
-    const newMap = new Map(newRows.map(o => [o.id, o]));
-
-    const added   = newRows.filter(o => !oldMap.has(o.id));
-    const removed = opportunities.filter(o => !newMap.has(o.id));
-
-    // Merge: keep manual status/weight overrides for existing opps
-    opportunities = newRows.map(o => {
-      const old = oldMap.get(o.id);
-      return {
-        ...o,
-        // carry forward manual edits if stage/probability unchanged in new CSV
-        _isNew: !old,
-      };
-    });
-
-    // Clear stale overrides for removed opps
-    removed.forEach(o => { delete manualStatuses[o.id]; delete manualWeights[o.id]; });
-
-    save(KEY_DATA, opportunities.map(o => ({ ...o, _isNew: false })));
-    save(KEY_STATUSES, manualStatuses);
-    save(KEY_WEIGHTS, manualWeights);
-
-    const ts = new Date().toISOString();
-    localStorage.setItem(KEY_UPLOAD_TS, ts);
-    refreshLastUploadLabel();
-    dismissNudge(); // fresh data — reset nudge
-
-    diffState = { added, removed };
-    showDiffBanner(added, removed);
-    renderBoard();
-    showToast(`Imported ${newRows.length} opportunit${newRows.length === 1 ? "y" : "ies"}`, false, "success");
-  }
-
-  function showDiffBanner(added, removed) {
-    const banner = document.getElementById("diff-banner");
-    if (added.length === 0 && removed.length === 0) {
-      banner.classList.remove("show");
-      return;
-    }
-
-    const newTags = document.getElementById("diff-new-tags");
-    const rmTags  = document.getElementById("diff-removed-tags");
-    const detail  = document.getElementById("diff-detail");
-
-    newTags.innerHTML = added.length
-      ? `<span class="tag tag-new">+${added.length} new</span>` : "";
-    rmTags.innerHTML = removed.length
-      ? `<span class="tag tag-removed">−${removed.length} removed</span>` : "";
-
-    const parts = [];
-    if (added.length)   parts.push("Added: " + added.map(o => o.name).join(", "));
-    if (removed.length) parts.push("Removed: " + removed.map(o => o.name).join(", "));
-    detail.textContent = parts.join("  ·  ");
-
-    banner.classList.add("show");
-  }
-
-  // ── Rendering ─────────────────────────────────────────────────────────────
-  const STAGE_COLORS = {
-    Qualify: "#0052cc", Develop: "#6554c0", Propose: "#ff8b00",
-    Close: "#00875a", Won: "#00875a", Lost: "#de350b",
-    Unknown: "#8993a4",
-  };
-  function stageColor(s) {
-    return STAGE_COLORS[s] || "#8993a4";
-  }
-
-  const STATUS_ORDER = ["Open", "In Progress", "On Hold", "Won", "Canceled", "Out-Sold", "Lost"];
-  const STAGE_ORDER  = ["Qualify", "Develop", "Propose", "Close", "Won", "Lost"];
-
-  function effectiveStage(o) {
-    return manualStatuses[o.id] || o.stage || "Unknown";
-  }
-  function effectiveWeight(o) {
-    return manualWeights[o.id] != null ? manualWeights[o.id] : (o.probability || 0);
-  }
-
-  function filtered() {
-    const q = document.getElementById("search").value.trim().toLowerCase();
-    if (!q) return opportunities;
-    return opportunities.filter(o =>
-      o.name.toLowerCase().includes(q) ||
-      (o.account || "").toLowerCase().includes(q) ||
-      (o.owner || "").toLowerCase().includes(q)
-    );
-  }
-
-  function renderBoard() {
-    const board = document.getElementById("board");
-    const emptyState = document.getElementById("empty-state");
-    board.innerHTML = "";
-
-    if (opportunities.length === 0) {
-      board.style.display = "none";
-      emptyState.classList.add("show");
-      return;
-    }
-    board.style.display = "flex";
-    emptyState.classList.remove("show");
-
-    const opps = filtered();
-    const groupFn = groupBy === "stage"
-      ? o => effectiveStage(o)
-      : o => o.status || "Open";
-
-    const orderRef = groupBy === "stage" ? STAGE_ORDER : STATUS_ORDER;
-    const groups = {};
-    opps.forEach(o => {
-      const k = groupFn(o);
-      if (!groups[k]) groups[k] = [];
-      groups[k].push(o);
-    });
-
-    // All opps (for deleted-from-CSV markers still in removed state)
-    if (diffState) {
-      diffState.removed.forEach(o => {
-        const k = groupFn(o);
-        if (!groups[k]) groups[k] = [];
-        if (!groups[k].find(x => x.id === o.id)) {
-          groups[k].push({ ...o, _removed: true });
-        }
-      });
-    }
-
-    const keys = [
-      ...orderRef.filter(k => groups[k]),
-      ...Object.keys(groups).filter(k => !orderRef.includes(k)),
-    ];
-
-    keys.forEach(key => board.appendChild(buildColumn(key, groups[key] || [])));
-  }
-
-  function buildColumn(key, opps) {
-    const col = document.createElement("div");
-    col.className = "column";
-    col.dataset.key = key;
-
-    const total = opps.filter(o => !o._removed).reduce((s, o) => s + (o.estValue || 0), 0);
-    const totalStr = total > 0 ? fmt(total) : "";
-    const color = stageColor(key);
-
-    col.innerHTML = `
-      <div class="column-header" style="border-left-color:${color}">
-        <span>${escHtml(key)}</span>
-        ${totalStr ? `<span class="col-total">${totalStr}</span>` : ""}
-        <span class="count">${opps.filter(o => !o._removed).length}</span>
-      </div>
-      <div class="column-body" data-key="${key}">
-        ${opps.length === 0 ? '<p class="empty-col">Drop cards here</p>' : ""}
-      </div>`;
-
-    const body = col.querySelector(".column-body");
-    body.addEventListener("dragover", e => { e.preventDefault(); body.classList.add("drag-over"); });
-    body.addEventListener("dragleave", e => { if (!body.contains(e.relatedTarget)) body.classList.remove("drag-over"); });
-    body.addEventListener("drop", e => {
-      e.preventDefault();
-      body.classList.remove("drag-over");
-      if (dragSourceCard && dragSourceCard.dataset.key !== key) {
-        dropCard(dragSourceCard, key, col);
-      }
-    });
-
-    opps.forEach(o => body.appendChild(buildCard(o)));
-    return col;
-  }
-
-  function buildCard(opp) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.draggable = !opp._removed;
-    card.dataset.id  = opp.id;
-    card.dataset.key = opp._removed ? (opp.stage || "Unknown") : effectiveStage(opp);
-
-    if (opp._isNew)    { card.classList.add("card-new"); }
-    if (opp._removed)  { card.classList.add("card-removed"); }
-
-    const w = effectiveWeight(opp);
-    const rating = (opp.rating || "").toLowerCase();
-    let ratingDot = "";
-    if (rating.includes("hot") || rating === "1") ratingDot = `<span class="rating-dot r-hot" title="Hot"></span>`;
-    else if (rating.includes("warm") || rating === "2") ratingDot = `<span class="rating-dot r-warm" title="Warm"></span>`;
-    else if (rating.includes("cold") || rating === "3") ratingDot = `<span class="rating-dot r-cold" title="Cold"></span>`;
-
-    const showStagePill = groupBy === "status";
-    const stagePill = showStagePill
-      ? `<span class="stage-chip">${escHtml(effectiveStage(opp))}</span>`
-      : "";
-
-    // Status select (only meaningful when not grouping by status, so user can change it)
-    const statusSelect = !opp._removed ? `
-      <select class="status-select" data-id="${opp.id}" title="Status">
-        ${["Open","In Progress","On Hold","Won","Canceled","Out-Sold","Lost"].map(s =>
-          `<option${s === (opp.status||"Open") ? " selected" : ""}>${s}</option>`
-        ).join("")}
-      </select>` : "";
-
-    card.innerHTML = `
-      ${opp._isNew ? '<span class="card-badge badge-new">New</span>' : ""}
-      ${opp._removed ? '<span class="card-badge badge-removed">Removed</span>' : ""}
-      <div class="card-title">${escHtml(opp.name)}</div>
-      ${opp.account ? `<div class="card-account">${escHtml(opp.account)}</div>` : ""}
-      <div class="card-meta">
-        ${ratingDot}
-        ${opp.estValue ? `<span class="card-value">${fmt(opp.estValue)}</span>` : ""}
-        ${opp.closeDate ? `<span style="font-size:11px;color:var(--muted)">${escHtml(opp.closeDate)}</span>` : ""}
-        ${stagePill}
-        ${statusSelect}
-        <span class="weight-wrap">
-          <span class="weight-label">Wt</span>
-          <input class="weight-input" type="number" min="0" max="100"
-            value="${w}" data-id="${opp.id}" data-orig="${w}"
-            title="Deal weight / probability (%)"
-            ${opp._removed ? "disabled" : ""} />
-          <span class="weight-pct">%</span>
-        </span>
-      </div>`;
-
-    // Rating border
-    if (rating.includes("hot") || rating === "1") card.style.borderLeftColor = "var(--danger)";
-    else if (rating.includes("warm") || rating === "2") card.style.borderLeftColor = "var(--warn)";
-
-    if (!opp._removed) {
-      card.addEventListener("dragstart", e => {
-        dragSourceCard = card;
-        card.classList.add("dragging");
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", opp.id);
-      });
-      card.addEventListener("dragend", () => {
-        card.classList.remove("dragging");
-        dragSourceCard = null;
-      });
-
-      // Status select change
-      const sel = card.querySelector(".status-select");
-      if (sel) {
-        sel.addEventListener("mousedown", e => e.stopPropagation());
-        sel.addEventListener("change", () => {
-          const oIdx = opportunities.findIndex(x => x.id === opp.id);
-          if (oIdx > -1) opportunities[oIdx].status = sel.value;
-          save(KEY_DATA, opportunities.map(o => ({ ...o, _isNew: false })));
-          showToast(`Status → ${sel.value}`);
-        });
-      }
-    }
-
-    // Weight input
-    const wi = card.querySelector(".weight-input");
-    if (wi) {
-      wi.addEventListener("mousedown", e => e.stopPropagation());
-      wi.addEventListener("click", e => e.stopPropagation());
-      wi.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); wi.blur(); } });
-      wi.addEventListener("blur", () => {
-        const orig = parseFloat(wi.dataset.orig);
-        const nv = Math.min(100, Math.max(0, parseInt(wi.value, 10) || 0));
-        wi.value = nv;
-        if (nv !== orig) {
-          manualWeights[opp.id] = nv;
-          wi.dataset.orig = nv;
-          save(KEY_WEIGHTS, manualWeights);
-          showToast(`Weight → ${nv}%`);
-        }
-      });
-    }
-
-    return card;
-  }
-
-  // ── Drag & drop ───────────────────────────────────────────────────────────
-  function dropCard(cardEl, newKey, targetCol) {
-    const id = cardEl.dataset.id;
-    const opp = opportunities.find(o => o.id === id);
-    if (!opp) return;
-
-    // Update groupBy key
-    if (groupBy === "stage") {
-      manualStatuses[id] = newKey;
-      save(KEY_STATUSES, manualStatuses);
-    } else {
-      opp.status = newKey;
-      save(KEY_DATA, opportunities.map(o => ({ ...o, _isNew: false })));
-    }
-
-    cardEl.dataset.key = newKey;
-
-    // Move in DOM
-    const oldBody = cardEl.parentElement;
-    const newBody = targetCol.querySelector(".column-body");
-    newBody.appendChild(cardEl);
-
-    updateCount(oldBody.closest(".column"));
-    updateCount(targetCol);
-    showToast(`Moved to ${newKey}`);
-  }
-
-  function updateCount(colEl) {
-    if (!colEl) return;
-    const cards = colEl.querySelectorAll(".card:not(.card-removed)");
-    const c = colEl.querySelector(".count");
-    if (c) c.textContent = cards.length;
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  function refreshLastUploadLabel() {
-    const ts = localStorage.getItem(KEY_UPLOAD_TS);
-    const el = document.getElementById("last-upload");
-    if (!ts) { el.textContent = ""; return; }
-    const d = new Date(ts);
-    const diff = Math.floor((Date.now() - d) / 86400000);
-    const label = diff === 0 ? "today"
-      : diff === 1 ? "yesterday"
-      : `${diff} days ago`;
-    el.textContent = `Last upload: ${label}`;
-  }
-
-  function syncGbButtons() {
-    document.querySelectorAll(".gb-btn").forEach(b => {
-      b.classList.toggle("active", b.dataset.gb === groupBy);
-    });
-  }
-
-  function fmt(v) {
-    if (!v) return "";
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
-  }
-
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  }
-
-  let toastTimer;
-  function showToast(msg, isError = false, variant = "") {
-    const el = document.getElementById("toast");
-    el.textContent = msg;
-    el.className = "show" + (isError ? " error" : variant === "success" ? " success" : "");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.className = ""; }, 3200);
-  }
-
-  boot();
-})();
-</script>
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>
