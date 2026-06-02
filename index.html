@@ -1028,8 +1028,8 @@ function matchStatus(raw) {
   const r=raw.trim().toLowerCase();
   const ex=config.statuses.find(s=>s.label.toLowerCase()===r||s.id.toLowerCase()===r); if(ex) return ex.id;
   if(r.includes("won")||r.includes("closed won")) return config.statuses.find(s=>s.id==="won")?.id||config.statuses.find(s=>s.terminal)?.id;
-  if(r.includes("lost")||r.includes("closed lost")||r.includes("cancel")) return config.statuses.find(s=>s.id==="lost")?.id||config.statuses.filter(s=>s.terminal)[1]?.id;
-  if(r.includes("hold")) return config.statuses.find(s=>s.id==="on-hold"||s.label.toLowerCase().includes("hold"))?.id;
+  if(r.includes("lost")||r.includes("closed lost")||r.includes("cancel")) return config.statuses.find(s=>s.id==="lost")?.id||config.statuses.filter(s=>s.terminal)[1]?.id||config.statuses.find(s=>s.terminal)?.id||config.statuses[0]?.id||"active";
+  if(r.includes("hold")) return config.statuses.find(s=>s.id==="on-hold"||s.label.toLowerCase().includes("hold"))?.id||config.statuses.find(s=>!s.terminal)?.id||"active";
   return config.statuses.find(s=>!s.terminal)?.id||"active";
 }
 function slugify(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");}
@@ -1185,7 +1185,8 @@ function renderBoard() {
   const board=document.getElementById("board"); board.innerHTML="";
   const visible=applyOpFilters(opportunities);
   const nonTermIds=new Set(config.statuses.filter(s=>!s.terminal).map(s=>s.id));
-  config.stages.forEach(stage=>{board.appendChild(buildColumn(stage,visible.filter(o=>o.stage===stage.id&&nonTermIds.has(o.status)),false));});
+  const allStatusIds=new Set(config.statuses.map(s=>s.id));
+  config.stages.forEach(stage=>{board.appendChild(buildColumn(stage,visible.filter(o=>o.stage===stage.id&&(nonTermIds.has(o.status)||!allStatusIds.has(o.status))),false));});
   config.statuses.filter(s=>s.terminal).forEach(st=>{board.appendChild(buildColumn({id:"__"+st.id,label:st.label,weight:null,color:st.color},visible.filter(o=>o.status===st.id),true));});
 }
 
