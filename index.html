@@ -370,14 +370,29 @@
     .prev-head { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); gap:10px; flex-shrink:0; }
     .prev-title { font-size:13px; font-weight:700; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .prev-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--muted); line-height:1; flex-shrink:0; }
-    #prev-body { flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center; min-height:300px; background:#f0f2f5; }
+    #prev-body { flex:1; overflow:hidden; display:flex; align-items:flex-start; justify-content:center; min-height:300px; background:#f0f2f5; }
     #prev-body iframe { width:100%; height:75vh; border:none; background:#fff; }
     #prev-body img { max-width:100%; max-height:75vh; object-fit:contain; display:block; margin:auto; }
-    .prev-xl-wrap { width:100%; overflow:auto; padding:12px; }
-    .prev-xl-table { border-collapse:collapse; font-size:12px; background:#fff; }
-    .prev-xl-table th { background:#f8f9fa; font-weight:700; text-align:left; padding:5px 10px; border:1px solid var(--border); font-size:11px; position:sticky; top:0; }
-    .prev-xl-table td { padding:4px 10px; border:1px solid #f0f2f5; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .prev-xl-table tr:nth-child(even) td { background:#f8f9fa; }
+    .prev-xl-wrap { display:flex; flex-direction:column; width:100%; height:100%; overflow:hidden; background:#fff; }
+    .prev-xl-toolbar { display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border); background:#f8f9fa; flex-shrink:0; flex-wrap:wrap; }
+    .prev-xl-search { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:var(--radius); outline:none; width:160px; }
+    .prev-xl-search:focus { border-color:var(--accent); }
+    .prev-xl-info { font-size:11px; color:var(--muted); margin-left:auto; }
+    .prev-xl-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); background:#f0f2f5; flex-shrink:0; overflow-x:auto; }
+    .prev-xl-tab { font-size:11px; font-weight:600; padding:6px 14px; border:none; border-right:1px solid var(--border); background:none; cursor:pointer; color:var(--muted); white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .prev-xl-tab.active { background:#fff; color:var(--accent); border-bottom-color:var(--accent); }
+    .prev-xl-tab:hover:not(.active) { background:#fff; color:var(--text); }
+    .prev-xl-body { flex:1; overflow:auto; }
+    .prev-xl-table { border-collapse:collapse; font-size:12px; background:#fff; table-layout:auto; }
+    .prev-xl-table th { background:#f1f3f5; font-weight:700; text-align:left; padding:5px 12px; border:1px solid #dde1e7; font-size:11px; position:sticky; top:0; z-index:2; white-space:nowrap; min-width:80px; }
+    .prev-xl-table th.row-num { background:#e8eaed; color:var(--muted); font-weight:400; min-width:36px; width:36px; text-align:center; position:sticky; top:0; left:0; z-index:3; }
+    .prev-xl-table td { padding:4px 12px; border:1px solid #eef0f3; white-space:nowrap; max-width:260px; overflow:hidden; text-overflow:ellipsis; cursor:default; }
+    .prev-xl-table td.row-num { background:#f8f9fa; color:var(--muted); font-size:10px; text-align:center; position:sticky; left:0; z-index:1; border-right:1px solid #dde1e7; }
+    .prev-xl-table tr:nth-child(even) td:not(.row-num) { background:#fafbfc; }
+    .prev-xl-table tr:hover td { background:#f0f6ff !important; }
+    .prev-xl-table td.xl-match { background:#fff3cd !important; }
+    .prev-xl-table td.xl-num { text-align:right; font-variant-numeric:tabular-nums; }
+    .prev-xl-table td.xl-selected { outline:2px solid var(--accent); outline-offset:-1px; }
     .prev-unsupported { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px; color:var(--muted); font-size:13px; width:100%; }
 
     /* ── Opp panel split-pane (inline preview alongside form) ── */
@@ -388,10 +403,10 @@
     .opp-main-side .op-body { flex:1; overflow-y:auto; }
     .opp-preview-side { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#f0f2f5; min-width:0; }
     .opp-preview-side .prev-head { background:#fff; border-bottom:1px solid var(--border); flex-shrink:0; }
-    .opp-preview-side #inl-prev-body { flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center; }
+    .opp-preview-side #inl-prev-body { flex:1; overflow:hidden; display:flex; align-items:flex-start; justify-content:center; }
     .opp-preview-side #inl-prev-body iframe { width:100%; height:100%; border:none; background:#fff; }
     .opp-preview-side #inl-prev-body img { max-width:100%; object-fit:contain; display:block; margin:auto; }
-    .opp-preview-side .prev-xl-wrap { width:100%; overflow:auto; padding:10px; height:100%; }
+    .opp-preview-side #inl-prev-body .prev-xl-wrap { width:100%; height:100%; padding:0; }
     .opp-preview-side .prev-unsupported { height:100%; }
 
     /* ── Manual badge ── */
@@ -2359,14 +2374,85 @@ function buildPreviewContent(file,bodyEl){
   } else if(file.type.includes("excel")||file.type.includes("spreadsheet")||/\.(xlsx|xls)$/i.test(file.name)){
     try{
       const base64=file.dataUrl.split(",")[1];
-      const wb=XLSX.read(base64,{type:"base64"});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const html=XLSX.utils.sheet_to_html(ws,{editable:false});
+      const wb=XLSX.read(base64,{type:"base64",cellStyles:true,cellDates:true});
       const wrap=document.createElement("div"); wrap.className="prev-xl-wrap";
-      wrap.innerHTML=html;
-      wrap.querySelectorAll("table").forEach(t=>t.className="prev-xl-table");
       bodyEl.appendChild(wrap);
-    }catch{bodyEl.innerHTML='<div class="prev-unsupported"><span style="font-size:32px">📊</span><span>Could not parse spreadsheet</span></div>';}
+      let activeSheet=wb.SheetNames[0];
+      let selectedCell=null;
+      function isNumeric(v){return typeof v==="number";}
+      function fmtCell(cell){
+        if(!cell) return "";
+        if(cell.t==="d") return cell.v instanceof Date?cell.v.toLocaleDateString("en-AU"):cell.w||"";
+        return cell.w!=null?cell.w:String(cell.v??"");
+      }
+      function renderSheet(sheetName){
+        const ws=wb.Sheets[sheetName];
+        const ref=ws["!ref"];
+        if(!ref){wrap.querySelector(".prev-xl-body").innerHTML='<p style="padding:20px;color:var(--muted);font-size:13px">Sheet is empty.</p>';return;}
+        const range=XLSX.utils.decode_range(ref);
+        const rowCount=range.e.r-range.s.r+1;
+        const colCount=range.e.c-range.s.c+1;
+        // Build header row from first data row
+        let html='<table class="prev-xl-table"><thead><tr><th class="row-num">#</th>';
+        for(let c=range.s.c;c<=range.e.c;c++){
+          const cell=ws[XLSX.utils.encode_cell({r:range.s.r,c})];
+          html+=`<th>${esc(fmtCell(cell))}</th>`;
+        }
+        html+='</tr></thead><tbody>';
+        for(let r=range.s.r+1;r<=range.e.r;r++){
+          html+=`<tr><td class="row-num">${r-range.s.r}</td>`;
+          for(let c=range.s.c;c<=range.e.c;c++){
+            const addr=XLSX.utils.encode_cell({r,c});
+            const cell=ws[addr];
+            const val=fmtCell(cell);
+            const numClass=cell&&isNumeric(cell.v)?" xl-num":"";
+            html+=`<td class="${numClass}" data-addr="${addr}" title="${esc(val)}">${esc(val)}</td>`;
+          }
+          html+='</tr>';
+        }
+        html+='</tbody></table>';
+        wrap.querySelector(".prev-xl-body").innerHTML=html;
+        wrap.querySelector(".prev-xl-info").textContent=`${rowCount} rows · ${colCount} cols`;
+        // Cell click → select + show value in toolbar
+        wrap.querySelectorAll(".prev-xl-body td[data-addr]").forEach(td=>{
+          td.addEventListener("click",e=>{
+            e.stopPropagation();
+            if(selectedCell) selectedCell.classList.remove("xl-selected");
+            td.classList.add("xl-selected"); selectedCell=td;
+            const cell=ws[td.dataset.addr];
+            wrap.querySelector(".prev-xl-cellval").textContent=td.dataset.addr+" : "+(cell?fmtCell(cell):"");
+          });
+        });
+        applySearch(wrap.querySelector(".prev-xl-search").value);
+      }
+      function applySearch(q){
+        const term=q.trim().toLowerCase();
+        wrap.querySelectorAll(".prev-xl-body td[data-addr]").forEach(td=>{
+          td.classList.toggle("xl-match",!!(term&&td.textContent.toLowerCase().includes(term)));
+        });
+      }
+      // Tabs
+      const tabsHtml=wb.SheetNames.map(n=>`<button class="prev-xl-tab${n===activeSheet?" active":""}" data-sheet="${esc(n)}">${esc(n)}</button>`).join("");
+      wrap.innerHTML=`
+        <div class="prev-xl-toolbar">
+          <input class="prev-xl-search" type="search" placeholder="Search cells…" />
+          <span class="prev-xl-cellval" style="font-size:11px;color:var(--accent);font-weight:600;min-width:120px"></span>
+          <span class="prev-xl-info" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+        </div>
+        ${wb.SheetNames.length>1?`<div class="prev-xl-tabs">${tabsHtml}</div>`:""}
+        <div class="prev-xl-body"></div>`;
+      renderSheet(activeSheet);
+      wrap.querySelectorAll(".prev-xl-tab").forEach(btn=>{
+        btn.addEventListener("click",()=>{
+          wrap.querySelectorAll(".prev-xl-tab").forEach(b=>b.classList.remove("active"));
+          btn.classList.add("active");
+          activeSheet=btn.dataset.sheet;
+          selectedCell=null;
+          renderSheet(activeSheet);
+        });
+      });
+      wrap.querySelector(".prev-xl-search").addEventListener("input",function(){applySearch(this.value);});
+    }catch(err){bodyEl.innerHTML='<div class="prev-unsupported"><span style="font-size:32px">📊</span><span>Could not parse spreadsheet</span></div>';}
   } else {
     bodyEl.innerHTML=`<div class="prev-unsupported"><span style="font-size:32px">${fileIcon(file.type)}</span><span>No preview available for this file type.</span><a href="${esc(file.dataUrl)}" download="${esc(file.name)}" style="color:var(--accent);text-decoration:underline">Download instead</a></div>`;
   }
