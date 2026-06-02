@@ -393,6 +393,18 @@
     .opp-preview-side #inl-prev-body img { max-width:100%; object-fit:contain; display:block; margin:auto; }
     .opp-preview-side .prev-xl-wrap { width:100%; overflow:auto; padding:10px; height:100%; }
     .opp-preview-side .prev-unsupported { height:100%; }
+
+    /* ── Manual badge ── */
+    .manual-badge { display:inline-block; font-size:9px; font-weight:700; background:#de350b; color:#fff; border-radius:8px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
+
+    /* ── Line Items section ── */
+    .op-li-section { background:#f8f9fa; border-radius:var(--radius); border:1px solid var(--border); padding:14px; }
+    .op-li-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .op-li-table th { text-align:left; font-size:11px; color:var(--muted); font-weight:600; padding:4px 6px 8px; border-bottom:1px solid var(--border); }
+    .op-li-table td { padding:6px; vertical-align:top; }
+    .op-li-table tfoot td { border-top:2px solid var(--border); padding-top:8px; }
+    .op-li-input { padding:4px 6px; font-size:12px; }
+    .op-li-marg { font-size:12px; color:var(--muted); }
   </style>
 </head>
 <body>
@@ -475,6 +487,16 @@
 <div id="settings-overlay">
   <div id="settings-panel">
     <div class="sp-head"><h2>⚙ Pipeline Settings</h2><button class="sp-close" id="sp-close">×</button></div>
+    <div class="sp-section">
+      <h3>Branding</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Upload your company logo. Displayed in the app header.</p>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <img id="sp-logo-preview" style="display:none;max-height:48px;border-radius:4px;border:1px solid var(--border)" />
+        <span id="sp-logo-placeholder" style="font-size:12px;color:var(--muted)">No logo uploaded</span>
+        <label style="font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;cursor:pointer;white-space:nowrap">Choose Image <input type="file" id="sp-logo-file" accept="image/*" style="display:none" /></label>
+        <button id="sp-logo-clear" style="display:none;font-size:12px;padding:6px 10px;border-radius:var(--radius);border:1px solid #de350b;background:#fff;color:#de350b;cursor:pointer">Remove</button>
+      </div>
+    </div>
     <div class="sp-section">
       <h3>Deal Stages</h3>
       <p>Each stage has a default weight applied to all deals in that column. Your changes here are saved permanently in the browser.</p>
@@ -564,12 +586,16 @@
 
 <!-- Topbar -->
 <div id="topbar">
+  <div class="tb-brand" id="tb-brand" style="display:flex;align-items:center;gap:8px;margin-right:12px">
+    <img id="header-logo" style="display:none;max-height:32px;border-radius:3px" />
+  </div>
   <h1>Opportunities</h1>
   <div class="view-tabs">
     <button class="view-tab active" data-view="kanban">Kanban</button>
     <button class="view-tab" data-view="list">List</button>
     <button class="view-tab" data-view="forecast">Forecast</button>
     <button class="view-tab" data-view="manual" id="manual-tab-btn">Manual</button>
+    <button class="view-tab" data-view="expiry" id="btn-expiry">Expiry<span class="manual-badge" id="expiry-badge" style="display:none"></span></button>
   </div>
   <input id="search" type="search" placeholder="Search…" />
   <button class="tb-btn" id="btn-filter">⚡ Filters <span id="filter-count"></span></button>
@@ -737,6 +763,9 @@
   <div id="mv-list"></div>
 </div>
 
+<!-- Expiry view -->
+<div id="expiry-view" style="display:none;padding:24px;overflow-y:auto;flex:1"></div>
+
 <!-- Empty state -->
 <div id="empty-state">
   <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -754,7 +783,7 @@
 "use strict";
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
-const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity", fcField:"kb_fc_field", files:"kb_files" };
+const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity", fcField:"kb_fc_field", files:"kb_files", logo:"kb_logo" };
 const CONFIG_VERSION = 3;
 
 // ── HubSpot date field labels ──────────────────────────────────────────────────
@@ -1050,7 +1079,7 @@ function importData(incoming) {
   const oldMap=new Map(opportunities.filter(o=>!o._manual).map(o=>[o.id,o]));
   const added=incoming.filter(o=>!oldMap.has(o.id));
   const removed=opportunities.filter(o=>!o._manual&&!new Map(incoming.map(x=>[x.id,x])).has(o.id));
-  const imported=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",ps:old?(old.ps||null):null,_manual:false,addedToCRM:false,addedToCRMDate:null,_isNew:!old};});
+  const imported=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",ps:old?(old.ps||null):null,lineItems:old?(old.lineItems||null):null,_manual:false,addedToCRM:false,addedToCRMDate:null,_isNew:!old};});
   // Detect manual opps that now appear in the import (by name match)
   const importedNames=new Set(incoming.map(o=>o.name.toLowerCase()));
   const nowInCRM=manuals.filter(o=>!o.addedToCRM&&importedNames.has(o.name.toLowerCase()));
@@ -1176,11 +1205,12 @@ function applyOpFilters(opps){
 
 // ── View routing ──────────────────────────────────────────────────────────────
 function renderView() {
-  const hasData=opportunities.length>0||currentView==="manual";
+  const hasData=opportunities.length>0||currentView==="manual"||currentView==="expiry";
   document.getElementById("board").style.display="none";
   document.getElementById("list-view").classList.remove("show");
   document.getElementById("forecast-view").classList.remove("show");
   document.getElementById("manual-view").classList.remove("show");
+  document.getElementById("expiry-view").style.display="none";
   document.getElementById("empty-state").classList.remove("show");
   document.getElementById("filter-bar").style.display="";
   if(!hasData){document.getElementById("empty-state").classList.add("show");return;}
@@ -1188,6 +1218,7 @@ function renderView() {
   else if(currentView==="list"){document.getElementById("list-view").classList.add("show");renderList();}
   else if(currentView==="forecast"){document.getElementById("forecast-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderForecast();}
   else if(currentView==="manual"){document.getElementById("manual-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderManual();}
+  else if(currentView==="expiry"){document.getElementById("expiry-view").style.display="block";document.getElementById("filter-bar").style.display="none";renderExpiry();}
 }
 
 // ── Kanban rendering ──────────────────────────────────────────────────────────
