@@ -247,9 +247,79 @@
     #toast.show { opacity: 1; transform: none; }
     #toast.ok  { background: #006644; }
     #toast.err { background: #de350b; }
+
+    /* ── Opportunity detail panel ── */
+    #opp-overlay { display:none; position:fixed; inset:0; background:rgba(9,30,66,.45); z-index:350; align-items:flex-start; justify-content:flex-end; }
+    #opp-overlay.open { display:flex; }
+    #opp-panel { width:780px; height:100vh; background:#fff; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideIn .2s ease; }
+    .op-head { display:flex; align-items:flex-start; padding:16px 20px; border-bottom:1px solid var(--border); gap:10px; flex-shrink:0; }
+    .op-head-text { flex:1; min-width:0; }
+    .op-head-text h2 { font-size:17px; font-weight:700; line-height:1.3; }
+    .op-account-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+    .op-close { background:none; border:none; cursor:pointer; font-size:24px; color:var(--muted); line-height:1; flex-shrink:0; }
+    .op-tabs-bar { display:flex; border-bottom:2px solid var(--border); padding:0 20px; flex-shrink:0; }
+    .op-tab { font-size:13px; font-weight:600; padding:10px 16px; border:none; background:none; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+    .op-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .op-body { flex:1; overflow-y:auto; }
+    .op-tab-pane { display:none; padding:20px; }
+    .op-tab-pane.active { display:block; }
+    .op-form { display:flex; flex-direction:column; gap:16px; }
+    .op-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .op-field { display:flex; flex-direction:column; gap:4px; }
+    .op-field-full { grid-column:1/-1; }
+    .op-field-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+    .op-input,.op-select { font-size:13px; padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; background:#fff; }
+    .op-input:focus,.op-select:focus { border-color:var(--accent); }
+    .op-textarea { font-size:13px; padding:9px 10px; border:1px solid var(--border); border-radius:var(--radius); color:var(--text); outline:none; width:100%; resize:vertical; font-family:inherit; line-height:1.6; min-height:100px; }
+    .op-textarea:focus { border-color:var(--accent); }
+    .op-calcs { display:flex; gap:16px; flex-wrap:wrap; padding:12px 14px; background:#f8f9fa; border-radius:var(--radius); }
+    .op-calc-item { font-size:12px; color:var(--muted); }
+    .op-calc-item strong { color:var(--text); }
+    .op-actions { display:flex; gap:8px; padding-top:4px; }
+    .op-save-btn { font-size:13px; font-weight:700; padding:9px 20px; border-radius:var(--radius); border:none; background:var(--accent); color:#fff; cursor:pointer; }
+    .op-save-btn:hover { background:#0043a8; }
+    .op-delete-btn { font-size:13px; padding:9px 16px; border-radius:var(--radius); border:1px solid #de350b; background:#fff; color:#de350b; cursor:pointer; margin-left:auto; }
+    .op-delete-btn:hover { background:#ffebe6; }
+    .op-notes-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; max-height:50vh; overflow-y:auto; }
+    .op-no-notes { font-size:13px; color:var(--muted); text-align:center; padding:20px 0; }
+    .op-file-drop { border:2px dashed var(--border); border-radius:var(--radius); cursor:pointer; transition:border-color .15s,background .15s; margin-bottom:16px; padding:24px; text-align:center; }
+    .op-file-drop:hover,.op-file-drop.dragging { border-color:var(--accent); background:#f0f6ff; }
+    .op-file-list { display:flex; flex-direction:column; gap:8px; }
+    .op-file-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f8f9fa; border-radius:var(--radius); }
+    .op-file-icon { font-size:22px; flex-shrink:0; line-height:1; }
+    .op-file-info { flex:1; min-width:0; }
+    .op-file-name { font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+    .op-file-name:hover { text-decoration:underline; }
+    .op-file-meta { font-size:11px; color:var(--muted); }
+    .op-file-del { background:none; border:none; cursor:pointer; color:var(--muted); font-size:20px; padding:4px; border-radius:4px; flex-shrink:0; line-height:1; }
+    .op-file-del:hover { background:#ffebe6; color:#de350b; }
+    .card-margin-pill { font-size:10px; color:var(--muted); background:#f0f2f5; padding:1px 5px; border-radius:8px; white-space:nowrap; }
   </style>
 </head>
 <body>
+
+<!-- Opportunity detail panel -->
+<div id="opp-overlay">
+  <div id="opp-panel">
+    <div class="op-head">
+      <div class="op-head-text">
+        <h2 id="op-title"></h2>
+        <div class="op-account-sub" id="op-account-sub"></div>
+      </div>
+      <button class="op-close" id="op-close">×</button>
+    </div>
+    <div class="op-tabs-bar">
+      <button class="op-tab active" data-tab="details">Details</button>
+      <button class="op-tab" data-tab="notes">Notes</button>
+      <button class="op-tab" data-tab="files">Files</button>
+    </div>
+    <div class="op-body">
+      <div class="op-tab-pane active" id="op-details-pane" data-tab="details"></div>
+      <div class="op-tab-pane" id="op-notes-pane" data-tab="notes"></div>
+      <div class="op-tab-pane" id="op-files-pane" data-tab="files"></div>
+    </div>
+  </div>
+</div>
 
 <!-- Settings overlay -->
 <div id="settings-overlay">
@@ -268,6 +338,14 @@
       <div class="status-row hdr"><span>Label</span><span>Terminal</span><span>Color</span><span></span></div>
       <div id="statuses-editor"></div>
       <button class="sp-add" id="add-status-btn">+ Add Status</button>
+    </div>
+    <div class="sp-section">
+      <h3>Default Deal Margin</h3>
+      <p>Gross margin % assumed for all deals unless overridden on an individual deal.</p>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input class="sp-input" type="number" id="sp-margin" min="0" max="100" step="0.1" style="width:80px" placeholder="5" />
+        <span style="font-size:13px;color:var(--muted)">% gross margin</span>
+      </div>
     </div>
     <div class="sp-footer">
       <button class="sp-cancel" id="sp-cancel">Cancel</button>
@@ -434,6 +512,16 @@
     <table class="fc-table"><thead><tr><th>Quarter</th><th>Deals</th><th>Pipeline</th><th>Weighted</th><th>Avg Weight</th></tr></thead><tbody id="tbl-quarterly"></tbody></table>
     <div class="fc-total" id="fc-quarterly-total"></div>
   </div>
+
+  <div class="fc-section">
+    <div class="fc-section-head">
+      <h3>Margin Forecast</h3>
+      <span style="font-size:12px;color:var(--muted);margin-left:4px">Revenue × deal margin % (monthly view)</span>
+    </div>
+    <div class="fc-chart-wrap"><canvas id="chart-margin"></canvas></div>
+    <table class="fc-table"><thead><tr><th>Month</th><th>Deals</th><th>Avg Margin</th><th>Margin Revenue</th><th>Wtd Margin</th></tr></thead><tbody id="tbl-margin"></tbody></table>
+    <div class="fc-total" id="fc-margin-total"></div>
+  </div>
 </div>
 
 <!-- Empty state -->
@@ -453,8 +541,8 @@
 "use strict";
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
-const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity", fcField:"kb_fc_field" };
-const CONFIG_VERSION = 2;
+const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity", fcField:"kb_fc_field", files:"kb_files" };
+const CONFIG_VERSION = 3;
 
 // ── HubSpot date field labels ──────────────────────────────────────────────────
 const HS_DATE_FIELDS = {
@@ -471,6 +559,7 @@ const HS_DATE_FIELDS = {
 // ── Defaults ──────────────────────────────────────────────────────────────────
 const DEFAULT_CONFIG = {
   configVersion: CONFIG_VERSION,
+  defaultMargin: 5,
   stages: [
     { id:"C",   label:"C",   weight:10, color:"#64748b" },
     { id:"B",   label:"B",   weight:25, color:"#6366f1" },
@@ -496,6 +585,7 @@ function migrateConfig(saved) {
   const out = clone(DEFAULT_CONFIG);
   if (Array.isArray(saved.stages) && saved.stages.length) out.stages = saved.stages.map(s => ({ ...DEFAULT_CONFIG.stages.find(d=>d.id===s.id)||DEFAULT_CONFIG.stages[0], ...s }));
   if (Array.isArray(saved.statuses) && saved.statuses.length) out.statuses = saved.statuses.map(s => ({ ...DEFAULT_CONFIG.statuses.find(d=>d.id===s.id)||DEFAULT_CONFIG.statuses[0], ...s }));
+  out.defaultMargin = saved.defaultMargin ?? DEFAULT_CONFIG.defaultMargin;
   out.configVersion = CONFIG_VERSION;
   ss(K.config, out);
   return out;
@@ -506,6 +596,7 @@ let config = clone(DEFAULT_CONFIG);
 let opportunities = [];
 let notes    = {};
 let activity = {};
+let oppFiles = {};
 let currentView = "kanban";
 let filterOpen = false;
 let filters = { statuses:new Set(), stages:new Set(), dateFrom:"", dateTo:"", valMin:"", valMax:"", company:"" };
@@ -514,10 +605,12 @@ let dragCard = null;
 let diffState = null;
 let settingsDraft = null;
 let notesOppId = null;
-let chartMonthly = null, chartQuarterly = null;
+let chartMonthly = null, chartQuarterly = null, chartMargin = null;
 let forecastDateField = "";
 let fcMonthWin = "3m", fcQuarWin = "8q";
 let fcCustomM = { from:"", to:"" }, fcCustomQ = { from:"", to:"" };
+let currentOppDetailId = null;
+let currentOppTab = "details";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function clone(x) { return JSON.parse(JSON.stringify(x)); }
@@ -545,6 +638,9 @@ function daysDiff(iso) { if(!iso) return null; const [y,m,d]=iso.split("-").map(
 function fmtTs(iso) { if(!iso) return ""; const d=new Date(iso); return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})+" · "+d.toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"}); }
 function fmtActivityShort(iso) { if(!iso) return ""; const d=new Date(iso); const diff=Math.floor((Date.now()-d)/86400000); if(diff===0) return "Today"; if(diff===1) return "Yesterday"; if(diff<7) return diff+"d ago"; return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"}); }
 
+function effMargin(opp) { return opp.margin != null ? opp.margin : (config.defaultMargin ?? 5); }
+function marginVal(opp) { return (opp.value||0) * effMargin(opp) / 100; }
+
 let toastTimer;
 function showToast(msg,type="") { const el=document.getElementById("toast"); el.textContent=msg; el.className="show"+(type?" "+type:""); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.className="";},3000); }
 
@@ -554,6 +650,7 @@ function boot() {
   opportunities = ls(K.data)||[];
   notes    = ls(K.notes)||{};
   activity = ls(K.activity)||{};
+  oppFiles = ls(K.files)||{};
   forecastDateField = localStorage.getItem(K.fcField)||"";
   refreshLastUpload();
   checkNudge();
@@ -598,6 +695,10 @@ function wireEvents() {
   document.getElementById("notes-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeNotes();});
   document.getElementById("np-submit").addEventListener("click",submitNote);
   document.getElementById("np-textarea").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();submitNote();}});
+
+  document.getElementById("op-close").addEventListener("click",closeOppDetail);
+  document.getElementById("opp-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeOppDetail();});
+  document.querySelectorAll(".op-tab").forEach(t=>t.addEventListener("click",()=>switchOppTab(t.dataset.tab)));
 
   document.getElementById("dp-close").addEventListener("click",closeDrill);
   document.getElementById("drill-overlay").addEventListener("click",e=>{if(e.target===e.currentTarget)closeDrill();});
@@ -696,7 +797,7 @@ function normalise(row) {
     if(row[key]){const iso=toISO(row[key]);if(iso)allDates[HS_DATE_FIELDS[key]]=iso;}
   });
 
-  return {id,name,account,owner,stage,status,value,closeDate,allDates,_isNew:false};
+  return {id,name,account,owner,stage,status,value,closeDate,allDates,margin:null,description:"",_isNew:false};
 }
 
 function matchStage(raw) { if(!raw) return config.stages[0]?.id||"C"; const r=raw.trim().toUpperCase(); const ex=config.stages.find(s=>s.label.toUpperCase()===r||s.id.toUpperCase()===r); return ex?ex.id:config.stages[0]?.id||"C"; }
@@ -716,7 +817,7 @@ function importData(incoming) {
   const oldMap=new Map(opportunities.map(o=>[o.id,o]));
   const added=incoming.filter(o=>!oldMap.has(o.id));
   const removed=opportunities.filter(o=>!new Map(incoming.map(x=>[x.id,x])).has(o.id));
-  opportunities=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,_isNew:!old};});
+  opportunities=incoming.map(o=>{const old=oldMap.get(o.id); return {...o,stage:old?old.stage:o.stage,status:old?old.status:o.status,value:old?old.value:o.value,closeDate:old?old.closeDate:o.closeDate,margin:old?(old.margin??null):null,description:old?(old.description||""):"",_isNew:!old};});
   persistOpps();
   localStorage.setItem(K.upload,new Date().toISOString());
   refreshLastUpload(); dismissNudge();
@@ -824,6 +925,7 @@ function buildCard(opp,stage){
   if(opp._isNew) card.style.outline="2px solid #10b981";
   const statusOptions=config.statuses.map(s=>`<option value="${esc(s.id)}"${s.id===opp.status?" selected":""}>${esc(s.label)}</option>`).join("");
   const actTs=activity[opp.id];
+  const marg=effMargin(opp);
   card.innerHTML=`
     ${opp._isNew?'<span class="card-badge badge-new">New</span>':""}
     <a class="card-name-link">${esc(opp.name)}</a>
@@ -831,6 +933,7 @@ function buildCard(opp,stage){
     <div class="card-value-row">
       <span class="card-value">${opp.value?fmt(opp.value):"—"}</span>
       ${wVal>0?`<span class="card-weighted">Wtd <strong>${fmt(wVal)}</strong></span>`:""}
+      <span class="card-margin-pill">${marg}%</span>
     </div>
     <div class="card-meta">
       <span class="card-date ${dateCss(opp.closeDate)}" title="Click to edit">${dateLabel(opp.closeDate)}</span>
@@ -840,7 +943,7 @@ function buildCard(opp,stage){
 
   card.addEventListener("dragstart",e=>{dragCard=card;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",opp.id);});
   card.addEventListener("dragend",()=>{card.classList.remove("dragging");dragCard=null;});
-  card.querySelector(".card-name-link").addEventListener("click",e=>{e.stopPropagation();openNotes(opp.id);});
+  card.querySelector(".card-name-link").addEventListener("click",e=>{e.stopPropagation();openOppDetail(opp.id,"details");});
   card.querySelector(".card-value").addEventListener("click",e=>{e.stopPropagation();startValueEdit(opp,card.querySelector(".card-value"),()=>renderBoard());});
   card.querySelector(".card-value").addEventListener("mousedown",e=>e.stopPropagation());
   card.querySelector(".card-date").addEventListener("click",e=>{e.stopPropagation();startDateEdit(opp,card.querySelector(".card-date"),()=>renderBoard());});
@@ -883,7 +986,7 @@ function onDrop(cardEl,targetStage){
 }
 
 // ── List view ─────────────────────────────────────────────────────────────────
-const LIST_COLS=[{key:"name",label:"Opportunity"},{key:"account",label:"Account"},{key:"stage",label:"Stage"},{key:"status",label:"Status"},{key:"value",label:"Value",num:true},{key:"weighted",label:"Weighted",num:true},{key:"closeDate",label:"Close Date"},{key:"activity",label:"Last Activity"},{key:"owner",label:"Owner"}];
+const LIST_COLS=[{key:"name",label:"Opportunity"},{key:"account",label:"Account"},{key:"stage",label:"Stage"},{key:"status",label:"Status"},{key:"value",label:"Value",num:true},{key:"weighted",label:"Weighted",num:true},{key:"margin",label:"Margin",num:true},{key:"closeDate",label:"Close Date"},{key:"activity",label:"Last Activity"},{key:"owner",label:"Owner"}];
 
 function renderList(){
   const opps=sortOpps(applyOpFilters(opportunities));
@@ -905,11 +1008,12 @@ function renderList(){
       <td><select class="lt-select lt-status-sel" style="color:${stColor};border-color:${stColor}40">${stOpts}</select></td>
       <td><span class="lt-val">${o.value?fmt(o.value):"—"}</span></td>
       <td style="color:${stagColor};font-weight:600">${wVal>0?fmt(wVal):"—"}</td>
+      <td style="color:#10b981;font-weight:600">${effMargin(o)}% · ${o.value?fmt(marginVal(o)):"—"}</td>
       <td><span class="lt-date${dClass?" "+dClass:""}">${dLabel||"—"}</span></td>
       <td class="lt-activity">${actTs?fmtActivityShort(actTs):""}</td>
       <td>${esc(o.owner||"")}</td>`;
-    tr.querySelector(".lt-name").addEventListener("click",()=>openNotes(o.id));
-    tr.querySelector(".lt-note-btn").addEventListener("click",()=>openNotes(o.id));
+    tr.querySelector(".lt-name").addEventListener("click",()=>openOppDetail(o.id,"details"));
+    tr.querySelector(".lt-note-btn").addEventListener("click",()=>openOppDetail(o.id,"notes"));
     tr.querySelector(".lt-val").addEventListener("click",e=>{e.stopPropagation();startValueEdit(o,tr.querySelector(".lt-val"),()=>renderList());});
     tr.querySelector(".lt-date").addEventListener("click",e=>{e.stopPropagation();startDateEdit(o,tr.querySelector(".lt-date"),()=>renderList());});
     tr.querySelector(".lt-stage-sel").addEventListener("change",function(){const wasTerminal=statusObj(o.status)?.terminal;o.stage=this.value;if(wasTerminal)o.status=config.statuses.find(s=>!s.terminal)?.id||o.status;touchActivity(o.id);persistOpps();renderList();showToast("Stage → "+config.stages.find(s=>s.id===this.value)?.label);});
@@ -933,6 +1037,7 @@ function sortOpps(opps){
   return [...opps].sort((a,b)=>{
     let va,vb;
     if(listSort.col==="weighted"){va=(a.value||0)*stageWeight(a.stage)/100;vb=(b.value||0)*stageWeight(b.stage)/100;}
+    else if(listSort.col==="margin"){va=effMargin(a);vb=effMargin(b);}
     else if(listSort.col==="activity"){va=activity[a.id]||"";vb=activity[b.id]||"";}
     else{va=a[listSort.col]||"";vb=b[listSort.col]||"";}
     if(typeof va==="number") return (va-vb)*listSort.dir;
@@ -940,52 +1045,9 @@ function sortOpps(opps){
   });
 }
 
-// ── Notes panel ───────────────────────────────────────────────────────────────
-function openNotes(oppId){
-  notesOppId=oppId; const opp=opportunities.find(o=>o.id===oppId); if(!opp) return;
-  document.getElementById("np-title").textContent=opp.name;
-  document.getElementById("np-account").textContent=opp.account||"";
-  renderNotesMeta(opp);
-  renderNotesList(oppId);
-  document.getElementById("np-textarea").value="";
-  document.getElementById("notes-overlay").classList.add("open");
-}
-
-function renderNotesMeta(opp){
-  const stObj2=statusObj(opp.status); const stColor=stObj2?.color||"#888";
-  const stageObj=config.stages.find(s=>s.id===opp.stage); const weight=stageWeight(opp.stage);
-  const actTs=activity[opp.id];
-  const meta=document.getElementById("np-meta");
-  meta.innerHTML=`
-    ${stageObj?`<span class="np-badge" style="background:${stageObj.color}20;color:${stageObj.color}">${esc(stageObj.label)} · ${weight}%</span>`:""}
-    ${stObj2?`<span class="np-badge" style="background:${stColor}20;color:${stColor}">${esc(stObj2.label)}</span>`:""}
-    ${opp.value?`<span class="np-value">${fmt(opp.value)}</span>`:""}
-    <span class="np-date" title="Click to edit">${opp.closeDate?"Closes "+fmtDate(opp.closeDate):"Set close date"}</span>
-    ${actTs?`<span class="np-activity">Last: ${fmtActivityShort(actTs)}</span>`:""}`;
-  meta.querySelector(".np-date").addEventListener("click",()=>{
-    startDateEdit(opp,meta.querySelector(".np-date"),()=>{renderNotesMeta(opportunities.find(o=>o.id===opp.id)||opp);});
-  });
-}
-
+// ── Notes panel (legacy — redirects to detail panel) ──────────────────────────
 function closeNotes(){document.getElementById("notes-overlay").classList.remove("open");notesOppId=null;}
-
-function renderNotesList(oppId){
-  const list=document.getElementById("np-notes-list"); const oNotes=[...(notes[oppId]||[])].reverse();
-  if(!oNotes.length){list.innerHTML='<p class="np-no-notes">No notes yet — add the first one below.</p>';return;}
-  list.innerHTML=oNotes.map(n=>`<div class="np-note"><div class="np-note-ts">${fmtTs(n.ts)}</div><div class="np-note-text">${esc(n.text)}</div></div>`).join("");
-}
-
-function submitNote(){
-  const ta=document.getElementById("np-textarea"); const text=ta.value.trim(); if(!text) return;
-  if(!notes[notesOppId]) notes[notesOppId]=[];
-  notes[notesOppId].push({id:uid(),text,ts:new Date().toISOString()});
-  ss(K.notes,notes); touchActivity(notesOppId); ta.value=""; renderNotesList(notesOppId);
-  const actSpan=document.getElementById("np-meta").querySelector(".np-activity");
-  const actText="Last: "+fmtActivityShort(activity[notesOppId]);
-  if(actSpan) actSpan.textContent=actText;
-  else document.getElementById("np-meta").insertAdjacentHTML("beforeend",`<span class="np-activity">${actText}</span>`);
-  showToast("Note added","ok");
-}
+function submitNote(){}
 
 // ── Forecast ──────────────────────────────────────────────────────────────────
 function getOppDate(o){ if(!forecastDateField||forecastDateField==="") return o.closeDate; return o.allDates?.[forecastDateField]||""; }
@@ -1015,6 +1077,7 @@ function renderForecast(){
   renderForecastChart("chart-quarterly",quarterly,"quarterly");
   renderForecastTable("tbl-monthly","fc-monthly-total",monthly,"monthly");
   renderForecastTable("tbl-quarterly","fc-quarterly-total",quarterly,"quarterly");
+  renderMarginForecast(monthly);
 }
 
 function monthRange(){
@@ -1050,17 +1113,17 @@ function groupByMonth(opps){
   for(let i=0;i<count;i++){
     const d=new Date(start.getFullYear(),start.getMonth()+i,1);
     const key=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
-    buckets[key]={label:d.toLocaleDateString("en-AU",{month:"short",year:"numeric"}),pipeline:0,weighted:0,count:0,totalWeight:0,oppIds:[]};
+    buckets[key]={label:d.toLocaleDateString("en-AU",{month:"short",year:"numeric"}),pipeline:0,weighted:0,count:0,totalWeight:0,totalMargin:0,marginRevenue:0,weightedMargin:0,oppIds:[]};
   }
-  opps.forEach(o=>{const dt=getOppDate(o);if(!dt)return;const key=dt.slice(0,7);if(!buckets[key])return;const w=stageWeight(o.stage);buckets[key].pipeline+=(o.value||0);buckets[key].weighted+=(o.value||0)*w/100;buckets[key].count++;buckets[key].totalWeight+=w;buckets[key].oppIds.push(o.id);});
+  opps.forEach(o=>{const dt=getOppDate(o);if(!dt)return;const key=dt.slice(0,7);if(!buckets[key])return;const w=stageWeight(o.stage);const mv=marginVal(o);buckets[key].pipeline+=(o.value||0);buckets[key].weighted+=(o.value||0)*w/100;buckets[key].count++;buckets[key].totalWeight+=w;buckets[key].totalMargin+=effMargin(o);buckets[key].marginRevenue+=mv;buckets[key].weightedMargin+=mv*w/100;buckets[key].oppIds.push(o.id);});
   return Object.values(buckets);
 }
 
 function groupByQuarter(opps){
   const {startYear,startQ,count}=quarterRange();
   const buckets={};
-  for(let i=0;i<count;i++){const q=(startQ+i)%4;const y=startYear+Math.floor((startQ+i)/4);const key=`${y}-Q${q+1}`;buckets[key]={label:`Q${q+1} ${y}`,pipeline:0,weighted:0,count:0,totalWeight:0,oppIds:[]};}
-  opps.forEach(o=>{const dt=getOppDate(o);if(!dt)return;const [y,m]=dt.split("-").map(Number);const q=Math.floor((m-1)/3)+1;const key=`${y}-Q${q}`;if(!buckets[key])return;const w=stageWeight(o.stage);buckets[key].pipeline+=(o.value||0);buckets[key].weighted+=(o.value||0)*w/100;buckets[key].count++;buckets[key].totalWeight+=w;buckets[key].oppIds.push(o.id);});
+  for(let i=0;i<count;i++){const q=(startQ+i)%4;const y=startYear+Math.floor((startQ+i)/4);const key=`${y}-Q${q+1}`;buckets[key]={label:`Q${q+1} ${y}`,pipeline:0,weighted:0,count:0,totalWeight:0,totalMargin:0,marginRevenue:0,weightedMargin:0,oppIds:[]};}
+  opps.forEach(o=>{const dt=getOppDate(o);if(!dt)return;const [y,m]=dt.split("-").map(Number);const q=Math.floor((m-1)/3)+1;const key=`${y}-Q${q}`;if(!buckets[key])return;const w=stageWeight(o.stage);const mv=marginVal(o);buckets[key].pipeline+=(o.value||0);buckets[key].weighted+=(o.value||0)*w/100;buckets[key].count++;buckets[key].totalWeight+=w;buckets[key].totalMargin+=effMargin(o);buckets[key].marginRevenue+=mv;buckets[key].weightedMargin+=mv*w/100;buckets[key].oppIds.push(o.id);});
   return Object.values(buckets);
 }
 
@@ -1128,7 +1191,7 @@ function openDrill(bucket){
       </tr>`;
     }).join("");
     tbody.querySelectorAll(".dp-name").forEach(el=>{
-      el.addEventListener("click",()=>{closeDrill();openNotes(el.dataset.id);});
+      el.addEventListener("click",()=>{closeDrill();openOppDetail(el.dataset.id,"notes");});
     });
   }
   document.getElementById("drill-overlay").classList.add("open");
@@ -1136,10 +1199,194 @@ function openDrill(bucket){
 
 function closeDrill(){document.getElementById("drill-overlay").classList.remove("open");}
 
+// ── Margin forecast ───────────────────────────────────────────────────────────
+function renderMarginForecast(monthly){
+  if(chartMargin){chartMargin.destroy();chartMargin=null;}
+  const el=document.getElementById("chart-margin");
+  chartMargin=new Chart(el,{
+    type:"bar",
+    data:{labels:monthly.map(d=>d.label),datasets:[
+      {label:"Margin Revenue",data:monthly.map(d=>Math.round(d.marginRevenue)),backgroundColor:"rgba(16,185,129,.25)",borderColor:"rgba(16,185,129,.8)",borderWidth:1.5,borderRadius:4},
+      {label:"Wtd Margin",data:monthly.map(d=>Math.round(d.weightedMargin)),backgroundColor:"rgba(99,102,241,.2)",borderColor:"rgba(99,102,241,.7)",borderWidth:1.5,borderRadius:4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>" "+ctx.dataset.label+": "+fmt(ctx.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{ticks:{font:{size:11},callback:v=>v>=1e6?fmt(v/1e6).replace("A$","")+"M":v>=1000?fmt(v/1000).replace("A$","")+"K":fmt(v)},grid:{color:"rgba(0,0,0,.05)"}}}}
+  });
+  const tbody=document.getElementById("tbl-margin");
+  let totMR=0,totWM=0,totDeals=0;
+  tbody.innerHTML=monthly.map(d=>{
+    totMR+=d.marginRevenue;totWM+=d.weightedMargin;totDeals+=d.count;
+    const avgM=d.count>0?Math.round(d.totalMargin/d.count):0;const zero=d.count===0;
+    return `<tr><td>${esc(d.label)}</td><td class="${zero?"zero":""}">${d.count||"—"}</td><td class="${zero?"zero":""}">${d.count?avgM+"%":"—"}</td><td class="${zero?"zero":""}">${d.marginRevenue?fmt(Math.round(d.marginRevenue)):"—"}</td><td class="${zero?"zero":""}">${d.weightedMargin?fmt(Math.round(d.weightedMargin)):"—"}</td></tr>`;
+  }).join("");
+  document.getElementById("fc-margin-total").textContent=totDeals?`Total: ${totDeals} deal${totDeals===1?"":"s"} · Margin Revenue ${fmt(Math.round(totMR))} · Wtd Margin ${fmt(Math.round(totWM))}`:"";
+}
+
+// ── Opportunity detail panel ──────────────────────────────────────────────────
+function openOppDetail(oppId, tab="details"){
+  currentOppDetailId=oppId;
+  const opp=opportunities.find(o=>o.id===oppId); if(!opp) return;
+  document.getElementById("op-title").textContent=opp.name;
+  document.getElementById("op-account-sub").textContent=opp.account||"";
+  document.getElementById("opp-overlay").classList.add("open");
+  switchOppTab(tab);
+}
+
+function switchOppTab(tab){
+  currentOppTab=tab;
+  document.querySelectorAll(".op-tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===tab));
+  document.querySelectorAll(".op-tab-pane").forEach(p=>p.classList.toggle("active",p.dataset.tab===tab));
+  const opp=opportunities.find(o=>o.id===currentOppDetailId); if(!opp) return;
+  if(tab==="details") renderOppDetails(opp);
+  else if(tab==="notes") renderOppNotes(opp);
+  else if(tab==="files") renderOppFiles(opp.id);
+}
+
+function updateOppTabCounts(oppId){
+  const nc=(notes[oppId]||[]).length; const fc=(oppFiles[oppId]||[]).length;
+  const nt=document.querySelector(".op-tab[data-tab='notes']");
+  const ft=document.querySelector(".op-tab[data-tab='files']");
+  if(nt) nt.textContent=nc>0?`Notes (${nc})`:"Notes";
+  if(ft) ft.textContent=fc>0?`Files (${fc})`:"Files";
+}
+
+function renderOppDetails(opp){
+  const el=document.getElementById("op-details-pane");
+  const w=stageWeight(opp.stage); const wVal=(opp.value||0)*w/100; const marg=effMargin(opp); const mVal=marginVal(opp);
+  const stageOpts=config.stages.map(s=>`<option value="${esc(s.id)}"${s.id===opp.stage?" selected":""}>${esc(s.label)}</option>`).join("");
+  const statusOpts=config.statuses.map(s=>`<option value="${esc(s.id)}"${s.id===opp.status?" selected":""}>${esc(s.label)}</option>`).join("");
+  el.innerHTML=`<div class="op-form">
+    <div class="op-2col">
+      <div class="op-field"><label class="op-field-label">Opportunity Name</label><input class="op-input" id="op-f-name" value="${esc(opp.name)}" /></div>
+      <div class="op-field"><label class="op-field-label">Account / Company</label><input class="op-input" id="op-f-account" value="${esc(opp.account||'')}" /></div>
+      <div class="op-field"><label class="op-field-label">Stage</label><select class="op-select" id="op-f-stage">${stageOpts}</select></div>
+      <div class="op-field"><label class="op-field-label">Status</label><select class="op-select" id="op-f-status">${statusOpts}</select></div>
+      <div class="op-field"><label class="op-field-label">Value ($)</label><input class="op-input" id="op-f-value" type="number" min="0" value="${opp.value||''}" placeholder="0" /></div>
+      <div class="op-field"><label class="op-field-label">Margin % <span style="font-weight:400;color:var(--muted)">(default ${config.defaultMargin??5}%)</span></label><input class="op-input" id="op-f-margin" type="number" min="0" max="100" step="0.1" value="${opp.margin!=null?opp.margin:''}" placeholder="${config.defaultMargin??5}" /></div>
+      <div class="op-field"><label class="op-field-label">Close Date</label><input class="op-input" id="op-f-closedate" type="date" value="${opp.closeDate||''}" /></div>
+      <div class="op-field"><label class="op-field-label">Owner</label><input class="op-input" id="op-f-owner" value="${esc(opp.owner||'')}" /></div>
+    </div>
+    <div class="op-calcs" id="op-calcs">
+      <span class="op-calc-item">Weighted: <strong>${fmt(wVal)}</strong></span>
+      <span class="op-calc-item">Margin Revenue: <strong>${fmt(mVal)}</strong></span>
+      <span class="op-calc-item">Effective Margin: <strong>${marg}%</strong></span>
+    </div>
+    <div class="op-field op-field-full"><label class="op-field-label">Description / Notes</label><textarea class="op-textarea" id="op-f-desc" rows="5" placeholder="Add context, key info, or background about this opportunity…">${esc(opp.description||'')}</textarea></div>
+    <div class="op-actions">
+      <button class="op-save-btn" id="op-save-btn">Save Changes</button>
+      <button class="op-delete-btn" id="op-delete-btn">Delete Opportunity</button>
+    </div>
+  </div>`;
+  function recalc(){
+    const v=parseFloat(document.getElementById("op-f-value").value)||0;
+    const mRaw=document.getElementById("op-f-margin").value;
+    const m=mRaw!==""?parseFloat(mRaw)||0:config.defaultMargin??5;
+    const stId=document.getElementById("op-f-stage").value;
+    const sw=stageWeight(stId);
+    document.getElementById("op-calcs").innerHTML=`<span class="op-calc-item">Weighted: <strong>${fmt(v*sw/100)}</strong></span><span class="op-calc-item">Margin Revenue: <strong>${fmt(v*m/100)}</strong></span><span class="op-calc-item">Effective Margin: <strong>${m}%</strong></span>`;
+  }
+  ["op-f-value","op-f-margin","op-f-stage"].forEach(id=>document.getElementById(id)?.addEventListener("input",recalc));
+  document.getElementById("op-save-btn").addEventListener("click",()=>saveOppDetail(opp));
+  document.getElementById("op-delete-btn").addEventListener("click",()=>deleteOpp(opp.id));
+  updateOppTabCounts(opp.id);
+}
+
+function saveOppDetail(opp){
+  opp.name=document.getElementById("op-f-name").value.trim()||opp.name;
+  opp.account=document.getElementById("op-f-account").value.trim();
+  opp.owner=document.getElementById("op-f-owner").value.trim();
+  opp.stage=document.getElementById("op-f-stage").value;
+  opp.status=document.getElementById("op-f-status").value;
+  opp.value=Math.max(0,parseFloat(document.getElementById("op-f-value").value)||0);
+  const mRaw=document.getElementById("op-f-margin").value;
+  opp.margin=mRaw!==""?Math.max(0,Math.min(100,parseFloat(mRaw)||0)):null;
+  opp.closeDate=document.getElementById("op-f-closedate").value;
+  opp.description=document.getElementById("op-f-desc").value;
+  touchActivity(opp.id); persistOpps();
+  document.getElementById("op-title").textContent=opp.name;
+  document.getElementById("op-account-sub").textContent=opp.account||"";
+  renderOppDetails(opp);
+  showToast("Changes saved","ok");
+  if(currentView==="kanban") renderBoard(); else if(currentView==="list") renderList();
+}
+
+function deleteOpp(id){
+  if(!confirm("Delete this opportunity? This cannot be undone.")) return;
+  opportunities=opportunities.filter(o=>o.id!==id);
+  persistOpps(); closeOppDetail(); renderView();
+  showToast("Opportunity deleted");
+}
+
+function renderOppNotes(opp){
+  const el=document.getElementById("op-notes-pane");
+  const oppNotes=[...(notes[opp.id]||[])].reverse();
+  el.innerHTML=`<div class="op-notes-list">${!oppNotes.length?'<p class="op-no-notes">No notes yet.</p>':oppNotes.map(n=>`<div class="np-note"><div class="np-note-ts">${fmtTs(n.ts)}</div><div class="np-note-text">${esc(n.text)}</div></div>`).join("")}</div>
+    <div class="np-add" style="border-top:1px solid var(--border);padding-top:12px">
+      <textarea class="np-textarea" id="op-note-ta" placeholder="Add a note… (Ctrl+Enter to save)"></textarea>
+      <button class="np-submit" id="op-note-btn">Add Note</button>
+    </div>`;
+  document.getElementById("op-note-btn").addEventListener("click",()=>submitOppNote(opp.id));
+  document.getElementById("op-note-ta").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();submitOppNote(opp.id);}});
+  updateOppTabCounts(opp.id);
+}
+
+function submitOppNote(oppId){
+  const ta=document.getElementById("op-note-ta"); const text=ta.value.trim(); if(!text) return;
+  if(!notes[oppId]) notes[oppId]=[];
+  notes[oppId].push({id:uid(),text,ts:new Date().toISOString()});
+  ss(K.notes,notes); touchActivity(oppId); ta.value="";
+  const opp=opportunities.find(o=>o.id===oppId); if(opp) renderOppNotes(opp);
+  showToast("Note added","ok");
+}
+
+function renderOppFiles(oppId){
+  const el=document.getElementById("op-files-pane");
+  const files=oppFiles[oppId]||[];
+  el.innerHTML=`<div class="op-file-drop" id="op-file-drop">
+    <div style="color:var(--muted);font-size:13px">
+      <div style="font-size:28px;margin-bottom:8px">📎</div>
+      <div>Drop files here or <label for="op-file-input" style="color:var(--accent);cursor:pointer;text-decoration:underline">browse</label></div>
+      <div style="font-size:11px;margin-top:4px">Max 2 MB per file · Stored in browser</div>
+    </div>
+    <input type="file" id="op-file-input" multiple style="display:none" />
+  </div>
+  <div class="op-file-list" id="op-file-list">${files.length===0?'<p style="font-size:13px;color:var(--muted);padding:4px 0">No files attached yet.</p>':files.map(f=>`<div class="op-file-item" data-fid="${esc(f.id)}"><span class="op-file-icon">${fileIcon(f.type)}</span><div class="op-file-info"><a class="op-file-name" href="${esc(f.dataUrl)}" download="${esc(f.name)}">${esc(f.name)}</a><span class="op-file-meta">${fmtFileSize(f.size)} · ${f.addedDate}</span></div><button class="op-file-del" data-fid="${esc(f.id)}">×</button></div>`).join("")}</div>`;
+  document.getElementById("op-file-input").addEventListener("change",e=>{Array.from(e.target.files).forEach(f=>addOppFile(oppId,f));e.target.value="";});
+  const drop=document.getElementById("op-file-drop");
+  drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("dragging");});
+  drop.addEventListener("dragleave",()=>drop.classList.remove("dragging"));
+  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("dragging");Array.from(e.dataTransfer.files).forEach(f=>addOppFile(oppId,f));});
+  el.querySelectorAll(".op-file-del").forEach(btn=>btn.addEventListener("click",()=>deleteOppFile(oppId,btn.dataset.fid)));
+  updateOppTabCounts(oppId);
+}
+
+function fileIcon(type){if(!type)return"📄";if(type.startsWith("image/"))return"🖼";if(type.includes("pdf"))return"📕";if(type.includes("excel")||type.includes("spreadsheet"))return"📊";if(type.includes("word")||type.includes("document"))return"📝";return"📄";}
+function fmtFileSize(b){if(b<1024)return b+"B";if(b<1048576)return(b/1024).toFixed(1)+"KB";return(b/1048576).toFixed(1)+"MB";}
+
+function addOppFile(oppId,file){
+  if(file.size>2*1024*1024){showToast("File too large (max 2MB)","err");return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    if(!oppFiles[oppId])oppFiles[oppId]=[];
+    oppFiles[oppId].push({id:uid(),name:file.name,type:file.type,size:file.size,addedDate:todayStr(),dataUrl:ev.target.result});
+    try{ss(K.files,oppFiles);}catch{showToast("Storage full — file not saved","err");oppFiles[oppId].pop();return;}
+    renderOppFiles(oppId); showToast("File added: "+file.name,"ok");
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteOppFile(oppId,fileId){
+  if(!oppFiles[oppId])return;
+  oppFiles[oppId]=oppFiles[oppId].filter(f=>f.id!==fileId);
+  ss(K.files,oppFiles); renderOppFiles(oppId);
+}
+
+function closeOppDetail(){document.getElementById("opp-overlay").classList.remove("open");currentOppDetailId=null;}
+function openNotes(oppId){openOppDetail(oppId,"notes");}
+
 // ── Settings ──────────────────────────────────────────────────────────────────
 function openSettings(){settingsDraft=clone(config);renderSettingsEditor();document.getElementById("settings-overlay").classList.add("open");}
 function closeSettings(){document.getElementById("settings-overlay").classList.remove("open");settingsDraft=null;}
-function renderSettingsEditor(){renderStagesEditor();renderStatusesEditor();}
+function renderSettingsEditor(){renderStagesEditor();renderStatusesEditor();document.getElementById("sp-margin").value=settingsDraft.defaultMargin??5;}
 
 function renderStagesEditor(){
   const el=document.getElementById("stages-editor");el.innerHTML="";
@@ -1169,6 +1416,7 @@ function addSettingsStatus(){settingsDraft.statuses.push({id:uid(),label:"New St
 function saveSettings(){
   settingsDraft.stages.forEach(s=>{if(!s.id||s.id.length<2)s.id=slugify(s.label)||uid();});
   settingsDraft.statuses.forEach(s=>{if(!s.id||s.id.length<2)s.id=slugify(s.label)||uid();});
+  settingsDraft.defaultMargin=Math.max(0,Math.min(100,parseFloat(document.getElementById("sp-margin").value)||5));
   settingsDraft.configVersion=CONFIG_VERSION;
   config=clone(settingsDraft);ss(K.config,config);
   closeSettings();buildFilterChips();renderView();
