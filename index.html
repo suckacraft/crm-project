@@ -1186,6 +1186,9 @@ function renderBoard() {
   const visible=applyOpFilters(opportunities);
   const nonTermIds=new Set(config.statuses.filter(s=>!s.terminal).map(s=>s.id));
   const allStatusIds=new Set(config.statuses.map(s=>s.id));
+  const allStageIds=new Set(config.stages.map(s=>s.id));
+  // Silently remap in-memory any opp whose stage ID no longer exists
+  visible.filter(o=>!allStageIds.has(o.stage)).forEach(o=>{o.stage=config.stages[0]?.id||o.stage;});
   config.stages.forEach(stage=>{board.appendChild(buildColumn(stage,visible.filter(o=>o.stage===stage.id&&(nonTermIds.has(o.status)||!allStatusIds.has(o.status))),false));});
   config.statuses.filter(s=>s.terminal).forEach(st=>{board.appendChild(buildColumn({id:"__"+st.id,label:st.label,weight:null,color:st.color},visible.filter(o=>o.status===st.id),true));});
 }
