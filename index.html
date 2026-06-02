@@ -412,6 +412,26 @@
     /* ── Manual badge ── */
     .manual-badge { display:inline-block; font-size:9px; font-weight:700; background:#de350b; color:#fff; border-radius:8px; padding:1px 5px; margin-left:4px; vertical-align:middle; }
 
+    /* ── Auth overlay ── */
+    #auth-overlay { position:fixed; inset:0; background:linear-gradient(135deg,#0052cc 0%,#003d99 100%); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    #auth-overlay.hidden { display:none; }
+    .auth-card { background:#fff; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,.25); padding:40px; width:100%; max-width:400px; }
+    .auth-logo-wrap { text-align:center; margin-bottom:24px; }
+    .auth-logo-wrap img { max-height:48px; margin-bottom:8px; display:none; }
+    .auth-logo-wrap h1 { font-size:20px; font-weight:700; color:#172b4d; }
+    .auth-logo-wrap p { font-size:12px; color:#5e6c84; margin-top:4px; }
+    .auth-tabs { display:flex; border-bottom:2px solid #dfe1e6; margin-bottom:24px; }
+    .auth-tab { flex:1; padding:10px; border:none; background:none; font-size:13px; font-weight:600; color:#5e6c84; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .auth-tab.active { color:#0052cc; border-bottom-color:#0052cc; }
+    .auth-field { margin-bottom:16px; }
+    .auth-field label { display:block; font-size:12px; font-weight:600; color:#5e6c84; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+    .auth-input { width:100%; padding:10px 12px; border:1.5px solid #dfe1e6; border-radius:7px; font-size:14px; outline:none; transition:border-color .15s; }
+    .auth-input:focus { border-color:#0052cc; }
+    .auth-btn { width:100%; padding:12px; border:none; border-radius:7px; background:#0052cc; color:#fff; font-size:14px; font-weight:700; cursor:pointer; margin-top:4px; transition:background .15s; }
+    .auth-btn:hover { background:#003d99; }
+    .auth-err { font-size:12px; color:#de350b; margin-top:8px; min-height:16px; }
+    .auth-footer { text-align:center; font-size:11px; color:#5e6c84; margin-top:16px; }
+
     /* ── Line Items section ── */
     .op-li-section { background:#f8f9fa; border-radius:var(--radius); border:1px solid var(--border); padding:14px; }
     .op-li-table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -423,6 +443,37 @@
   </style>
 </head>
 <body>
+
+<!-- Auth overlay -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo-wrap">
+      <img id="auth-logo" />
+      <h1>Opportunities CRM</h1>
+      <p id="auth-sub">Sign in to your account</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="auth-tab-login">Sign In</button>
+      <button class="auth-tab" id="auth-tab-register">Create Account</button>
+    </div>
+    <div id="auth-login-form">
+      <div class="auth-field"><label>Email / Username</label><input class="auth-input" id="auth-username" type="text" placeholder="you@company.com" autocomplete="username" /></div>
+      <div class="auth-field"><label>Password</label><input class="auth-input" id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" /></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5e6c84;margin-bottom:12px;cursor:pointer"><input type="checkbox" id="auth-remember" checked style="accent-color:#0052cc" /> Remember me</label>
+      <button class="auth-btn" id="auth-login-btn">Sign In</button>
+      <div class="auth-err" id="auth-login-err"></div>
+    </div>
+    <div id="auth-register-form" style="display:none">
+      <div class="auth-field"><label>Full Name</label><input class="auth-input" id="reg-name" type="text" placeholder="Jane Smith" autocomplete="name" /></div>
+      <div class="auth-field"><label>Email / Username</label><input class="auth-input" id="reg-username" type="text" placeholder="you@company.com" autocomplete="username" /></div>
+      <div class="auth-field"><label>Password</label><input class="auth-input" id="reg-password" type="password" placeholder="Min 6 characters" autocomplete="new-password" /></div>
+      <div class="auth-field"><label>Confirm Password</label><input class="auth-input" id="reg-confirm" type="password" placeholder="••••••••" autocomplete="new-password" /></div>
+      <button class="auth-btn" id="auth-reg-btn">Create Account</button>
+      <div class="auth-err" id="auth-reg-err"></div>
+    </div>
+    <div class="auth-footer" id="auth-footer"></div>
+  </div>
+</div>
 
 <!-- New Opportunity form panel -->
 <div id="new-opp-overlay">
@@ -619,6 +670,10 @@
   <button class="tb-btn" id="btn-settings">⚙ Settings</button>
   <button class="tb-btn primary" id="btn-upload">⬆ Upload</button>
   <input id="file-input" type="file" accept=".csv,.xlsx,.xls,text/csv" />
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <span id="topbar-user" style="font-size:12px;font-weight:600;color:#5e6c84"></span>
+    <button class="tb-btn" id="btn-logout" style="font-size:12px">Sign Out</button>
+  </div>
 </div>
 
 <!-- Filter bar -->
@@ -799,7 +854,178 @@
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 const K = { config:"kb_config", data:"kb_data", upload:"kb_upload", nudge:"kb_nudge", notes:"kb_notes", activity:"kb_activity", fcField:"kb_fc_field", files:"kb_files", logo:"kb_logo" };
+const KG = { users:"kb_users", session:"kb_session" };
 const CONFIG_VERSION = 3;
+
+// ── Per-user key scoping ───────────────────────────────────────────────────────
+function applyUserKeys(uid2){
+  K.config   = "kb_config_u"  + uid2;
+  K.data     = "kb_data_u"    + uid2;
+  K.upload   = "kb_upload_u"  + uid2;
+  K.nudge    = "kb_nudge_u"   + uid2;
+  K.notes    = "kb_notes_u"   + uid2;
+  K.activity = "kb_activity_u"+ uid2;
+  K.fcField  = "kb_fc_field_u"+ uid2;
+  K.files    = "kb_files_u"   + uid2;
+  // K.logo stays global (shared)
+}
+
+// ── Auth helpers ───────────────────────────────────────────────────────────────
+async function hashPassword(password, salt){
+  const enc = new TextEncoder();
+  const data = enc.encode(password + salt);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function genSalt(){ return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join(""); }
+
+function getUsers(){ try{ return JSON.parse(localStorage.getItem(KG.users)||"[]"); }catch{ return []; } }
+function saveUsers(u){ localStorage.setItem(KG.users, JSON.stringify(u)); }
+
+async function registerUser(username, password, displayName, isAdmin=false){
+  const users = getUsers();
+  if(users.find(u=>u.username===username.toLowerCase())) return {err:"Username already exists"};
+  if(password.length<6) return {err:"Password must be at least 6 characters"};
+  const salt = genSalt();
+  const passhash = await hashPassword(password, salt);
+  const user = {id:uid(), username:username.toLowerCase(), displayName:displayName||username, passhash, salt, isAdmin, createdAt:new Date().toISOString()};
+  users.push(user);
+  saveUsers(users);
+  return {user};
+}
+
+async function loginUser(username, password){
+  const users = getUsers();
+  const user = users.find(u=>u.username===username.toLowerCase().trim());
+  if(!user) return {err:"No account found for that username"};
+  const hash = await hashPassword(password, user.salt);
+  if(hash !== user.passhash) return {err:"Incorrect password"};
+  return {user};
+}
+
+function saveSession(user, remember){
+  const sess = {userId:user.id, username:user.username, displayName:user.displayName, isAdmin:user.isAdmin};
+  if(remember) localStorage.setItem(KG.session, JSON.stringify(sess));
+  else sessionStorage.setItem(KG.session, JSON.stringify(sess));
+}
+
+function loadSession(){
+  const s = localStorage.getItem(KG.session)||sessionStorage.getItem(KG.session);
+  try{ return s?JSON.parse(s):null; }catch{ return null; }
+}
+
+function clearSession(){
+  localStorage.removeItem(KG.session);
+  sessionStorage.removeItem(KG.session);
+}
+
+function migrateExistingDataToUser(uid2){
+  const legacyKeys = ["kb_config","kb_data","kb_upload","kb_nudge","kb_notes","kb_activity","kb_fc_field","kb_files"];
+  legacyKeys.forEach(k=>{
+    const val = localStorage.getItem(k);
+    if(val != null){
+      const newKey = k+"_u"+uid2;
+      if(!localStorage.getItem(newKey)){
+        localStorage.setItem(newKey, val);
+      }
+    }
+  });
+}
+
+async function ensureAdminUser(){
+  const users = getUsers();
+  if(!users.find(u=>u.username==="joshua.sakajiou@perfekt.com.au")){
+    await registerUser("joshua.sakajiou@perfekt.com.au","Perfekt2024!","Josh",true);
+  }
+}
+
+function showApp(){
+  document.getElementById("auth-overlay").classList.add("hidden");
+  document.getElementById("topbar-user").textContent = currentUser.displayName;
+  const authLogo = document.getElementById("auth-logo");
+  const logoSrc = localStorage.getItem(K.logo)||"";
+  if(authLogo && logoSrc){ authLogo.src=logoSrc; authLogo.style.display="block"; }
+}
+
+function showAuthOverlay(){
+  document.getElementById("auth-overlay").classList.remove("hidden");
+}
+
+function wireAuthEvents(){
+  document.getElementById("auth-tab-login").addEventListener("click",()=>{
+    document.getElementById("auth-login-form").style.display="block";
+    document.getElementById("auth-register-form").style.display="none";
+    document.getElementById("auth-tab-login").classList.add("active");
+    document.getElementById("auth-tab-register").classList.remove("active");
+  });
+  document.getElementById("auth-tab-register").addEventListener("click",()=>{
+    document.getElementById("auth-login-form").style.display="none";
+    document.getElementById("auth-register-form").style.display="block";
+    document.getElementById("auth-tab-login").classList.remove("active");
+    document.getElementById("auth-tab-register").classList.add("active");
+  });
+
+  document.getElementById("auth-login-btn").addEventListener("click", async ()=>{
+    const u=document.getElementById("auth-username").value.trim();
+    const p=document.getElementById("auth-password").value;
+    const remember=document.getElementById("auth-remember").checked;
+    document.getElementById("auth-login-err").textContent="Signing in…";
+    const res = await loginUser(u, p);
+    if(res.err){ document.getElementById("auth-login-err").textContent=res.err; return; }
+    saveSession(res.user, remember);
+    currentUser = {id:res.user.id, username:res.user.username, displayName:res.user.displayName, isAdmin:res.user.isAdmin};
+    applyUserKeys(res.user.id);
+    migrateExistingDataToUser(res.user.id);
+    showApp();
+    boot();
+  });
+
+  ["auth-username","auth-password"].forEach(id=>{
+    document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("auth-login-btn").click();});
+  });
+
+  document.getElementById("auth-reg-btn").addEventListener("click", async ()=>{
+    const name=document.getElementById("reg-name").value.trim();
+    const u=document.getElementById("reg-username").value.trim();
+    const p=document.getElementById("reg-password").value;
+    const c=document.getElementById("reg-confirm").value;
+    const errEl=document.getElementById("auth-reg-err");
+    if(!name){errEl.textContent="Please enter your name";return;}
+    if(!u){errEl.textContent="Please enter a username";return;}
+    if(p.length<6){errEl.textContent="Password must be at least 6 characters";return;}
+    if(p!==c){errEl.textContent="Passwords do not match";return;}
+    errEl.textContent="Creating account…";
+    const res = await registerUser(u, p, name);
+    if(res.err){errEl.textContent=res.err;return;}
+    saveSession(res.user, true);
+    currentUser = {id:res.user.id, username:res.user.username, displayName:res.user.displayName, isAdmin:res.user.isAdmin};
+    applyUserKeys(res.user.id);
+    showApp();
+    boot();
+  });
+
+  document.getElementById("btn-logout").addEventListener("click",()=>{
+    if(!confirm("Sign out?")) return;
+    clearSession();
+    location.reload();
+  });
+
+  const cnt = getUsers().length;
+  document.getElementById("auth-footer").textContent = cnt>0 ? `${cnt} account${cnt!==1?"s":""} on this device` : "";
+}
+
+async function init(){
+  await ensureAdminUser();
+  const sess = loadSession();
+  if(sess){
+    currentUser = sess;
+    applyUserKeys(sess.userId);
+    showApp();
+    boot();
+    return;
+  }
+  showAuthOverlay();
+}
 
 // ── HubSpot date field labels ──────────────────────────────────────────────────
 const HS_DATE_FIELDS = {
@@ -849,6 +1075,7 @@ function migrateConfig(saved) {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
+let currentUser = null;
 let config = clone(DEFAULT_CONFIG);
 let opportunities = [];
 let notes    = {};
@@ -2622,7 +2849,8 @@ function saveSettings(){
   showToast("Settings saved","ok");
 }
 
-boot();
+wireAuthEvents();
+init();
 </script>
 </body>
 </html>
