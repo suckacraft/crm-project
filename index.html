@@ -2401,7 +2401,9 @@ function openSettings(){
   const clr=document.getElementById("sp-logo-clear");
   if(savedLogo){prev.src=savedLogo;prev.style.display="inline-block";ph.style.display="none";clr.style.display="inline-block";}
   else{prev.style.display="none";ph.style.display="inline-block";clr.style.display="none";}
-  // Replace file input to clear previous listeners
+  // Use a flag object scoped to this settings session
+  const logoState={pending:undefined,clear:false};
+  document._logoState=logoState;
   const oldFileInput=document.getElementById("sp-logo-file");
   const newFileInput=oldFileInput.cloneNode(true);
   oldFileInput.parentNode.replaceChild(newFileInput,oldFileInput);
@@ -2409,21 +2411,20 @@ function openSettings(){
     const f=this.files[0]; if(!f) return;
     const r=new FileReader();
     r.onload=ev=>{
-      if(ev.target.result.length>300000){showToast("Image too large (max ~200KB)","err");return;}
-      prev.src=ev.target.result;prev.style.display="inline-block";ph.style.display="none";clr.style.display="inline-block";
-      document._pendingLogo=ev.target.result;
+      if(ev.target.result.length>400000){showToast("Image too large (max ~300KB)","err");return;}
+      prev.src=ev.target.result;prev.style.display="inline-block";ph.style.display="none";
+      document.getElementById("sp-logo-clear").style.display="inline-block";
+      logoState.pending=ev.target.result; logoState.clear=false;
     };
     r.readAsDataURL(f);
   });
-  // Replace clear button too
   const oldClr=document.getElementById("sp-logo-clear");
   const newClr=oldClr.cloneNode(true);
   oldClr.parentNode.replaceChild(newClr,oldClr);
   newClr.addEventListener("click",()=>{
     prev.src="";prev.style.display="none";ph.style.display="inline-block";newClr.style.display="none";
-    document._pendingLogo=null; document._clearLogo=true;
+    logoState.pending=null; logoState.clear=true;
   });
-  document._pendingLogo=undefined; document._clearLogo=false;
 }
 function closeSettings(){document.getElementById("settings-overlay").classList.remove("open");settingsDraft=null;}
 function renderSettingsEditor(){renderStagesEditor();renderStatusesEditor();document.getElementById("sp-margin").value=settingsDraft.defaultMargin??5;}
@@ -2459,8 +2460,9 @@ function saveSettings(){
   settingsDraft.defaultMargin=Math.max(0,Math.min(100,parseFloat(document.getElementById("sp-margin").value)||5));
   settingsDraft.configVersion=CONFIG_VERSION;
   config=clone(settingsDraft);ss(K.config,config);
-  if(document._clearLogo){localStorage.removeItem(K.logo);}
-  else if(document._pendingLogo){try{localStorage.setItem(K.logo,document._pendingLogo);}catch{showToast("Logo too large to store","err");}}
+  const ls2=document._logoState||{};
+  if(ls2.clear){localStorage.removeItem(K.logo);}
+  else if(ls2.pending){try{localStorage.setItem(K.logo,ls2.pending);}catch(e){showToast("Logo too large to store — try a smaller image","err");}}
   updateHeaderLogo();
   closeSettings();buildFilterChips();renderView();
   showToast("Settings saved","ok");
