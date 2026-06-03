@@ -1692,6 +1692,7 @@ function renderOppFiles(oppId){
   el.querySelectorAll(".op-file-del").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();deleteOppFileById(oppId,btn.dataset.fid,btn.dataset.bucket);}));
   el.querySelectorAll(".op-file-prev").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();const fd2=getOppFileData(oppId);const all=[...fd2.files,...fd2.sellQuotes,...fd2.buyQuotes];const f=all.find(x=>x.id===btn.dataset.fid);if(f)openPreview(f);}));
   el.querySelectorAll(".op-expiry-input").forEach(inp=>inp.addEventListener("change",()=>saveExpiryDate(oppId,inp.dataset.fid,inp.dataset.bucket,inp.value)));
+  el.querySelectorAll(".op-cat-edit-btn").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();openCategoryForm(oppId,btn.dataset.fid,btn.dataset.bucket);}));
   document.getElementById("add-sell-btn").addEventListener("click",()=>openQuoteForm(oppId,"sell"));
   document.getElementById("add-buy-btn").addEventListener("click",()=>openQuoteForm(oppId,"buy"));
   document.getElementById("op-file-input").addEventListener("change",e=>{Array.from(e.target.files).forEach(f=>addOppFile(oppId,f,"files"));e.target.value="";});
@@ -1763,6 +1764,7 @@ function fileItemHtml(f,bucket="files"){
     </div>
     <div style="display:flex;gap:4px;flex-shrink:0">
       <button class="op-file-prev mv-edit-btn" data-fid="${esc(f.id)}" style="font-size:10px;padding:3px 7px">View</button>
+      ${(bucket==="sellQuotes"||bucket==="buyQuotes")?`<button class="op-cat-edit-btn" data-fid="${esc(f.id)}" data-bucket="${esc(bucket)}" style="font-size:10px;padding:3px 7px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;cursor:pointer;white-space:nowrap">✏ Categories</button>`:""}
       <button class="op-file-del" data-fid="${esc(f.id)}" data-bucket="${esc(bucket)}">×</button>
     </div>`;
 }
@@ -1870,6 +1872,90 @@ function openPromoteForm(oppId,fid,type){
     fd2[bucket].push(moved);
     setOppFileData(oppId,fd2); ss(K.files,oppFiles);
     renderOppFiles(oppId); showToast(`Moved to ${typeLabel} Quotes ✓`,"ok");
+  });
+}
+
+function openCategoryForm(oppId, fid, bucket){
+  const area=document.getElementById("quote-form-area");
+  const fd=getOppFileData(oppId);
+  const quotes=fd[bucket]||[];
+  const file=quotes.find(x=>x.id===fid); if(!file) return;
+  const existing=file.categories||[];
+  const typeLabel=bucket==="sellQuotes"?"Sell":"Buy";
+  const accentColor=bucket==="sellQuotes"?"var(--accent)":"#10b981";
+  const bgColor=bucket==="sellQuotes"?"#f0f6ff":"#f0fdf8";
+  const borderColor=bucket==="sellQuotes"?"#0052cc":"#10b981";
+
+  function catRow(cat, label, existingAmt, existingChecked){
+    return `<label style="display:flex;align-items:center;gap:10px;font-size:12px;cursor:pointer;padding:6px 8px;border-radius:var(--radius);background:${existingChecked?'#fff':''};border:1px solid ${existingChecked?'var(--border)':'transparent'}">
+      <input type="checkbox" class="cef-cb" data-cat="${cat}" ${existingChecked?"checked":""} style="accent-color:var(--accent);width:15px;height:15px" />
+      <span style="width:130px;font-weight:${existingChecked?'600':'400'}">${label}</span>
+      <span style="font-size:11px;color:var(--muted)">$</span>
+      <input class="cef-amt op-input" data-cat="${cat}" type="number" min="0" style="width:110px;display:${existingChecked?'block':'none'};padding:4px 8px" placeholder="Amount" value="${existingAmt!=null?existingAmt:''}" />
+    </label>`;
+  }
+
+  const hwEx=existing.find(c=>c.type==="hw"); const swEx=existing.find(c=>c.type==="sw"); const psEx=existing.find(c=>c.type==="ps");
+  area.innerHTML=`<div style="background:${bgColor};border:1.5px solid ${borderColor};border-radius:var(--radius);padding:14px;margin-top:14px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:4px;color:${accentColor}">✏ Edit Categories — ${typeLabel} Quote: <em>${esc(file.name)}</em></div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Classify this quote as HW / SW / PS or any combination. Per-category amounts should add up to the quote total${file.amount?` (${fmt(file.amount)})`:""}.  Leave all unchecked to remove categorisation.</p>
+    <div style="margin-bottom:6px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Quote total: <strong style="color:var(--text)">${file.amount?fmt(file.amount):"—"}</strong></div>
+      <div id="cef-cats" style="display:flex;flex-direction:column;gap:4px">
+        ${catRow("hw","Hardware",hwEx?.amount,!!hwEx)}
+        ${catRow("sw","Software",swEx?.amount,!!swEx)}
+        ${catRow("ps","Prof. Services",psEx?.amount,!!psEx)}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;min-height:16px" id="cef-unalloc"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="op-save-btn" id="cef-save" style="padding:7px 16px;font-size:12px;background:${accentColor}">Save Categories</button>
+      <button class="nop-cancel" id="cef-cancel" style="padding:7px 14px;font-size:12px">Cancel</button>
+    </div>
+  </div>`;
+
+  area.scrollIntoView({behavior:"smooth",block:"nearest"});
+  document.getElementById("cef-cancel").addEventListener("click",()=>area.innerHTML="");
+
+  function updateUnalloc(){
+    const total=file.amount||0;
+    const sum=[...area.querySelectorAll(".cef-cb:checked")].reduce((s,cb)=>s+(parseFloat(area.querySelector(`.cef-amt[data-cat="${cb.dataset.cat}"]`)?.value)||0),0);
+    const ua=document.getElementById("cef-unalloc");
+    if(!ua) return;
+    if(!total){ua.textContent="";return;}
+    const diff=total-sum;
+    const absDiff=Math.abs(diff);
+    if(Math.abs(diff)<0.01){ua.innerHTML=`<span style="color:#10b981;font-weight:600">✓ Fully allocated (${fmt(total)})</span>`;}
+    else if(diff>0){ua.innerHTML=`Unallocated: <strong style="color:#ff8b00">${fmt(absDiff)}</strong>`;}
+    else{ua.innerHTML=`Over by: <strong style="color:#de350b">${fmt(absDiff)}</strong>`;}
+  }
+
+  area.querySelectorAll(".cef-cb").forEach(cb=>{
+    cb.addEventListener("change",()=>{
+      const amt=area.querySelector(`.cef-amt[data-cat="${cb.dataset.cat}"]`);
+      amt.style.display=cb.checked?"block":"none";
+      if(!cb.checked) amt.value="";
+      updateUnalloc();
+    });
+  });
+  area.querySelectorAll(".cef-amt").forEach(i=>i.addEventListener("input",updateUnalloc));
+  updateUnalloc();
+
+  document.getElementById("cef-save").addEventListener("click",()=>{
+    const checked=[...area.querySelectorAll(".cef-cb:checked")];
+    const newCats=checked.map(cb=>{
+      const rawAmt=area.querySelector(`.cef-amt[data-cat="${cb.dataset.cat}"]`)?.value;
+      const amt=rawAmt!==""&&rawAmt!=null?parseFloat(rawAmt)||null:null;
+      // If only one category checked and no amount given, default to quote total
+      return {type:cb.dataset.cat, amount: amt!=null?amt:(checked.length===1?(file.amount||null):null)};
+    });
+    file.categories=newCats;
+    setOppFileData(oppId,fd);
+    try{ss(K.files,oppFiles);}catch{showToast("Storage full","err");return;}
+    area.innerHTML="";
+    renderOppFiles(oppId);
+    updateExpiryBadge();
+    showToast(newCats.length?`Categories saved: ${newCats.map(c=>c.type.toUpperCase()).join(", ")}`:"Categories cleared","ok");
   });
 }
 
