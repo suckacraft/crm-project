@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quote Parsing POC — Reseller → Standardized Template</title>
+  <!-- Same stack as crm-project so this lifts straight in. -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  </script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f0f2f5;--card:#fff;--accent:#0052cc;--text:#172b4d;--muted:#5e6c84;
+      --border:#dfe1e6;--radius:7px;--ok:#10b981;--warn:#ff8b00;--err:#de350b}
+    body{font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:var(--bg);color:var(--text)}
+    #topbar{display:flex;align-items:center;gap:14px;padding:0 18px;height:54px;background:#fff;
+      border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+    #topbar h1{font-size:15px;font-weight:800}
+    #topbar .sub{font-size:11px;color:var(--muted)}
+    .tabs{display:flex;gap:2px;margin-left:auto}
+    .tab{font-size:12px;font-weight:600;padding:7px 14px;border:1px solid var(--border);
+      background:#fff;color:var(--muted);cursor:pointer;border-radius:var(--radius)}
+    .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    main{max-width:1100px;margin:18px auto;padding:0 18px}
+    .panel{display:none}.panel.active{display:block}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:16px;margin-bottom:16px}
+    .card h2{font-size:13px;font-weight:800;margin-bottom:10px}
+    .drop{border:2px dashed var(--border);border-radius:var(--radius);padding:34px;text-align:center;
+      color:var(--muted);cursor:pointer;transition:.15s}
+    .drop.drag{border-color:var(--accent);background:#f0f6ff;color:var(--accent)}
+    .btn{font-size:12px;font-weight:600;padding:7px 14px;border-radius:var(--radius);
+      border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer}
+    .btn:hover{background:var(--bg)}
+    .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .btn.primary:hover{background:#0043a8}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    label.fld{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)}
+    input,select{font:12px inherit;padding:6px 8px;border:1px solid var(--border);
+      border-radius:5px;color:var(--text);outline:none;background:#fff}
+    input:focus,select:focus{border-color:var(--accent)}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{background:#f4f5f7;text-align:left;padding:7px;font-size:11px;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid var(--border)}
+    td{padding:5px 7px;border-bottom:1px solid #eef0f2;vertical-align:middle}
+    td input,td select{width:100%;padding:4px 5px;font-size:12px}
+    td.num input{text-align:right}
+    .pill{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
+    .pill.hw{background:#e8f0fe;color:#1a73e8}.pill.sw{background:#e6f9f0;color:#137333}
+    .pill.ps{background:#fff3e0;color:#e65100}.pill.other{background:#eee;color:#666}
+    .conf{height:6px;border-radius:3px;background:#eee;overflow:hidden;width:46px}
+    .conf>span{display:block;height:100%;background:var(--ok)}
+    .warn{background:#fffae6;border:1px solid #ffe380;border-radius:5px;padding:8px 10px;
+      font-size:12px;color:#974f0c;margin-bottom:10px}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+    .metric{background:#f8f9fa;border-radius:var(--radius);padding:10px}
+    .metric .v{font-size:20px;font-weight:800;color:var(--accent)}
+    .metric .l{font-size:11px;color:var(--muted)}
+    .muted{color:var(--muted)}.mono{font-family:ui-monospace,Menlo,monospace}
+    pre{background:#0b1324;color:#cfe3ff;padding:12px;border-radius:var(--radius);
+      overflow:auto;font-size:11px;line-height:1.45;max-height:340px}
+    #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#172b4d;
+      color:#fff;padding:9px 16px;border-radius:var(--radius);font-size:12px;opacity:0;
+      transition:.2s;pointer-events:none;z-index:50}
+    #toast.show{opacity:1}
+    .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:#e3fcef;color:#006644}
+    .small{font-size:11px}
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <div>
+      <h1>Quote Parsing POC</h1>
+      <div class="sub">Reseller / distributor quote → standardized customer template</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="parse">Parse &amp; Review</button>
+      <button class="tab" data-tab="feedback">Feedback</button>
+      <button class="tab" data-tab="eval">Eval</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+  </div>
+
+  <main>
+    <!-- ── PARSE & REVIEW ─────────────────────────────────────────────── -->
+    <section class="panel active" id="panel-parse">
+      <div class="card">
+        <h2>1 · Upload a reseller quote</h2>
+        <div class="row" style="margin-bottom:10px">
+          <label class="fld">Extractor
+            <select id="sel-extractor"></select>
+          </label>
+          <span class="small muted" id="extractor-note"></span>
+          <span style="flex:1"></span>
+          <button class="btn" id="btn-samples">Load a sample quote ▾</button>
+        </div>
+        <div class="drop" id="drop">
+          <strong>Drop a PDF, Excel, CSV or HTML/email quote here</strong>
+          <div class="small" style="margin-top:4px">or click to browse · max 5MB</div>
+          <input type="file" id="file" hidden accept=".pdf,.xlsx,.xls,.csv,.html,.htm,.txt,.eml" />
+        </div>
+        <div id="samples-list" class="row small" style="margin-top:10px;display:none"></div>
+        <div id="ingest-info" class="small muted" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card" id="review-card" style="display:none">
+        <div class="row">
+          <h2 style="margin:0">2 · Review &amp; correct extraction</h2>
+          <span style="flex:1"></span>
+          <span class="small muted" id="review-meta"></span>
+        </div>
+        <div id="warnings"></div>
+
+        <div class="row" style="margin:12px 0 8px">
+          <label class="fld">Vendor<input id="f-vendor" style="width:160px"/></label>
+          <label class="fld">Quote #<input id="f-quoteno" style="width:110px"/></label>
+          <label class="fld">Valid until<input id="f-valid" type="date"/></label>
+          <label class="fld">Currency<input id="f-currency" style="width:64px"/></label>
+          <label class="fld">Customer<input id="f-customer" style="width:150px"/></label>
+        </div>
+
+        <table id="items">
+          <thead><tr>
+            <th style="width:30px">#</th><th style="width:120px">SKU / MPN</th><th>Description</th>
+            <th style="width:78px">Type</th><th style="width:54px">Qty</th>
+            <th style="width:92px">Unit cost</th><th style="width:96px">Ext cost</th>
+            <th style="width:50px">Conf</th><th style="width:30px"></th>
+          </tr></thead>
+          <tbody id="items-body"></tbody>
+          <tfoot><tr>
+            <td colspan="6" style="text-align:right;font-weight:700">Grand total cost</td>
+            <td class="num" style="font-weight:800"><span id="grand-total"></span></td>
+            <td colspan="2"></td>
+          </tr></tfoot>
+        </table>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="btn-add-line">+ Add line</button>
+          <span style="flex:1"></span>
+          <span class="small muted">Category totals: <span id="cat-totals"></span></span>
+        </div>
+
+        <div class="row" style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+          <button class="btn primary" id="btn-save">Save correction → feedback</button>
+          <button class="btn" id="btn-template">Generate customer template ↗</button>
+          <button class="btn" id="btn-crm">Show CRM buyQuote mapping</button>
+          <label class="fld" style="margin-left:auto">Markup %
+            <input id="f-markup" type="number" min="0" value="20" style="width:70px"/></label>
+        </div>
+        <pre id="crm-out" style="display:none;margin-top:12px"></pre>
+      </div>
+    </section>
+
+    <!-- ── FEEDBACK ───────────────────────────────────────────────────── -->
+    <section class="panel" id="panel-feedback">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Correction dataset</h2>
+          <span class="small muted" id="fb-count"></span>
+          <span style="flex:1"></span>
+          <button class="btn" id="btn-sync">Sync now</button>
+          <button class="btn" id="btn-export">Export JSONL</button>
+          <button class="btn" id="btn-import">Import JSONL</button>
+          <input type="file" id="import-file" accept=".jsonl,.json,.txt" hidden />
+          <button class="btn" id="btn-clear-fb">Clear</button>
+        </div>
+        <p class="small muted" style="margin:8px 0 12px">
+          Every saved correction becomes a labeled example — the asset that lets inference improve
+          over time. Promote any example to the eval golden set to lock it in as ground truth.
+        </p>
+        <div id="fb-list"></div>
+      </div>
+    </section>
+
+    <!-- ── EVAL ───────────────────────────────────────────────────────── -->
+    <section class="panel" id="panel-eval">
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Extraction accuracy</h2>
+          <span style="flex:1"></span>
+          <label class="fld">Extractor<select id="eval-extractor"></select></label>
+          <button class="btn" id="btn-seed-golden">Seed golden from samples</button>
+          <button class="btn primary" id="btn-run-eval">Run eval</button>
+        </div>
+        <p class="small muted" style="margin:8px 0 12px">
+          Scores an extractor against the golden set (line F1, category accuracy, total error).
+          Run it for Mock vs an LLM provider to prove "better inferencing over time" with numbers.
+        </p>
+        <div class="metrics" id="eval-metrics"></div>
+        <div id="eval-detail" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <!-- ── SETTINGS ───────────────────────────────────────────────────── -->
+    <section class="panel" id="panel-settings">
+      <div class="card">
+        <h2>Inference &amp; proxy</h2>
+        <div class="row">
+          <label class="fld">Default extractor<select id="set-extractor"></select></label>
+          <label class="fld">Provider
+            <select id="set-provider"><option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (GPT)</option></select></label>
+          <label class="fld">Model (blank = default)<input id="set-model" placeholder="claude-haiku-4-5-20251001" style="width:230px"/></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label class="fld">Proxy URL<input id="set-proxy" style="width:240px"/></label>
+          <label class="fld">Feedback corpus URL<input id="set-feedback" placeholder="/api/feedback (blank = local only)" style="width:240px"/></label>
+          <label class="fld">API token<input id="set-token" type="password" placeholder="blank unless proxy requires it" style="width:200px"/></label>
+          <label class="fld">Default markup %<input id="set-markup" type="number" min="0" style="width:90px"/></label>
+          <button class="btn primary" id="btn-save-settings" style="align-self:flex-end">Save settings</button>
+        </div>
+        <p class="small muted" style="margin-top:12px">
+          Keys never live in the browser — the proxy holds <span class="mono">ANTHROPIC_API_KEY</span> /
+          <span class="mono">OPENAI_API_KEY</span>. Start it with
+          <span class="mono">node proxy/server.js</span> and open this page from it
+          (default <span class="mono">http://localhost:8787</span>). The Mock extractor needs no proxy.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast"></div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
