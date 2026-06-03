@@ -587,6 +587,36 @@
         <span style="font-size:13px;color:var(--muted)">% gross margin</span>
       </div>
     </div>
+    <div class="sp-section">
+      <h3>Quote Parser</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Controls how vendor quote files are extracted. API keys live on the proxy server — never in the browser.</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Extractor
+            <select class="sp-input" id="sp-qp-extractor" style="width:140px">
+              <option value="mock">Mock (offline demo)</option>
+              <option value="llm">LLM (via proxy)</option>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Provider
+            <select class="sp-input" id="sp-qp-provider" style="width:140px">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI</option>
+            </select>
+          </label>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Proxy URL
+          <input class="sp-input" type="url" id="sp-qp-proxy" placeholder="/api/extract" style="width:100%;max-width:340px" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Proxy Auth Token <span style="font-weight:400;color:var(--muted)">(optional — Bearer token for locked-down proxy)</span>
+          <input class="sp-input" type="password" id="sp-qp-token" placeholder="Leave blank if proxy is open" style="width:100%;max-width:340px" autocomplete="new-password" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Feedback URL <span style="font-weight:400;color:var(--muted)">(optional — corpus API endpoint)</span>
+          <input class="sp-input" type="url" id="sp-qp-feedback" placeholder="https://your-proxy.com/api/feedback" style="width:100%;max-width:340px" />
+        </label>
+        <p style="font-size:11px;color:var(--muted);margin:0;background:#fffae6;border:1px solid #ffe380;border-radius:5px;padding:7px 10px">⚠ <strong>API keys (ANTHROPIC_API_KEY / OPENAI_API_KEY) must be set as environment variables on the proxy server</strong> — never enter them here.</p>
+      </div>
+    </div>
     <div class="sp-footer">
       <button class="sp-cancel" id="sp-cancel">Cancel</button>
       <button class="sp-save" id="sp-save">Save Changes</button>

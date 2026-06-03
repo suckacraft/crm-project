@@ -1,5 +1,6 @@
 import { K, KG, CONFIG_VERSION, applyUserKeys, ls, ss, clone, uid, hashPassword, genSalt, getUsers, saveUsers, registerUser, loginUser, saveSession, loadSession, clearSession, migrateExistingDataToUser, ensureAdminUser, getCurrentUser, setCurrentUser, getCurrentUserId } from "./core/storage.js";
 import { initForCrm, buildBuyQuoteFromFile, recordReview, mountReviewPanel } from "./features/quote/src/integration/crmBridge.js";
+import { getSettings as getParserSettings, saveSettings as saveParserSettings } from "./features/quote/src/storage.js";
 
 
 function showApp(){
@@ -1836,7 +1837,7 @@ function openQuoteForm(oppId,type){
         const { quote, buyQuote } = await buildBuyQuoteFromFile(
           file,
           { name: file.name, type: file.type, size: file.size },
-          { extractorId: "mock" }
+          { extractorId: getParserSettings().extractorId || "mock" }
         );
         // Pre-fill the simple fields as before
         if(buyQuote.amount){ area.querySelector("#qf-amount").value=buyQuote.amount; updateUnalloc(); }
@@ -2279,7 +2280,16 @@ function openSettings(){
   });
 }
 function closeSettings(){document.getElementById("settings-overlay").classList.remove("open");settingsDraft=null;}
-function renderSettingsEditor(){renderStagesEditor();renderStatusesEditor();document.getElementById("sp-margin").value=settingsDraft.defaultMargin??5;}
+function renderSettingsEditor(){
+  renderStagesEditor();renderStatusesEditor();
+  document.getElementById("sp-margin").value=settingsDraft.defaultMargin??5;
+  const ps=getParserSettings();
+  document.getElementById("sp-qp-extractor").value=ps.extractorId||"mock";
+  document.getElementById("sp-qp-provider").value=ps.provider||"anthropic";
+  document.getElementById("sp-qp-proxy").value=ps.proxyUrl||"";
+  document.getElementById("sp-qp-token").value=ps.apiToken||"";
+  document.getElementById("sp-qp-feedback").value=ps.feedbackUrl||"";
+}
 
 function renderStagesEditor(){
   const el=document.getElementById("stages-editor");el.innerHTML="";
@@ -2315,6 +2325,13 @@ function saveSettings(){
   const ls2=document._logoState||{};
   if(ls2.clear){localStorage.removeItem(K.logo);}
   else if(ls2.pending){try{localStorage.setItem(K.logo,ls2.pending);}catch(e){showToast("Logo too large to store — try a smaller image","err");}}
+  saveParserSettings({
+    extractorId: document.getElementById("sp-qp-extractor").value,
+    provider: document.getElementById("sp-qp-provider").value,
+    proxyUrl: document.getElementById("sp-qp-proxy").value.trim()||"/api/extract",
+    apiToken: document.getElementById("sp-qp-token").value.trim(),
+    feedbackUrl: document.getElementById("sp-qp-feedback").value.trim(),
+  });
   updateHeaderLogo();
   closeSettings();buildFilterChips();renderView();
   showToast("Settings saved","ok");
