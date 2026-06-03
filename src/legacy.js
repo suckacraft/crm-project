@@ -1,5 +1,5 @@
 import { K, KG, CONFIG_VERSION, applyUserKeys, ls, ss, clone, uid, hashPassword, genSalt, getUsers, saveUsers, registerUser, loginUser, saveSession, loadSession, clearSession, migrateExistingDataToUser, ensureAdminUser, getCurrentUser, setCurrentUser, getCurrentUserId } from "./core/storage.js";
-import { initForCrm, buildBuyQuoteFromFile, recordReview } from "./features/quote/src/integration/crmBridge.js";
+import { initForCrm, buildBuyQuoteFromFile, recordReview, mountReviewPanel } from "./features/quote/src/integration/crmBridge.js";
 
 
 function showApp(){
@@ -1825,28 +1825,67 @@ function openQuoteForm(oppId,type){
   area.querySelectorAll(".qf-cat-amt").forEach(i=>i.addEventListener("input",updateUnalloc));
   area.querySelector("#qf-amount").addEventListener("input",updateUnalloc);
 
-  // Phase 3: auto-fill buy quote from file using mock extractor
+  // Phase 3: auto-fill buy quote + show review panel (buy quotes only)
   if(type==="buy"){
     document.getElementById("qf-file").addEventListener("change", async (e)=>{
       const file=e.target.files[0]; if(!file) return;
+      // Remove any existing review panel
+      area.querySelector(".qrp-mount")?.remove();
       try {
         showToast("Analysing quote…");
-        const { buyQuote } = await buildBuyQuoteFromFile(
+        const { quote, buyQuote } = await buildBuyQuoteFromFile(
           file,
           { name: file.name, type: file.type, size: file.size },
           { extractorId: "mock" }
         );
-        if(buyQuote.amount) { area.querySelector("#qf-amount").value=buyQuote.amount; updateUnalloc(); }
+        // Pre-fill the simple fields as before
+        if(buyQuote.amount){ area.querySelector("#qf-amount").value=buyQuote.amount; updateUnalloc(); }
         (buyQuote.categories||[]).forEach(c=>{
           const cb=area.querySelector(`.qf-cat-cb[data-cat="${c.type}"]`);
           if(cb){ cb.checked=true; cb.dispatchEvent(new Event("change"));
             const amtEl=area.querySelector(`.qf-cat-amt[data-cat="${c.type}"]`);
             if(amtEl&&c.amount) amtEl.value=c.amount; }
         });
-        area._predicted={ buyQuote };
         updateUnalloc();
-        showToast("Auto-filled from quote — please review","ok");
-      } catch(err){ /* silent — user still fills manually */ }
+        // Mount review panel so user can see which cells were read and correct errors
+        const mount=document.createElement("div");
+        mount.className="qrp-mount";
+        mount.style.cssText="margin-top:14px;border:1.5px solid #0052cc;border-radius:var(--radius);padding:12px;background:#f0f6ff";
+        area.appendChild(mount);
+        area._predicted={ quote, buyQuote, notes:"" };
+        mountReviewPanel(mount,{
+          quote,
+          onChange(updated){
+            // Keep simple fields in sync as user edits the panel
+            const bq=updated.categoryTotals;
+            area._predicted.quote=updated;
+          },
+          onSave(corrected, { notes=""}={}){
+            area._predicted={ quote:corrected, buyQuote, notes };
+            // Push corrected totals back into the simple form fields
+            if(corrected.totals?.grandTotalCost){
+              area.querySelector("#qf-amount").value=corrected.totals.grandTotalCost;
+              // Clear + re-apply category checkboxes from corrected data
+              area.querySelectorAll(".qf-cat-cb").forEach(cb=>{ cb.checked=false; cb.dispatchEvent(new Event("change")); });
+              const cats=corrected.categoryTotals;
+              ["hw","sw","ps"].forEach(cat=>{
+                const cost=cats[cat]?.cost;
+                if(!cost) return;
+                const cb=area.querySelector(`.qf-cat-cb[data-cat="${cat}"]`);
+                if(cb){ cb.checked=true; cb.dispatchEvent(new Event("change"));
+                  const amtEl=area.querySelector(`.qf-cat-amt[data-cat="${cat}"]`);
+                  if(amtEl) amtEl.value=cost; }
+              });
+              updateUnalloc();
+            }
+            mount.style.border="1.5px solid #10b981";
+            mount.style.background="#f0fdf8";
+            showToast(notes?"Correction saved with notes ✓":"Extraction approved ✓","ok");
+          }
+        });
+        mount.scrollIntoView({behavior:"smooth",block:"nearest"});
+        showToast("Review the extraction below — correct any errors then approve","ok");
+      } catch(err){ showToast("Auto-parse unavailable — enter details manually"); }
     });
   }
 
@@ -1872,7 +1911,7 @@ function openQuoteForm(oppId,type){
       renderOppFiles(oppId); showToast(`${type==="sell"?"Sell":"Buy"} quote added`,"ok");
       updateExpiryBadge();
       if(type==="buy"&&area._predicted){
-        try{ recordReview(area._predicted.buyQuote, {amount,categories:finalCats}, {fileName:file.name}); }catch{}
+        try{ recordReview(area._predicted.quote, area._predicted.quote, {fileName:file.name, notes:area._predicted.notes||""}); }catch{}
         area._predicted=null;
       }
     };

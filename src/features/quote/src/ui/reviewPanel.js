@@ -45,16 +45,20 @@ export function mountReviewPanel(container, opts = {}) {
     </div>
     <table class="qrp-tbl">
       <thead><tr><th>#</th><th>SKU / MPN</th><th>Description</th><th>Type</th>
-        <th class="qrp-r">Qty</th><th class="qrp-r">Unit cost</th><th class="qrp-r">Ext cost</th><th></th></tr></thead>
+        <th class="qrp-r">Qty</th><th class="qrp-r">Unit cost</th><th class="qrp-r">Ext cost</th><th title="Extraction confidence &amp; source cell">Src</th><th></th></tr></thead>
       <tbody data-body></tbody>
-      <tfoot><tr><td colspan="6" class="qrp-r qrp-b">Grand total</td>
+      <tfoot><tr><td colspan="7" class="qrp-r qrp-b">Grand total</td>
         <td class="qrp-r qrp-b" data-grand></td><td></td></tr></tfoot>
     </table>
     <div class="qrp-actions">
       <button class="qrp-btn" data-add>+ Add line</button>
       <span class="qrp-cats" data-cats></span>
       <span class="qrp-spacer"></span>
-      <button class="qrp-btn qrp-primary" data-save>Save correction</button>
+      <button class="qrp-btn qrp-primary" data-save>Save &amp; approve</button>
+    </div>
+    <div class="qrp-notes-wrap">
+      <label class="qrp-notes-lbl">What did the extractor get wrong? <span style="font-weight:400;color:#5e6c84">(optional — helps it improve)</span></label>
+      <textarea class="qrp-notes" data-notes placeholder="e.g. "Missed the discount row", "Qty and unit cost swapped on line 3", "Wrong currency — should be AUD"…" rows="2"></textarea>
     </div>
   </div>`;
 
@@ -73,7 +77,8 @@ export function mountReviewPanel(container, opts = {}) {
   });
   el.querySelector("[data-save]").addEventListener("click", () => {
     recomputeTotals(working);
-    opts.onSave && opts.onSave(working);
+    const notes = (el.querySelector("[data-notes]")?.value || "").trim();
+    opts.onSave && opts.onSave(working, { notes });
   });
 
   renderRows();
@@ -81,8 +86,15 @@ export function mountReviewPanel(container, opts = {}) {
 
   function renderRows() {
     const body = el.querySelector("[data-body]");
-    body.innerHTML = working.lineItems.map((li, i) => `
-      <tr data-i="${i}">
+    body.innerHTML = working.lineItems.map((li, i) => {
+      const conf = li.confidence ?? 1;
+      const confColor = conf >= 0.7 ? "#10b981" : conf >= 0.4 ? "#ff8b00" : "#de350b";
+      const confPct = Math.round(conf * 100);
+      const srcBadge = `<span title="Confidence: ${confPct}%${li.sourceRef ? `\nSource: ${li.sourceRef}` : ""}" style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;cursor:default">
+        <span style="font-size:10px;font-weight:700;color:${confColor}">${confPct}%</span>
+        ${li.sourceRef ? `<span style="font-size:9px;color:#5e6c84;white-space:nowrap;overflow:hidden;max-width:56px;text-overflow:ellipsis" title="${esc(li.sourceRef)}">${esc(li.sourceRef)}</span>` : ""}
+      </span>`;
+      return `<tr data-i="${i}" style="background:${conf < 0.4 ? "#fff8f8" : ""}">
         <td class="qrp-mut">${i + 1}</td>
         <td><input data-li="sku" value="${esc(li.sku || li.mfgPartNumber)}"/></td>
         <td><input data-li="description" value="${esc(li.description)}"/></td>
@@ -90,8 +102,10 @@ export function mountReviewPanel(container, opts = {}) {
         <td class="qrp-r"><input data-li="quantity" type="number" min="0" value="${li.quantity}"/></td>
         <td class="qrp-r"><input data-li="unitCost" type="number" min="0" step="0.01" value="${li.unitCost}"/></td>
         <td class="qrp-r"><input data-li="extendedCost" type="number" min="0" step="0.01" value="${li.extendedCost}"/></td>
+        <td class="qrp-r" style="min-width:60px">${srcBadge}</td>
         <td><button class="qrp-x" data-del="${i}">×</button></td>
-      </tr>`).join("");
+      </tr>`;
+    }).join("");
 
     body.querySelectorAll("input,select").forEach(inp => inp.addEventListener("input", () => {
       const i = +inp.closest("tr").dataset.i, f = inp.dataset.li, li = working.lineItems[i];
@@ -169,5 +183,9 @@ function styleTag() {
   .qrp-pill{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
   .qrp-hw{background:#e8f0fe;color:#1a73e8}.qrp-sw{background:#e6f9f0;color:#137333}
   .qrp-ps{background:#fff3e0;color:#e65100}.qrp-other{background:#eee;color:#666}
+  .qrp-notes-wrap{margin-top:10px;border-top:1px solid #eef0f2;padding-top:10px}
+  .qrp-notes-lbl{display:block;font-size:11px;font-weight:700;color:#5e6c84;margin-bottom:4px}
+  .qrp-notes{width:100%;box-sizing:border-box;font:12px inherit;padding:7px 9px;border:1px solid #dfe1e6;border-radius:6px;resize:vertical;color:#172b4d}
+  .qrp-notes:focus{outline:none;border-color:#0052cc}
   </style>`;
 }
