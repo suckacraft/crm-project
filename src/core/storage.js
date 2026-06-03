@@ -15,7 +15,7 @@
 export const K = {
   config: "kb_config", data: "kb_data", upload: "kb_upload", nudge: "kb_nudge",
   notes: "kb_notes", activity: "kb_activity", fcField: "kb_fc_field",
-  files: "kb_files", logo: "kb_logo",
+  files: "kb_files", logo: "kb_logo", tasks: "kb_tasks",
 };
 export const KG = { users: "kb_users", session: "kb_session" };
 export const CONFIG_VERSION = 3;
@@ -30,6 +30,7 @@ export function applyUserKeys(uid2) {
   K.activity = "kb_activity_u" + uid2;
   K.fcField  = "kb_fc_field_u" + uid2;
   K.files    = "kb_files_u"   + uid2;
+  K.tasks    = "kb_tasks_u"   + uid2;
   // K.logo stays global (shared)
 }
 

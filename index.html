@@ -531,11 +531,13 @@
           <button class="op-tab active" data-tab="details">Details</button>
           <button class="op-tab" data-tab="notes">Notes</button>
           <button class="op-tab" data-tab="files">Files</button>
+          <button class="op-tab" data-tab="tasks">Tasks<span id="op-tasks-badge" style="display:none;margin-left:4px;font-size:10px;background:var(--accent);color:#fff;border-radius:8px;padding:1px 5px;font-weight:700"></span></button>
         </div>
         <div class="op-body">
           <div class="op-tab-pane active" id="op-details-pane" data-tab="details"></div>
           <div class="op-tab-pane" id="op-notes-pane" data-tab="notes"></div>
           <div class="op-tab-pane" id="op-files-pane" data-tab="files"></div>
+          <div class="op-tab-pane" id="op-tasks-pane" data-tab="tasks"></div>
         </div>
       </div>
       <div class="opp-preview-side" id="opp-preview-side" style="display:none">
@@ -662,6 +664,7 @@
     <button class="view-tab" data-view="forecast">Forecast</button>
     <button class="view-tab" data-view="manual" id="manual-tab-btn">Manual</button>
     <button class="view-tab" data-view="expiry" id="btn-expiry">Expiry<span class="manual-badge" id="expiry-badge" style="display:none"></span></button>
+    <button class="view-tab" data-view="tasks" id="btn-tasks">Tasks<span class="manual-badge" id="tasks-badge" style="display:none"></span></button>
   </div>
   <input id="search" type="search" placeholder="Search…" />
   <button class="tb-btn" id="btn-filter">⚡ Filters <span id="filter-count"></span></button>
@@ -835,6 +838,9 @@
 
 <!-- Expiry view -->
 <div id="expiry-view" style="display:none;padding:24px;overflow-y:auto;flex:1"></div>
+
+<!-- Tasks view -->
+<div id="tasks-view" style="display:none;padding:24px;overflow-y:auto;flex:1"></div>
 
 <!-- Empty state -->
 <div id="empty-state">

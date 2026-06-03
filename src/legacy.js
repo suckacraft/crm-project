@@ -142,6 +142,7 @@ let opportunities = [];
 let notes    = {};
 let activity = {};
 let oppFiles = {};
+let tasks = [];
 let currentView = "kanban";
 let filterOpen = false;
 let filters = { statuses:new Set(), stages:new Set(), dateFrom:"", dateTo:"", valMin:"", valMax:"", company:"" };
@@ -195,9 +196,12 @@ function renderExpiry(){
     ["sellQuotes","buyQuotes"].forEach(bucket=>{
       (fd[bucket]||[]).forEach(f=>{
         if(!f.expiryDate) return;
-        rows.push({opp,file:f,quoteType:bucket==="sellQuotes"?"sell":"buy",daysLeft:daysDiff(f.expiryDate),cls:expiryClass(f.expiryDate)});
+        rows.push({opp,file:f,quoteType:bucket==="sellQuotes"?"sell":"buy",daysLeft:daysDiff(f.expiryDate),cls:expiryClass(f.expiryDate),rowKind:"quote"});
       });
     });
+    if(opp.dealRegExpiry){
+      rows.push({opp,file:null,quoteType:"deal-reg",daysLeft:daysDiff(opp.dealRegExpiry),cls:expiryClass(opp.dealRegExpiry),rowKind:"dealreg"});
+    }
   });
   rows.sort((a,b)=>{
     const order={overdue:0,soon:1,"":2};
@@ -207,7 +211,7 @@ function renderExpiry(){
   let fStatus="all"; let fType="all"; let fCat="all";
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-      <h2 style="font-size:18px;font-weight:700;margin:0">Quote Expiry</h2>
+      <h2 style="font-size:18px;font-weight:700;margin:0">Expiry Tracker</h2>
       <span id="exp-summary" style="font-size:12px;color:var(--muted)"></span>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
@@ -215,7 +219,7 @@ function renderExpiry(){
         ${["all","overdue","soon",""].map(v=>`<button class="exp-filter-btn" data-group="status" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All":v==="overdue"?"Overdue":v==="soon"?"Soon":"Active"}</button>`).join("")}
       </div>
       <div style="display:flex;gap:4px">
-        ${["all","sell","buy"].map(v=>`<button class="exp-filter-btn" data-group="type" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Types":v==="sell"?"Sell":"Buy"}</button>`).join("")}
+        ${["all","sell","buy","deal-reg"].map(v=>`<button class="exp-filter-btn" data-group="type" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Types":v==="sell"?"Sell":v==="buy"?"Buy":"Deal Reg"}</button>`).join("")}
       </div>
       <div style="display:flex;gap:4px">
         ${["all","hw","sw","ps"].map(v=>`<button class="exp-filter-btn" data-group="cat" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v==="all"?"var(--accent)":"#fff"};color:${v==="all"?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Categories":v==="hw"?"HW":v==="sw"?"SW":"PS"}</button>`).join("")}
@@ -226,7 +230,7 @@ function renderExpiry(){
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr style="border-bottom:2px solid var(--border)">
           <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Status</th>
-          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">File</th>
+          <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Item</th>
           <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Type</th>
           <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Categories</th>
           <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Amount</th>
@@ -239,7 +243,7 @@ function renderExpiry(){
         <tbody id="exp-tbody"></tbody>
       </table>
     </div>
-    ${!rows.length?'<p style="text-align:center;color:var(--muted);padding:40px">No quotes with expiry dates found. Add expiry dates to your sell and buy quotes.</p>':''}
+    ${!rows.length?'<p style="text-align:center;color:var(--muted);padding:40px">No expiry dates found. Add expiry dates to quotes or deal registrations.</p>':''}
   `;
   const tbody=document.getElementById("exp-tbody");
   const summary=document.getElementById("exp-summary");
@@ -248,7 +252,8 @@ function renderExpiry(){
     const filtered=rows.filter(r=>{
       if(fStatus!=="all"&&r.cls!==fStatus) return false;
       if(fType!=="all"&&r.quoteType!==fType) return false;
-      if(fCat!=="all"&&!(r.file.categories||[]).some(c=>c.type===fCat)) return false;
+      if(fCat!=="all"&&r.rowKind==="dealreg") return false; // deal-reg rows have no category
+      if(fCat!=="all"&&!(r.file?.categories||[]).some(c=>c.type===fCat)) return false;
       return true;
     });
     const overdueCnt=rows.filter(r=>r.cls==="overdue").length;
@@ -257,22 +262,36 @@ function renderExpiry(){
       const stageObj=config.stages.find(s=>s.id===r.opp.stage);
       const clsColor=r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"#10b981";
       const clsLabel=r.cls==="overdue"?"OVERDUE":r.cls==="soon"?"SOON":"OK";
-      const catPills=(r.file.categories||[]).map(c=>`<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;background:${c.type==='hw'?'#e8f0fe':c.type==='sw'?'#e6f9f0':'#fff3e0'};color:${c.type==='hw'?'#1a73e8':c.type==='sw'?'#137333':'#e65100'}">${c.type.toUpperCase()}</span>`).join(" ");
+      if(r.rowKind==="dealreg"){
+        return `<tr class="exp-row" style="border-bottom:1px solid var(--border);transition:background .1s;background:#fffbf0" data-oppid="${r.opp.id}">
+          <td style="padding:8px 6px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${clsColor}20;color:${clsColor}">${clsLabel}</span></td>
+          <td style="padding:8px 6px;font-size:12px;font-weight:600;color:var(--text)">${r.opp.dealId?esc(r.opp.dealId):'<span style="color:var(--muted)">—</span>'}</td>
+          <td style="padding:8px 6px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:#e8f0fe;color:#1a73e8">Deal Reg</span></td>
+          <td style="padding:8px 6px;font-size:12px;color:var(--muted)">—</td>
+          <td style="padding:8px 6px;font-size:12px;color:var(--muted)">—</td>
+          <td style="padding:8px 6px;font-size:12px">${fmtDate(r.opp.dealRegExpiry)}</td>
+          <td style="padding:8px 6px;font-size:12px;font-weight:600;color:${r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"var(--text)"}">${r.daysLeft!=null?(r.daysLeft<0?Math.abs(r.daysLeft)+"d overdue":r.daysLeft===0?"Today":r.daysLeft+"d"):"—"}</td>
+          <td style="padding:8px 6px"><a class="exp-opp-link" data-id="${r.opp.id}" style="color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">${esc(r.opp.name)}</a></td>
+          <td style="padding:8px 6px;font-size:12px;color:var(--muted)">${esc(r.opp.account||"—")}</td>
+          <td style="padding:8px 6px;font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:${stageObj?.color||'#888'}20;color:${stageObj?.color||'#888'};font-weight:600">${esc(stageObj?.label||r.opp.stage)}</span></td>
+        </tr>`;
+      }
+      const catPills=(r.file?.categories||[]).map(c=>`<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:8px;background:${c.type==='hw'?'#e8f0fe':c.type==='sw'?'#e6f9f0':'#fff3e0'};color:${c.type==='hw'?'#1a73e8':c.type==='sw'?'#137333':'#e65100'}">${c.type.toUpperCase()}</span>`).join(" ");
       return `<tr class="exp-row" style="border-bottom:1px solid var(--border);transition:background .1s;cursor:default" data-oppid="${r.opp.id}" data-fid="${r.file.id}">
         <td style="padding:8px 6px"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${clsColor}20;color:${clsColor}">${clsLabel}</span></td>
-        <td style="padding:8px 6px"><a class="exp-file-link" data-oppid="${r.opp.id}" data-fid="${r.file.id}" style="color:var(--accent);font-size:12px;cursor:pointer;text-decoration:none;font-weight:600" title="Open file in opportunity">${esc(r.file.name)}</a></td>
+        <td style="padding:8px 6px"><a class="exp-file-link" data-oppid="${r.opp.id}" data-fid="${r.file.id}" style="color:var(--accent);font-size:12px;cursor:pointer;text-decoration:none;font-weight:600">${esc(r.file.name)}</a></td>
         <td style="padding:8px 6px;font-size:12px;text-transform:capitalize">${r.quoteType}</td>
         <td style="padding:8px 6px;font-size:12px">${catPills||'—'}</td>
         <td style="padding:8px 6px;font-size:12px;font-weight:600">${r.file.amount?fmt(r.file.amount):"—"}</td>
         <td style="padding:8px 6px;font-size:12px">${fmtDate(r.file.expiryDate)}</td>
         <td style="padding:8px 6px;font-size:12px;font-weight:600;color:${r.cls==="overdue"?"#de350b":r.cls==="soon"?"#ff8b00":"var(--text)"}">${r.daysLeft!=null?(r.daysLeft<0?Math.abs(r.daysLeft)+"d overdue":r.daysLeft===0?"Today":r.daysLeft+"d"):"—"}</td>
-        <td style="padding:8px 6px"><a class="exp-opp-link" data-id="${r.opp.id}" style="color:var(--accent);font-size:12px;cursor:pointer;font-weight:600" title="Open opportunity">${esc(r.opp.name)}</a></td>
+        <td style="padding:8px 6px"><a class="exp-opp-link" data-id="${r.opp.id}" style="color:var(--accent);font-size:12px;cursor:pointer;font-weight:600">${esc(r.opp.name)}</a></td>
         <td style="padding:8px 6px;font-size:12px;color:var(--muted)">${esc(r.opp.account||"—")}</td>
         <td style="padding:8px 6px;font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:${stageObj?.color||'#888'}20;color:${stageObj?.color||'#888'};font-weight:600">${esc(stageObj?.label||r.opp.stage)}</span></td>
       </tr>`;
     }).join("");
     summary.textContent=`${overdueCnt} overdue · ${soonCnt} expiring soon · ${rows.filter(r=>r.cls==="").length} active`;
-    countEl.textContent=`${filtered.length} quote${filtered.length!==1?"s":""}`;
+    countEl.textContent=`${filtered.length} item${filtered.length!==1?"s":""}`;
   }
   renderTable();
   el.querySelectorAll(".exp-filter-btn").forEach(btn=>{
@@ -319,12 +338,170 @@ function updateHeaderLogo(){
 
 // ── Expiry badge ──────────────────────────────────────────────────────────────
 function updateExpiryBadge(){
-  const cnt=opportunities.reduce((s,opp)=>{
+  const quoteCnt=opportunities.reduce((s,opp)=>{
     const fd=getOppFileData(opp.id);
     return s+[...(fd.sellQuotes||[]),...(fd.buyQuotes||[])].filter(f=>f.expiryDate&&(expiryClass(f.expiryDate)==="overdue"||expiryClass(f.expiryDate)==="soon")).length;
   },0);
+  const dealRegCnt=opportunities.filter(o=>o.dealRegExpiry&&(expiryClass(o.dealRegExpiry)==="overdue"||expiryClass(o.dealRegExpiry)==="soon")).length;
+  const cnt=quoteCnt+dealRegCnt;
   const badge=document.getElementById("expiry-badge");
   if(badge){badge.textContent=cnt;badge.style.display=cnt>0?"inline-block":"none";}
+}
+
+// ── Tasks persistence + badge ─────────────────────────────────────────────────
+function saveTasks(){ ss(K.tasks, tasks); }
+function updateTasksBadge(){
+  const cnt=tasks.filter(t=>!t.done).length;
+  const badge=document.getElementById("tasks-badge");
+  if(badge){badge.textContent=cnt;badge.style.display=cnt>0?"inline-block":"none";}
+}
+
+// ── Tasks view ────────────────────────────────────────────────────────────────
+function renderTasks(){
+  const el=document.getElementById("tasks-view"); el.innerHTML="";
+  const today=new Date().toISOString().slice(0,10);
+  const weekEnd=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
+  let fDone="pending"; let fOpp="all"; let fDate="all";
+  let showAddRow=false;
+  function oppName(id){const o=opportunities.find(x=>x.id===id);return o?o.name:null;}
+  function dueCss(t){if(t.done)return"color:var(--muted)";const dc=expiryClass(t.dueDate);return dc==="overdue"?"color:#de350b;font-weight:700":dc==="soon"?"color:#ff8b00;font-weight:600":"color:var(--text)";}
+  function render(){
+    let list=tasks;
+    if(fDone==="pending") list=list.filter(t=>!t.done);
+    else if(fDone==="done") list=list.filter(t=>t.done);
+    if(fOpp==="unlinked") list=list.filter(t=>!t.oppId);
+    if(fDate==="overdue") list=list.filter(t=>t.dueDate&&t.dueDate<today);
+    else if(fDate==="today") list=list.filter(t=>t.dueDate===today);
+    else if(fDate==="week") list=list.filter(t=>t.dueDate&&t.dueDate>=today&&t.dueDate<=weekEnd);
+    // Group: overdue → today → upcoming → no-date → done
+    const overdue=list.filter(t=>!t.done&&t.dueDate&&t.dueDate<today);
+    const dueToday=list.filter(t=>!t.done&&t.dueDate===today);
+    const upcoming=list.filter(t=>!t.done&&t.dueDate&&t.dueDate>today);
+    const noDate=list.filter(t=>!t.done&&!t.dueDate);
+    const done=list.filter(t=>t.done);
+    function taskRow(t){
+      const oName=t.oppId?oppName(t.oppId):null;
+      const dc=expiryClass(t.dueDate);
+      const duePill=t.dueDate?`<span style="font-size:11px;padding:2px 7px;border-radius:8px;margin-right:4px;background:${dc==='overdue'?'#fde8e8':dc==='soon'?'#fff3cd':'#f0f4f8'};color:${dc==='overdue'?'#de350b':dc==='soon'?'#ff8b00':'#5e6c84'}">${fmtDate(t.dueDate)}</span>`:"";
+      return `<tr data-tid="${t.id}" style="border-bottom:1px solid var(--border);transition:background .1s">
+        <td style="padding:8px 6px;width:32px"><input type="checkbox" class="tv-cb" data-tid="${t.id}" ${t.done?"checked":""} style="accent-color:var(--accent);width:15px;height:15px;cursor:pointer" /></td>
+        <td style="padding:8px 6px;font-size:13px;${t.done?"text-decoration:line-through;color:var(--muted)":"font-weight:500"}">${esc(t.title)}</td>
+        <td style="padding:8px 6px;font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.notes?esc(t.notes):"—"}</td>
+        <td style="padding:8px 6px;font-size:12px">${oName?`<a class="tv-opp-link" data-id="${t.oppId}" style="color:var(--accent);font-weight:600;cursor:pointer">${esc(oName)}</a>`:'<span style="color:var(--muted)">—</span>'}</td>
+        <td style="padding:8px 6px">${duePill||'<span style="font-size:11px;color:var(--muted)">No date</span>'}</td>
+        <td style="padding:8px 6px"><button class="tv-del" data-tid="${t.id}" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--muted);cursor:pointer">Delete</button></td>
+      </tr>`;
+    }
+    function section(label,list2,color){
+      if(!list2.length) return "";
+      return `<tr><td colspan="6" style="padding:10px 6px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${color||'var(--muted)'};">${label}</td></tr>${list2.map(taskRow).join("")}`;
+    }
+    const addRowHtml=showAddRow?`<tr id="tv-add-row" style="border-bottom:2px solid var(--accent)">
+      <td style="padding:8px 6px"></td>
+      <td style="padding:8px 6px"><input class="op-input" id="tv-new-title" placeholder="Task title…" style="width:100%;min-width:160px" /></td>
+      <td style="padding:8px 6px"><input class="op-input" id="tv-new-notes" placeholder="Notes (optional)" style="width:100%" /></td>
+      <td style="padding:8px 6px">
+        <select class="op-select" id="tv-new-opp" style="width:100%;font-size:12px;max-width:200px">
+          <option value="">— No opportunity —</option>
+          ${opportunities.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join("")}
+        </select>
+      </td>
+      <td style="padding:8px 6px"><input class="op-input" id="tv-new-due" type="date" style="width:140px" /></td>
+      <td style="padding:8px 6px;display:flex;gap:6px">
+        <button class="op-save-btn" id="tv-save-add" style="padding:6px 14px;font-size:12px">Save</button>
+        <button id="tv-cancel-add" style="padding:6px 10px;font-size:12px;background:none;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer">Cancel</button>
+      </td>
+    </tr>`:"";
+    const total=list.length;
+    const openCnt=tasks.filter(t=>!t.done).length;
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <h2 style="font-size:18px;font-weight:700;margin:0">Tasks</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:var(--muted)">${openCnt} open</span>
+          <button class="op-save-btn" id="tv-add-btn" style="padding:7px 16px;font-size:12px">+ Add Task</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;gap:4px">
+          ${["pending","done","all"].map(v=>`<button class="tv-filter-btn" data-group="done" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v===fDone?"var(--accent)":"#fff"};color:${v===fDone?"#fff":"var(--text)"};cursor:pointer">${v==="pending"?"Pending":v==="done"?"Done":"All"}</button>`).join("")}
+        </div>
+        <div style="display:flex;gap:4px">
+          ${["all","unlinked"].map(v=>`<button class="tv-filter-btn" data-group="opp" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v===fOpp?"var(--accent)":"#fff"};color:${v===fOpp?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Opps":"Unlinked"}</button>`).join("")}
+        </div>
+        <div style="display:flex;gap:4px">
+          ${["all","overdue","today","week"].map(v=>`<button class="tv-filter-btn" data-group="date" data-val="${v}" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:${v===fDate?"var(--accent)":"#fff"};color:${v===fDate?"#fff":"var(--text)"};cursor:pointer">${v==="all"?"All Dates":v==="overdue"?"Overdue":v==="today"?"Due Today":"This Week"}</button>`).join("")}
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="border-bottom:2px solid var(--border)">
+            <th style="padding:8px 6px;width:32px"></th>
+            <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Title</th>
+            <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Notes</th>
+            <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Opportunity</th>
+            <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600">Due Date</th>
+            <th style="padding:8px 6px;text-align:left;font-size:11px;color:var(--muted);font-weight:600"></th>
+          </tr></thead>
+          <tbody>
+            ${addRowHtml}
+            ${section("⚠ Overdue",overdue,"#de350b")}
+            ${section("📅 Due Today",dueToday,"#1a73e8")}
+            ${section("Upcoming",upcoming,"")}
+            ${section("No Date",noDate,"")}
+            ${done.length?`<tr><td colspan="6" style="padding:10px 6px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Completed (${done.length})</td></tr>${done.map(taskRow).join("")}`:""}
+            ${!total?`<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--muted)">No tasks. Click "+ Add Task" to create one.</td></tr>`:""}
+          </tbody>
+        </table>
+      </div>`;
+    // wire events
+    el.querySelectorAll(".tv-filter-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const grp=btn.dataset.group,val=btn.dataset.val;
+        if(grp==="done") fDone=val;
+        else if(grp==="opp") fOpp=val;
+        else fDate=val;
+        render();
+      });
+    });
+    el.querySelector("#tv-add-btn")?.addEventListener("click",()=>{showAddRow=true;render();});
+    el.querySelector("#tv-cancel-add")?.addEventListener("click",()=>{showAddRow=false;render();});
+    el.querySelector("#tv-save-add")?.addEventListener("click",()=>{
+      const title=(document.getElementById("tv-new-title")?.value||"").trim();
+      if(!title){showToast("Enter a task title","err");return;}
+      const dueDate=document.getElementById("tv-new-due")?.value||"";
+      const notes=(document.getElementById("tv-new-notes")?.value||"").trim();
+      const oppId=document.getElementById("tv-new-opp")?.value||null;
+      const ts=new Date().toISOString();
+      tasks.push({id:uid(),title,notes,dueDate,oppId:oppId||null,done:false,createdAt:ts,updatedAt:ts});
+      saveTasks(); updateTasksBadge(); showAddRow=false; render();
+      showToast("Task added","ok");
+    });
+    el.querySelector("#tv-new-title")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();el.querySelector("#tv-save-add")?.click();}});
+    el.querySelectorAll(".tv-cb").forEach(cb=>{
+      cb.addEventListener("change",()=>{
+        const t=tasks.find(x=>x.id===cb.dataset.tid); if(!t) return;
+        t.done=cb.checked; t.updatedAt=new Date().toISOString();
+        saveTasks(); updateTasksBadge(); render();
+      });
+    });
+    el.querySelectorAll(".tv-del").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        if(!confirm("Delete this task?")) return;
+        tasks=tasks.filter(t=>t.id!==btn.dataset.tid);
+        saveTasks(); updateTasksBadge(); render();
+      });
+    });
+    el.querySelectorAll(".tv-opp-link").forEach(a=>{
+      a.addEventListener("click",()=>openOppDetail(a.dataset.id,"tasks"));
+    });
+    // hover
+    el.querySelectorAll("tr[data-tid]").forEach(tr=>{
+      tr.addEventListener("mouseenter",()=>tr.style.background="#f8f9fa");
+      tr.addEventListener("mouseleave",()=>tr.style.background="");
+    });
+  }
+  render();
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -334,6 +511,7 @@ function boot() {
   notes    = ls(K.notes)||{};
   activity = ls(K.activity)||{};
   oppFiles = ls(K.files)||{};
+  tasks    = ls(K.tasks)||[];
   forecastDateField = localStorage.getItem(K.fcField)||"";
   refreshLastUpload();
   checkNudge();
@@ -342,6 +520,7 @@ function boot() {
   updateManualTabBadge();
   updateHeaderLogo();
   updateExpiryBadge();
+  updateTasksBadge();
   renderView();
 }
 
@@ -648,12 +827,13 @@ function applyOpFilters(opps){
 
 // ── View routing ──────────────────────────────────────────────────────────────
 function renderView() {
-  const hasData=opportunities.length>0||currentView==="manual"||currentView==="expiry";
+  const hasData=opportunities.length>0||currentView==="manual"||currentView==="expiry"||currentView==="tasks";
   document.getElementById("board").style.display="none";
   document.getElementById("list-view").classList.remove("show");
   document.getElementById("forecast-view").classList.remove("show");
   document.getElementById("manual-view").classList.remove("show");
   document.getElementById("expiry-view").style.display="none";
+  document.getElementById("tasks-view").style.display="none";
   document.getElementById("empty-state").classList.remove("show");
   document.getElementById("filter-bar").style.display="";
   if(!hasData){document.getElementById("empty-state").classList.add("show");return;}
@@ -662,6 +842,7 @@ function renderView() {
   else if(currentView==="forecast"){document.getElementById("forecast-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderForecast();}
   else if(currentView==="manual"){document.getElementById("manual-view").classList.add("show");document.getElementById("filter-bar").style.display="none";renderManual();}
   else if(currentView==="expiry"){document.getElementById("expiry-view").style.display="block";document.getElementById("filter-bar").style.display="none";renderExpiry();}
+  else if(currentView==="tasks"){document.getElementById("tasks-view").style.display="block";document.getElementById("filter-bar").style.display="none";renderTasks();}
 }
 
 // ── Kanban rendering ──────────────────────────────────────────────────────────
@@ -714,6 +895,7 @@ function buildCard(opp,stage){
       <span class="card-date ${dateCss(opp.closeDate)}" title="Click to edit">${dateLabel(opp.closeDate)}</span>
       <select class="status-pill" style="background:${stColor}20;color:${stColor};border:1.5px solid ${stColor}60">${statusOptions}</select>
     </div>
+    ${(()=>{const rc=expiryClass(opp.dealRegExpiry);return rc?`<div style="margin-top:4px"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:${rc==='overdue'?'#fde8e8':'#fff3cd'};color:${rc==='overdue'?'#de350b':'#ff8b00'}">REG EXP${opp.dealId?` · ${esc(opp.dealId)}`:''}</span></div>`:"";})()}
     ${actTs?`<div class="card-activity">Last: ${fmtActivityShort(actTs)}</div>`:""}`;
 
   card.addEventListener("dragstart",e=>{dragCard=card;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",opp.id);});
@@ -1113,14 +1295,18 @@ function switchOppTab(tab){
   if(tab==="details") renderOppDetails(opp);
   else if(tab==="notes") renderOppNotes(opp);
   else if(tab==="files") renderOppFiles(opp.id);
+  else if(tab==="tasks") renderOppTasks(opp.id);
 }
 
 function updateOppTabCounts(oppId){
   const nc=(notes[oppId]||[]).length; const fd=getOppFileData(oppId); const fc=fd.files.length+fd.sellQuotes.length+fd.buyQuotes.length;
+  const oppTasksOpen=tasks.filter(t=>t.oppId===oppId&&!t.done).length;
   const nt=document.querySelector(".op-tab[data-tab='notes']");
   const ft=document.querySelector(".op-tab[data-tab='files']");
   if(nt) nt.textContent=nc>0?`Notes (${nc})`:"Notes";
   if(ft) ft.textContent=fc>0?`Files (${fc})`:"Files";
+  const badge=document.getElementById("op-tasks-badge");
+  if(badge){badge.textContent=oppTasksOpen;badge.style.display=oppTasksOpen>0?"inline":"none";}
 }
 
 function renderOppDetails(opp){
@@ -1164,6 +1350,8 @@ function renderOppDetails(opp){
       <div class="op-field"><label class="op-field-label">Margin % <span style="font-weight:400;color:var(--muted)">(default ${config.defaultMargin??5}%)</span></label><input class="op-input" id="op-f-margin" type="number" min="0" max="100" step="0.1" value="${opp.margin!=null?opp.margin:''}" placeholder="${config.defaultMargin??5}" /></div>
       <div class="op-field"><label class="op-field-label">Close Date</label><input class="op-input" id="op-f-closedate" type="date" value="${opp.closeDate||''}" /></div>
       <div class="op-field"><label class="op-field-label">Owner</label><input class="op-input" id="op-f-owner" value="${esc(opp.owner||'')}" /></div>
+      <div class="op-field"><label class="op-field-label">Deal ID <span style="font-weight:400;color:var(--muted)">(registration)</span></label><input class="op-input" id="op-f-dealid" value="${esc(opp.dealId||'')}" placeholder="e.g. REG-12345" /></div>
+      <div class="op-field"><label class="op-field-label">Deal Reg Expiry ${opp.dealRegExpiry?`<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;background:${expiryClass(opp.dealRegExpiry)==='overdue'?'#fde8e8':expiryClass(opp.dealRegExpiry)==='soon'?'#fff3cd':'#e8f5e9'};color:${expiryClass(opp.dealRegExpiry)==='overdue'?'#de350b':expiryClass(opp.dealRegExpiry)==='soon'?'#ff8b00':'#137333'}">${expiryClass(opp.dealRegExpiry)==='overdue'?'OVERDUE':expiryClass(opp.dealRegExpiry)==='soon'?'SOON':'OK'}</span>`:''}</label><input class="op-input" id="op-f-dealregexpiry" type="date" value="${opp.dealRegExpiry||''}" /></div>
     </div>
     <div class="op-calcs" id="op-calcs">
       <span class="op-calc-item">Weighted: <strong>${fmt(wVal)}</strong></span>
@@ -1340,6 +1528,8 @@ function saveOppDetail(opp){
   const mRaw=document.getElementById("op-f-margin").value;
   opp.margin=mRaw!==""?Math.max(0,Math.min(100,parseFloat(mRaw)||0)):null;
   opp.closeDate=document.getElementById("op-f-closedate").value;
+  opp.dealId=document.getElementById("op-f-dealid").value.trim();
+  opp.dealRegExpiry=document.getElementById("op-f-dealregexpiry").value;
   opp.description=document.getElementById("op-f-desc").value;
   // Line items
   const liHwSell=parseFloat(document.getElementById("li-hw-sell")?.value)||0;
@@ -1389,6 +1579,70 @@ function submitOppNote(oppId){
   ss(K.notes,notes); touchActivity(oppId); ta.value="";
   const opp=opportunities.find(o=>o.id===oppId); if(opp) renderOppNotes(opp);
   showToast("Note added","ok");
+}
+
+function renderOppTasks(oppId){
+  const el=document.getElementById("op-tasks-pane"); if(!el) return;
+  const oppTasks=tasks.filter(t=>t.oppId===oppId);
+  const open=oppTasks.filter(t=>!t.done);
+  const done=oppTasks.filter(t=>t.done);
+  const now=new Date().toISOString().slice(0,10);
+  function taskRowHtml(t){
+    const dc=expiryClass(t.dueDate);
+    const duePill=t.dueDate?`<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;margin-left:6px;background:${dc==='overdue'?'#fde8e8':dc==='soon'?'#fff3cd':'#f0f4f8'};color:${dc==='overdue'?'#de350b':dc==='soon'?'#ff8b00':'#5e6c84'}">${fmtDate(t.dueDate)}</span>`:"";
+    return `<div class="opp-task-row" data-tid="${t.id}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" class="opp-task-cb" data-tid="${t.id}" ${t.done?"checked":""} style="accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer" />
+      <span style="flex:1;font-size:13px;${t.done?"text-decoration:line-through;color:var(--muted)":""}">${esc(t.title)}${duePill}</span>
+      ${t.notes?`<span style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.notes)}">${esc(t.notes)}</span>`:""}
+      <button class="opp-task-del" data-tid="${t.id}" style="flex-shrink:0;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:3px" title="Delete">×</button>
+    </div>`;
+  }
+  el.innerHTML=`
+    <div style="padding:0 0 12px">
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+          <label class="op-field-label" style="font-size:10px">Task title</label>
+          <input class="op-input" id="opp-task-title" placeholder="Add a task…" style="width:100%" />
+        </div>
+        <div>
+          <label class="op-field-label" style="font-size:10px">Due date</label>
+          <input class="op-input" id="opp-task-due" type="date" style="width:140px" />
+        </div>
+        <div>
+          <label class="op-field-label" style="font-size:10px">Notes</label>
+          <input class="op-input" id="opp-task-notes" placeholder="Optional notes" style="width:160px" />
+        </div>
+        <button class="op-save-btn" id="opp-task-add" style="padding:7px 16px;font-size:12px;align-self:flex-end">+ Add</button>
+      </div>
+      ${open.length?open.map(taskRowHtml).join(""):'<p style="font-size:12px;color:var(--muted);padding:8px 0">No open tasks for this opportunity.</p>'}
+      ${done.length?`<details style="margin-top:12px"><summary style="font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.05em">Completed (${done.length})</summary>${done.map(taskRowHtml).join("")}</details>`:""}
+    </div>`;
+  document.getElementById("opp-task-add").addEventListener("click",()=>{
+    const title=document.getElementById("opp-task-title").value.trim();
+    if(!title){showToast("Enter a task title","err");return;}
+    const dueDate=document.getElementById("opp-task-due").value;
+    const notes=document.getElementById("opp-task-notes").value.trim();
+    const ts=new Date().toISOString();
+    tasks.push({id:uid(),title,notes,dueDate,oppId,done:false,createdAt:ts,updatedAt:ts});
+    saveTasks(); updateTasksBadge(); updateOppTabCounts(oppId); renderOppTasks(oppId);
+    showToast("Task added","ok");
+  });
+  document.getElementById("opp-task-title").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("opp-task-add").click();}});
+  el.querySelectorAll(".opp-task-cb").forEach(cb=>{
+    cb.addEventListener("change",()=>{
+      const t=tasks.find(x=>x.id===cb.dataset.tid); if(!t) return;
+      t.done=cb.checked; t.updatedAt=new Date().toISOString();
+      saveTasks(); updateTasksBadge(); updateOppTabCounts(oppId); renderOppTasks(oppId);
+    });
+  });
+  el.querySelectorAll(".opp-task-del").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(!confirm("Delete this task?")) return;
+      tasks=tasks.filter(t=>t.id!==btn.dataset.tid);
+      saveTasks(); updateTasksBadge(); updateOppTabCounts(oppId); renderOppTasks(oppId);
+    });
+  });
+  updateOppTabCounts(oppId);
 }
 
 function getOppFileData(oppId){
