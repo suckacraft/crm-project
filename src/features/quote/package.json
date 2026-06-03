@@ -1,0 +1,17 @@
+{
+  "name": "quote-parser-poc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reseller/distributor quote-parsing POC — modular front-end, built to fuse into crm-project.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "proxy": "node proxy/server.js",
+    "test": "node tests/smoke.mjs"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

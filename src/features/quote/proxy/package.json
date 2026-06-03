@@ -1,0 +1,15 @@
+{
+  "name": "quote-parser-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tiny key-holding proxy that fronts Anthropic/OpenAI for the Quote Parsing POC. Zero runtime dependencies — Node 18+ only.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "optionalDependencies": {
+    "pg": "^8.13.0"
+  }
+}

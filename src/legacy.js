@@ -1,4 +1,5 @@
 import { K, KG, CONFIG_VERSION, applyUserKeys, ls, ss, clone, uid, hashPassword, genSalt, getUsers, saveUsers, registerUser, loginUser, saveSession, loadSession, clearSession, migrateExistingDataToUser, ensureAdminUser, getCurrentUser, setCurrentUser, getCurrentUserId } from "./core/storage.js";
+import { initForCrm, buildBuyQuoteFromFile, recordReview } from "./features/quote/src/integration/crmBridge.js";
 
 
 function showApp(){
@@ -39,6 +40,7 @@ function wireAuthEvents(){
     setCurrentUser({id:res.user.id, username:res.user.username, displayName:res.user.displayName, isAdmin:res.user.isAdmin});
     applyUserKeys(res.user.id);
     migrateExistingDataToUser(res.user.id);
+    initForCrm({ userId: res.user.id });
     showApp();
     boot();
   });
@@ -63,6 +65,7 @@ function wireAuthEvents(){
     saveSession(res.user, true);
     setCurrentUser({id:res.user.id, username:res.user.username, displayName:res.user.displayName, isAdmin:res.user.isAdmin});
     applyUserKeys(res.user.id);
+    initForCrm({ userId: res.user.id });
     showApp();
     boot();
   });
@@ -87,6 +90,7 @@ async function init(){
   if(sess){
     setCurrentUser(sess);
     applyUserKeys(sess.userId);
+    initForCrm({ userId: sess.userId });
     showApp();
     boot();
     return;
@@ -1820,6 +1824,32 @@ function openQuoteForm(oppId,type){
   }
   area.querySelectorAll(".qf-cat-amt").forEach(i=>i.addEventListener("input",updateUnalloc));
   area.querySelector("#qf-amount").addEventListener("input",updateUnalloc);
+
+  // Phase 3: auto-fill buy quote from file using mock extractor
+  if(type==="buy"){
+    document.getElementById("qf-file").addEventListener("change", async (e)=>{
+      const file=e.target.files[0]; if(!file) return;
+      try {
+        showToast("Analysing quote…");
+        const { buyQuote } = await buildBuyQuoteFromFile(
+          file,
+          { name: file.name, type: file.type, size: file.size },
+          { extractorId: "mock" }
+        );
+        if(buyQuote.amount) { area.querySelector("#qf-amount").value=buyQuote.amount; updateUnalloc(); }
+        (buyQuote.categories||[]).forEach(c=>{
+          const cb=area.querySelector(`.qf-cat-cb[data-cat="${c.type}"]`);
+          if(cb){ cb.checked=true; cb.dispatchEvent(new Event("change"));
+            const amtEl=area.querySelector(`.qf-cat-amt[data-cat="${c.type}"]`);
+            if(amtEl&&c.amount) amtEl.value=c.amount; }
+        });
+        area._predicted={ buyQuote };
+        updateUnalloc();
+        showToast("Auto-filled from quote — please review","ok");
+      } catch(err){ /* silent — user still fills manually */ }
+    });
+  }
+
   document.getElementById("qf-save").addEventListener("click",()=>{
     const fileEl=document.getElementById("qf-file");
     const file=fileEl.files[0]; if(!file){showToast("Select a file","err");return;}
@@ -1841,6 +1871,10 @@ function openQuoteForm(oppId,type){
       try{ss(K.files,oppFiles);}catch{showToast("Storage full","err");fd[bucket].pop();return;}
       renderOppFiles(oppId); showToast(`${type==="sell"?"Sell":"Buy"} quote added`,"ok");
       updateExpiryBadge();
+      if(type==="buy"&&area._predicted){
+        try{ recordReview(area._predicted.buyQuote, {amount,categories:finalCats}, {fileName:file.name}); }catch{}
+        area._predicted=null;
+      }
     };
     reader.readAsDataURL(file);
   });
