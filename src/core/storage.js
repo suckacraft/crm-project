@@ -55,6 +55,7 @@ export function getCurrentUserId() { return currentScopeId; }
 
 // ── Auth helpers ───────────────────────────────────────────────────────────────
 export async function hashPassword(password, salt) {
+  if (!crypto?.subtle) throw new Error("This app requires HTTPS or localhost — crypto.subtle is unavailable on insecure origins.");
   const data = new TextEncoder().encode(password + salt);
   const buf = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");

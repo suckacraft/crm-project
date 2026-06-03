@@ -32,7 +32,8 @@ function wireAuthEvents(){
     const p=document.getElementById("auth-password").value;
     const remember=document.getElementById("auth-remember").checked;
     document.getElementById("auth-login-err").textContent="Signing in…";
-    const res = await loginUser(u, p);
+    let res;
+    try { res = await loginUser(u, p); } catch(e) { document.getElementById("auth-login-err").textContent=e.message; return; }
     if(res.err){ document.getElementById("auth-login-err").textContent=res.err; return; }
     saveSession(res.user, remember);
     setCurrentUser({id:res.user.id, username:res.user.username, displayName:res.user.displayName, isAdmin:res.user.isAdmin});
@@ -77,6 +78,10 @@ function wireAuthEvents(){
 }
 
 async function init(){
+  if(!crypto?.subtle){
+    document.getElementById("auth-login-err").textContent="⚠ App requires HTTPS or localhost to run. Open via a secure URL.";
+    showAuthOverlay(); return;
+  }
   await ensureAdminUser();
   const sess = loadSession();
   if(sess){
