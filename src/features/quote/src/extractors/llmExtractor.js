@@ -12,13 +12,33 @@ import { registerExtractor } from "./base.js";
 import { normalizeExtraction } from "../normalize.js";
 import { getSettings, authHeaders } from "../storage.js";
 
+// Reject proxy URLs that point outside the local network.
+// Allowed: relative paths, localhost, 127.x, 10.x, 172.16-31.x, 192.168.x
+function assertLocalEndpoint(url) {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) return url; // relative — always local
+  let hostname;
+  try { hostname = new URL(url).hostname; } catch { throw new Error(`Invalid proxy URL: ${url}`); }
+  const isLocal =
+    hostname === "localhost" ||
+    /^127\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+  if (!isLocal) throw new Error(
+    `Security policy: proxy URL must point to a local/internal server, not "${hostname}". ` +
+    `Update the Proxy URL in Settings to your internal AI endpoint.`
+  );
+  return url;
+}
+
 export const llmExtractor = {
   id: "llm",
   label: "LLM via proxy (Claude / GPT)",
   needsKey: true,
   async extract(doc) {
     const s = getSettings();
-    const endpoint = (s.proxyUrl || "/api/extract").replace(/\/$/, "");
+    const rawProxy = (s.proxyUrl || "/api/extract").replace(/\/$/, "");
+    const endpoint = assertLocalEndpoint(rawProxy);
     const t0 = performance.now();
 
     const payload = {

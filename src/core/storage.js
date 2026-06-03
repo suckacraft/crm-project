@@ -72,8 +72,10 @@ export async function registerUser(username, password, displayName, isAdmin = fa
   if (password.length < 6) return { err: "Password must be at least 6 characters" };
   const salt = genSalt();
   const passhash = await hashPassword(password, salt);
+  // First user to register becomes admin automatically.
+  const effectiveAdmin = isAdmin || users.length === 0;
   const user = { id: uid(), username: username.toLowerCase(), displayName: displayName || username,
-    passhash, salt, isAdmin, createdAt: new Date().toISOString() };
+    passhash, salt, isAdmin: effectiveAdmin, createdAt: new Date().toISOString() };
   users.push(user); saveUsers(users);
   return { user };
 }
@@ -111,8 +113,6 @@ export function migrateExistingDataToUser(uid2) {
 }
 
 export async function ensureAdminUser() {
-  const users = getUsers();
-  if (!users.find(u => u.username === "joshua.sakajiou@perfekt.com.au")) {
-    await registerUser("joshua.sakajiou@perfekt.com.au", "Perfekt2024!", "Josh", true);
-  }
+  // No default credentials — first user to register is promoted to admin.
+  // See registerUser(): isAdmin is set to true when the users list is empty.
 }

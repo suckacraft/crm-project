@@ -6,6 +6,9 @@
 // else in the stack changes.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// "internal" talks to any OpenAI-compatible API (Ollama, LM Studio, vLLM, etc.)
+// Set INTERNAL_LLM_URL (e.g. http://localhost:11434/v1) and optionally
+// INTERNAL_LLM_MODEL in the proxy's environment. No API key required by default.
 export const PROVIDERS = {
   anthropic: {
     defaultModel: "claude-haiku-4-5-20251001",
@@ -16,6 +19,11 @@ export const PROVIDERS = {
     defaultModel: "gpt-4o-mini",
     envKey: "OPENAI_API_KEY",
     call: callOpenAI,
+  },
+  internal: {
+    defaultModel: process.env.INTERNAL_LLM_MODEL || "llama3",
+    envKey: null,   // no key required; set INTERNAL_LLM_URL instead
+    call: callInternal,
   },
 };
 
@@ -59,6 +67,27 @@ async function callOpenAI({ model, system, user, apiKey }) {
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content || "";
   return { text, usage: data.usage, model: data.model };
+}
+
+// Calls any OpenAI-compatible local endpoint (Ollama, LM Studio, vLLM, etc.)
+async function callInternal({ model, system, user }) {
+  const base = (process.env.INTERNAL_LLM_URL || "http://localhost:11434/v1").replace(/\/$/, "");
+  const res = await fetch(`${base}/chat/completions`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      model,
+      temperature: 0,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  });
+  if (!res.ok) throw await providerError("internal", res);
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || "";
+  return { text, usage: data.usage, model: data.model || model };
 }
 
 async function providerError(name, res) {

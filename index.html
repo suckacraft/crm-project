@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Opportunities CRM</title>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="/vendor/xlsx.full.min.js"></script>
+  <script src="/vendor/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -600,8 +600,9 @@
           </label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Provider
             <select class="sp-input" id="sp-qp-provider" style="width:140px">
-              <option value="anthropic">Anthropic (Claude)</option>
-              <option value="openai">OpenAI</option>
+              <option value="internal">Internal LLM (Ollama / LM Studio / vLLM)</option>
+              <option value="anthropic">Anthropic (Claude) — requires external proxy</option>
+              <option value="openai">OpenAI — requires external proxy</option>
             </select>
           </label>
         </div>
@@ -614,7 +615,8 @@
         <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:600;color:var(--muted)">Feedback URL <span style="font-weight:400;color:var(--muted)">(optional — corpus API endpoint)</span>
           <input class="sp-input" type="url" id="sp-qp-feedback" placeholder="https://your-proxy.com/api/feedback" style="width:100%;max-width:340px" />
         </label>
-        <p style="font-size:11px;color:var(--muted);margin:0;background:#fffae6;border:1px solid #ffe380;border-radius:5px;padding:7px 10px">⚠ <strong>API keys (ANTHROPIC_API_KEY / OPENAI_API_KEY) must be set as environment variables on the proxy server</strong> — never enter them here.</p>
+        <p style="font-size:11px;color:var(--muted);margin:0;background:#e6f9f0;border:1px solid #79f2c0;border-radius:5px;padding:7px 10px">✓ <strong>Internal LLM</strong> — set Proxy URL to your local Ollama/LM Studio endpoint (e.g. <code>http://localhost:11434/v1</code>). No API key needed; data never leaves your network.</p>
+        <p style="font-size:11px;color:var(--muted);margin:0;margin-top:6px;background:#fffae6;border:1px solid #ffe380;border-radius:5px;padding:7px 10px">⚠ If using Anthropic or OpenAI: API keys must be environment variables on the proxy server (<code>ANTHROPIC_API_KEY</code> / <code>OPENAI_API_KEY</code>) — never stored in the browser.</p>
       </div>
     </div>
     <div class="sp-footer">

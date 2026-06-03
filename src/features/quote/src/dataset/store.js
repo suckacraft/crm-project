@@ -58,8 +58,27 @@ export const LocalStore = {
 // ── Durable remote (async) ────────────────────────────────────────────────────
 // Talks to the proxy's /api/feedback + /api/golden endpoints. Disabled when no
 // feedbackUrl is configured (the app still works fully on LocalStore alone).
+function assertLocalFeedbackUrl(url) {
+  if (!url || !url.startsWith("http://") && !url.startsWith("https://")) return url;
+  let hostname;
+  try { hostname = new URL(url).hostname; } catch { return url; }
+  const isLocal =
+    hostname === "localhost" ||
+    /^127\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+  if (!isLocal) throw new Error(
+    `Security policy: feedback URL must point to a local/internal server, not "${hostname}".`
+  );
+  return url;
+}
+
 export const RemoteStore = {
-  baseUrl() { return (getSettings().feedbackUrl || "").replace(/\/$/, ""); },
+  baseUrl() {
+    const u = (getSettings().feedbackUrl || "").replace(/\/$/, "");
+    return u ? assertLocalFeedbackUrl(u) : "";
+  },
   enabled() { return !!this.baseUrl(); },
 
   async pull(kind = "feedback") {
